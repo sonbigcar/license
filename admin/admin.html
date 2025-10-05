@@ -11,11 +11,56 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
-    <div class="container">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <div class="login-header">
+                <h1>🔐 Admin Login</h1>
+                <p>Vui lòng đăng nhập để truy cập trang quản lý</p>
+            </div>
+            
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="adminUsername">👤 Tài khoản:</label>
+                    <input type="text" id="adminUsername" name="username" 
+                           placeholder="Nhập tài khoản admin..." required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="adminPassword">🔒 Mật khẩu:</label>
+                    <input type="password" id="adminPassword" name="password" 
+                           placeholder="Nhập mật khẩu..." required>
+                    <div class="password-toggle" onclick="togglePasswordVisibility()">
+                        <span id="toggleIcon">👁️</span>
+                    </div>
+                </div>
+                
+                <button type="submit" class="login-btn">
+                    🚀 Đăng nhập
+                </button>
+                
+                <div id="loginError" class="login-error" style="display: none;">
+                    ❌ Sai tài khoản hoặc mật khẩu!
+                </div>
+            </form>
+            
+            <div class="login-footer">
+                <p>📝 <strong>Tài khoản mặc định:</strong></p>
+                <p>Username: <code>admin</code> | Password: <code>admin123</code></p>
+                <p class="login-note">Liên hệ quản trị viên để thay đổi thông tin đăng nhập</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Admin Content (Hidden initially) -->
+    <div id="adminContent" class="container" style="display: none;">
         <header>
             <div class="header-content">
                 <h1>Admin Panel - Registration Management</h1>
                 <p class="subtitle">Quản lý đăng ký và duyệt license cho khách hàng</p>
+                <button id="logoutBtn" class="logout-btn" onclick="adminLogout()" title="Đăng xuất">
+                    😪 Logout
+                </button>
             </div>
         </header>
 

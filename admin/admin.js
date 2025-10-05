@@ -623,9 +623,148 @@ function confirmSuspendLicense() {
     adminPanel.confirmSuspendLicense();
 }
 
-// Initialize admin panel when DOM is loaded
+// Admin Authentication
+class AdminAuth {
+    constructor() {
+        this.defaultCredentials = {
+            username: 'doanthanhson102@gmail.com',
+            password: '17021351'
+        };
+        this.sessionKey = 'adminLoggedIn';
+        this.init();
+    }
+
+    init() {
+        // Check if already logged in
+        if (this.isLoggedIn()) {
+            this.showAdminContent();
+        } else {
+            this.showLoginScreen();
+        }
+
+        // Setup login form
+        this.setupLoginForm();
+    }
+
+    setupLoginForm() {
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleLogin();
+            });
+        }
+
+        // Setup password toggle
+        const passwordInput = document.getElementById('adminPassword');
+        if (passwordInput) {
+            passwordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.handleLogin();
+                }
+            });
+        }
+    }
+
+    handleLogin() {
+        const username = document.getElementById('adminUsername').value.trim();
+        const password = document.getElementById('adminPassword').value.trim();
+        const errorDiv = document.getElementById('loginError');
+
+        // Hide previous error
+        errorDiv.style.display = 'none';
+
+        // Validate credentials
+        if (this.validateCredentials(username, password)) {
+            // Login successful
+            this.setLoggedIn(true);
+            this.showAdminContent();
+            
+            // Clear form
+            document.getElementById('loginForm').reset();
+        } else {
+            // Login failed
+            errorDiv.style.display = 'block';
+            
+            // Shake animation for error
+            errorDiv.style.animation = 'shake 0.5s ease-in-out';
+            setTimeout(() => {
+                errorDiv.style.animation = '';
+            }, 500);
+
+            // Focus back to username
+            document.getElementById('adminUsername').focus();
+        }
+    }
+
+    validateCredentials(username, password) {
+        // You can modify this to use database, API, or other authentication methods
+        return username === this.defaultCredentials.username && 
+               password === this.defaultCredentials.password;
+    }
+
+    isLoggedIn() {
+        return sessionStorage.getItem(this.sessionKey) === 'true';
+    }
+
+    setLoggedIn(status) {
+        sessionStorage.setItem(this.sessionKey, status.toString());
+    }
+
+    showLoginScreen() {
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('adminContent').style.display = 'none';
+        
+        // Focus on username field
+        setTimeout(() => {
+            document.getElementById('adminUsername').focus();
+        }, 100);
+    }
+
+    showAdminContent() {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('adminContent').style.display = 'block';
+        
+        // Initialize admin panel
+        if (!window.adminPanel) {
+            window.adminPanel = new AdminPanel();
+        }
+    }
+
+    logout() {
+        this.setLoggedIn(false);
+        this.showLoginScreen();
+        
+        // Clear admin panel data
+        if (window.adminPanel) {
+            window.adminPanel = null;
+        }
+    }
+}
+
+// Global functions
+function togglePasswordVisibility() {
+    const passwordInput = document.getElementById('adminPassword');
+    const toggleIcon = document.getElementById('toggleIcon');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.textContent = '🙈';
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.textContent = '👁️';
+    }
+}
+
+function adminLogout() {
+    if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+        window.adminAuth.logout();
+    }
+}
+
+// Initialize admin authentication when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.adminPanel = new AdminPanel();
+    window.adminAuth = new AdminAuth();
 });
 
 // Handle modal clicks
