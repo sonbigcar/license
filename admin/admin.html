@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - License Management</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>Admin Panel - Registration Management</h1>
+                <p class="subtitle">Quản lý đăng ký và duyệt license cho khách hàng</p>
+            </div>
+        </header>
+
+        <nav class="admin-nav">
+            <div class="nav-content">
+                <a href="../index.html" class="nav-link">← Quay về trang chính</a>
+                <div class="nav-stats">
+                    <span id="totalRegistrations" class="stat-item">0 đăng ký</span>
+                    <span id="pendingRegistrations" class="stat-item">0 chờ duyệt</span>
+                </div>
+            </div>
+        </nav>
+
+        <main class="admin-main">
+            <div class="admin-container">
+                <!-- Controls -->
+                <div class="admin-controls">
+                    <div class="control-group">
+                        <h2>Bộ lọc và tìm kiếm</h2>
+                        <div class="controls-row">
+                            <input type="text" id="searchInput" placeholder="Tìm kiếm theo tên, email, license key...">
+                            <select id="statusFilter">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="Pending">Chờ duyệt</option>
+                                <option value="Approved">Đã duyệt</option>
+                                <option value="Rejected">Từ chối</option>
+                                <option value="Suspended">Tạm dừng</option>
+                            </select>
+                            <button id="refreshBtn" class="btn btn-secondary">Làm mới</button>
+                            <button id="exportBtn" class="btn btn-primary">Xuất Excel</button>
+                            <button id="testEmailBtn" class="btn btn-secondary">Test Email</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-info">
+                            <h3 id="totalCount">0</h3>
+                            <p>Tổng đăng ký</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⏰</div>
+                        <div class="stat-info">
+                            <h3 id="pendingCount">0</h3>
+                            <p>Chờ duyệt</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <h3 id="approvedCount">0</h3>
+                            <p>Đã duyệt</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⛔</div>
+                        <div class="stat-info">
+                            <h3 id="suspendedCount">0</h3>
+                            <p>Tạm dừng</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-info">
+                            <h3 id="todayRegistrations">0</h3>
+                            <p>Đăng ký hôm nay</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- License Table -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h2>Danh sách Đăng ký</h2>
+                        <div class="table-actions">
+                            <button id="approveSelectedBtn" class="btn btn-success btn-sm">Duyệt đã chọn</button>
+                            <button id="rejectSelectedBtn" class="btn btn-danger btn-sm">Từ chối đã chọn</button>
+                            <button id="suspendSelectedBtn" class="btn btn-warning btn-sm">Tạm dừng đã chọn</button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-wrapper">
+                        <table id="registrationsTable" class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" id="selectAll"></th>
+                                    <th>Mã đăng ký</th>
+                                    <th>Người dùng</th>
+                                    <th>Email</th>
+                                    <th>Số điện thoại</th>
+                                    <th>Công ty</th>
+                                    <th>License Key</th>
+                                    <th>Số máy</th>
+                                    <th>Ngày đăng ký</th>
+                                    <th>Trạng thái</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="registrationsTableBody">
+                                <!-- Data will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="emptyState" class="empty-state" style="display: none;">
+                        <div class="empty-icon">📄</div>
+                        <h3>Chưa có đăng ký nào</h3>
+                        <p>Chưa có đăng ký nào trong hệ thống.</p>
+                        <a href="../index.html" class="btn btn-primary">Tạo đăng ký đầu tiên</a>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div id="pagination" class="pagination" style="display: none;">
+                    <button id="prevPage" class="btn btn-sm">← Trước</button>
+                    <span id="pageInfo">Trang 1 / 1</span>
+                    <button id="nextPage" class="btn btn-sm">Sau →</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- License Detail Modal -->
+    <div id="licenseDetailModal" class="modal" style="display: none;">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Chi tiết License</h3>
+                <span class="close" onclick="closeLicenseDetailModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="licenseDetailContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeLicenseDetailModal()" class="btn btn-secondary">Đóng</button>
+                <button id="editLicenseBtn" class="btn btn-primary">Chỉnh sửa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit License Modal -->
+    <div id="editLicenseModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Chỉnh sửa License</h3>
+                <span class="close" onclick="closeEditLicenseModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="editLicenseForm">
+                    <input type="hidden" id="editLicenseIndex">
+                    <div class="form-group">
+                        <label>Tên người dùng:</label>
+                        <input type="text" id="editUserName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="editEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Công ty:</label>
+                        <input type="text" id="editCompany">
+                    </div>
+                    <div class="form-group">
+                        <label>Trạng thái:</label>
+                        <select id="editStatus">
+                            <option value="Active">Active</option>
+                            <option value="Suspended">Suspended</option>
+                            <option value="Expired">Expired</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeEditLicenseModal()" class="btn btn-secondary">Hủy</button>
+                <button onclick="saveLicenseChanges()" class="btn btn-primary">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approve Registration Modal -->
+    <div id="approveModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Duyệt đăng ký License</h3>
+                <span class="close" onclick="closeApproveModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="approveForm">
+                    <input type="hidden" id="approveRegistrationId">
+                    <div class="form-group">
+                        <label>Email khách hàng:</label>
+                        <input type="email" id="approveEmail" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>License Key (tự động tạo):</label>
+                        <input type="text" id="approveLicenseKey" readonly>
+                        <button type="button" onclick="generateNewLicenseKey()" class="btn btn-sm btn-secondary">Tạo lại</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Ghi chú:</label>
+                        <textarea id="approveNote" rows="3" placeholder="Ghi chú thêm (không bắt buộc)..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeApproveModal()" class="btn btn-secondary">Hủy</button>
+                <button onclick="confirmApproveRegistration()" class="btn btn-success">Duyệt đăng ký</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Registration Modal -->
+    <div id="rejectModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Từ chối đăng ký</h3>
+                <span class="close" onclick="closeRejectModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="rejectForm">
+                    <input type="hidden" id="rejectRegistrationId">
+                    <div class="form-group">
+                        <label>Email khách hàng:</label>
+                        <input type="email" id="rejectEmail" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Lý do từ chối:</label>
+                        <textarea id="rejectReason" rows="4" placeholder="Nhập lý do từ chối..." required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeRejectModal()" class="btn btn-secondary">Hủy</button>
+                <button onclick="confirmRejectRegistration()" class="btn btn-danger">Từ chối đăng ký</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Suspend License Modal -->
+    <div id="suspendModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Tạm dừng License</h3>
+                <span class="close" onclick="closeSuspendModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="suspendForm">
+                    <input type="hidden" id="suspendRegistrationId">
+                    <div class="form-group">
+                        <label>Email khách hàng:</label>
+                        <input type="email" id="suspendEmail" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>License Key:</label>
+                        <input type="text" id="suspendLicenseKey" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Số máy hiện tại:</label>
+                        <input type="number" id="suspendMachineCount" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Lý do tạm dừng:</label>
+                        <select id="suspendReason" required>
+                            <option value="">Chọn lý do</option>
+                            <option value="multiple_machines">Sử dụng trên nhiều máy tính</option>
+                            <option value="suspicious_activity">Hoạt động đáng nghi</option>
+                            <option value="payment_issue">Vấn đề thanh toán</option>
+                            <option value="violation">Vi phạm điều khoản</option>
+                            <option value="other">Khác</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Chi tiết:</label>
+                        <textarea id="suspendDetail" rows="4" placeholder="Mô tả chi tiết lý do tạm dừng..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeSuspendModal()" class="btn btn-secondary">Hủy</button>
+                <button onclick="confirmSuspendLicense()" class="btn btn-warning">Tạm dừng License</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="confirmTitle">Xác nhận</h3>
+                <span class="close" onclick="closeConfirmModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeConfirmModal()" class="btn btn-secondary">Hủy</button>
+                <button id="confirmActionBtn" class="btn btn-danger">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
