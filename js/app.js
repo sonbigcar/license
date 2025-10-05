@@ -1,7 +1,7 @@
 // Registration Web App - Main JavaScript File
 class RegistrationApp {
     constructor() {
-        this.registrations = JSON.parse(localStorage.getItem('licenseRegistrations') || '[]');
+        this.registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
         this.machineId = this.generateMachineId();
         
         this.initializeApp();
@@ -355,7 +355,7 @@ class RegistrationApp {
             
             // Save to local storage
             this.registrations.push(registrationData);
-            localStorage.setItem('licenseRegistrations', JSON.stringify(this.registrations));
+            localStorage.setItem('registrations', JSON.stringify(this.registrations));
             
             this.showRegistrationSuccess(registrationData);
         }, 2000);

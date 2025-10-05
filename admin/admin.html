@@ -25,6 +25,9 @@
                 <div class="nav-stats">
                     <span id="totalRegistrations" class="stat-item">0 đăng ký</span>
                     <span id="pendingRegistrations" class="stat-item">0 chờ duyệt</span>
+                    <span id="approvedRegistrations" class="stat-item">0 đã duyệt</span>
+                    <span id="rejectedRegistrations" class="stat-item">0 đã từ chối</span>
+                    <span id="suspendedRegistrations" class="stat-item">0 tạm dừng</span>
                 </div>
             </div>
         </nav>
@@ -135,7 +138,7 @@
                 <!-- Pagination -->
                 <div id="pagination" class="pagination" style="display: none;">
                     <button id="prevPage" class="btn btn-sm">← Trước</button>
-                    <span id="pageInfo">Trang 1 / 1</span>
+                    <span id="pageInfo">Trang <span id="currentPage">1</span> / <span id="totalPages">1</span></span>
                     <button id="nextPage" class="btn btn-sm">Sau →</button>
                 </div>
             </div>
@@ -198,61 +201,59 @@
         </div>
     </div>
 
-    <!-- Approve Registration Modal -->
-    <div id="approveModal" class="modal" style="display: none;">
+    <!-- View Registration Modal -->
+    <div id="viewRegistrationModal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Duyệt đăng ký License</h3>
-                <span class="close" onclick="closeApproveModal()">&times;</span>
+                <h3>Chi tiết đăng ký</h3>
+                <span class="close" onclick="closeViewRegistrationModal()">&times;</span>
             </div>
             <div class="modal-body">
-                <form id="approveForm">
-                    <input type="hidden" id="approveRegistrationId">
-                    <div class="form-group">
-                        <label>Email khách hàng:</label>
-                        <input type="email" id="approveEmail" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label>License Key (tự động tạo):</label>
-                        <input type="text" id="approveLicenseKey" readonly>
-                        <button type="button" onclick="generateNewLicenseKey()" class="btn btn-sm btn-secondary">Tạo lại</button>
-                    </div>
-                    <div class="form-group">
-                        <label>Ghi chú:</label>
-                        <textarea id="approveNote" rows="3" placeholder="Ghi chú thêm (không bắt buộc)..."></textarea>
-                    </div>
-                </form>
+                <table class="modal-table">
+                    <tr>
+                        <td><strong>Mã đăng ký:</strong></td>
+                        <td id="viewRegistrationId"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tên người dùng:</strong></td>
+                        <td id="viewUserName"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Email:</strong></td>
+                        <td id="viewEmail"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Số điện thoại:</strong></td>
+                        <td id="viewPhone"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Công ty:</strong></td>
+                        <td id="viewCompany"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Machine ID:</strong></td>
+                        <td id="viewMachineId"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ngày đăng ký:</strong></td>
+                        <td id="viewRegisteredAt"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Số tiền:</strong></td>
+                        <td id="viewPaymentAmount"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Trạng thái:</strong></td>
+                        <td id="viewStatus"></td>
+                    </tr>
+                    <tr id="viewLicenseKeyRow" style="display: none;">
+                        <td><strong>License Key:</strong></td>
+                        <td id="viewLicenseKey" class="license-key"></td>
+                    </tr>
+                </table>
             </div>
             <div class="modal-footer">
-                <button onclick="closeApproveModal()" class="btn btn-secondary">Hủy</button>
-                <button onclick="confirmApproveRegistration()" class="btn btn-success">Duyệt đăng ký</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Reject Registration Modal -->
-    <div id="rejectModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Từ chối đăng ký</h3>
-                <span class="close" onclick="closeRejectModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form id="rejectForm">
-                    <input type="hidden" id="rejectRegistrationId">
-                    <div class="form-group">
-                        <label>Email khách hàng:</label>
-                        <input type="email" id="rejectEmail" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label>Lý do từ chối:</label>
-                        <textarea id="rejectReason" rows="4" placeholder="Nhập lý do từ chối..." required></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button onclick="closeRejectModal()" class="btn btn-secondary">Hủy</button>
-                <button onclick="confirmRejectRegistration()" class="btn btn-danger">Từ chối đăng ký</button>
+                <button onclick="closeViewRegistrationModal()" class="btn btn-secondary">Đóng</button>
             </div>
         </div>
     </div>

@@ -377,6 +377,29 @@
     100% { opacity: 1; }
 }
 
+/* Modal table styling */
+.modal-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+}
+
+.modal-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+}
+
+.modal-table td:first-child {
+    width: 40%;
+    font-weight: 500;
+    color: #666;
+}
+
+.modal-table td:last-child {
+    width: 60%;
+}
+
 .machine-count-warning {
     color: #dc3545;
     font-weight: bold;
