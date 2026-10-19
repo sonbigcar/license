@@ -19,8 +19,8 @@ namespace RevitHub.AutomationTools
 {
     public class LicenseVerificationService
     {
-        // Địa chỉ máy chủ Cloud API (Cloudflare Worker Edge)
-        private const string API_BASE_URL = "https://api.revitstore.vn";
+        // Địa chỉ máy chủ Cloud API (Cloudflare Worker Edge đang hoạt động trực tuyến)
+        private const string API_BASE_URL = "https://revit-store-api.polydactyl-wormhole.workers.dev";
         private const string VERIFY_ENDPOINT = API_BASE_URL + "/api/v1/license/verify";
         private const string HEARTBEAT_ENDPOINT = API_BASE_URL + "/api/v1/license/heartbeat";
 
