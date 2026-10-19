@@ -1,0 +1,431 @@
+/* ==========================================================================
+   REVIT BIM STORE - PORTAL & ACCOUNT MANAGEMENT (SOFT PEACH THEME)
+   ========================================================================== */
+
+.portal-container {
+  max-width: 1400px;
+  margin: 24px auto 80px;
+  padding: 0 32px;
+}
+
+.portal-header {
+  margin-bottom: 24px;
+}
+
+.portal-title {
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--text-pure);
+  letter-spacing: -0.4px;
+  margin-bottom: 6px;
+}
+
+.portal-tabs {
+  display: flex;
+  gap: 10px;
+  border-bottom: 1px solid #EAE0D7;
+  margin-bottom: 28px;
+  overflow-x: auto;
+}
+
+.portal-tab-btn {
+  padding: 12px 22px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  transition: all var(--transition-smooth);
+}
+
+.portal-tab-btn:hover {
+  color: var(--primary);
+}
+
+.portal-tab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* Library Cards */
+.library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 24px;
+}
+
+.library-card {
+  background: #FFFFFF;
+  border: var(--border-light);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.library-card-header {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.library-thumb {
+  width: 74px;
+  height: 74px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  background: #F3EAE3;
+}
+
+.library-info h4 {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-pure);
+  line-height: 1.35;
+}
+
+.library-download-box {
+  background: #FAF3EE;
+  border: 1px solid #EAE0D7;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.download-countdown {
+  font-size: 0.8rem;
+  color: var(--warning);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* License Cards */
+.license-card {
+  background: #FFFFFF;
+  border: var(--border-light);
+  border-radius: var(--radius-xl);
+  padding: 28px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.license-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.license-key-display {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #FFF5F0;
+  border: 1.5px solid var(--primary-border);
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--primary-deep);
+  letter-spacing: 1px;
+}
+
+.machines-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 14px;
+  font-size: 0.9rem;
+}
+
+.machines-table th, .machines-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #F0E6DE;
+}
+
+.machines-table th {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+/* Admin Dashboard Tables & Stats */
+.account-badge-customer {
+  background: #F0F9FF;
+  color: #0284C7;
+  border: 1px solid #BAE6FD;
+}
+
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.admin-stat-card {
+  background: #FFFFFF;
+  border: var(--border-light);
+  padding: 24px;
+  border-radius: var(--radius-xl);
+  border-left: 4px solid var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-table-container {
+  overflow-x: auto;
+  border-radius: var(--radius-xl);
+  border: var(--border-light);
+  background: #FFFFFF;
+  box-shadow: var(--shadow-sm);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.data-table th, .data-table td {
+  padding: 16px 20px;
+  text-align: left;
+  border-bottom: 1px solid #F0E6DE;
+}
+
+.data-table th {
+  background: #FFFBF9;
+  color: var(--text-dim);
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0.6px;
+}
+
+.data-table tr:hover td {
+  background: #FFF9F5;
+}
+
+/* ==========================================================================
+   ADVANCED LICENSE MANAGEMENT CONSOLE (ADMIN & USER)
+   ========================================================================== */
+
+.license-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.license-metric-box {
+  background: #FFFFFF;
+  border: var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-smooth);
+}
+
+.license-metric-box:hover {
+  transform: translateY(-2px);
+}
+
+.license-metric-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.license-metric-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.license-metric-num {
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-pure);
+  line-height: 1.1;
+}
+
+.license-metric-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.license-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  background: #FFFFFF;
+  border: var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.license-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.license-search-input {
+  min-width: 260px;
+  max-width: 380px;
+  padding: 9px 16px;
+  border-radius: var(--radius-full);
+  border: var(--border-light);
+  background: #FAF3EE;
+  font-size: 0.88rem;
+  outline: none;
+  transition: all var(--transition-smooth);
+}
+
+.license-search-input:focus {
+  border-color: var(--primary);
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.15);
+}
+
+.license-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.station-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: #F4EBE4;
+  color: var(--text-pure);
+  cursor: pointer;
+  transition: all var(--transition-smooth);
+}
+
+.station-pill:hover {
+  background: var(--primary-light);
+  color: var(--primary-deep);
+}
+
+.station-pill.full {
+  background: #FEF3C7;
+  color: #B45309;
+}
+
+.license-action-cell {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.device-card-item {
+  background: #FFFFFF;
+  border: var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  transition: all var(--transition-smooth);
+}
+
+.device-card-item:hover {
+  border-color: var(--primary-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.device-info-col {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.device-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: #FAF3EE;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.license-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 16px;
+}
+
+.license-guide-card {
+  background: #FAF3EE;
+  border: 1px solid #EAE0D7;
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  position: relative;
+}
+
+.license-guide-step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+  margin-bottom: 14px;
+}
+

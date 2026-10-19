@@ -1,0 +1,244 @@
+/* ==========================================================================
+   REVIT BIM STORE - CHECKOUT & VIETQR (SOFT PEACH THEME)
+   ========================================================================== */
+
+/* Cart Drawer */
+.cart-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-overlay);
+  backdrop-filter: blur(8px);
+  z-index: 1050;
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-smooth);
+}
+
+.cart-drawer-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.cart-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 100%;
+  max-width: 440px;
+  height: 100vh;
+  background: #FFFFFF;
+  border-left: var(--border-light);
+  z-index: 1060;
+  transform: translateX(100%);
+  transition: transform var(--transition-smooth);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -10px 0 35px rgba(180, 120, 90, 0.2);
+}
+
+.cart-drawer.active {
+  transform: translateX(0);
+}
+
+.drawer-header {
+  padding: 22px 26px;
+  border-bottom: 1px solid #F0E6DE;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #FFFBF9;
+}
+
+.drawer-title {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-pure);
+}
+
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cart-item {
+  background: #FAF3EE;
+  border: 1px solid #EAE0D7;
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.cart-item-thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  background: #F3EAE3;
+}
+
+.cart-item-info {
+  flex: 1;
+}
+
+.cart-item-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-pure);
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+
+.cart-item-price {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.cart-item-remove {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-smooth);
+}
+
+.cart-item-remove:hover {
+  color: var(--danger);
+}
+
+.drawer-footer {
+  padding: 20px 26px;
+  border-top: 1px solid #F0E6DE;
+  background: #FFFBF9;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 0.94rem;
+  color: var(--text-muted);
+}
+
+.summary-total {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text-pure);
+  border-top: 1px dashed #EAE0D7;
+  padding-top: 14px;
+}
+
+/* Payment Modal */
+.payment-modal {
+  max-width: 520px;
+}
+
+.qr-card-container {
+  padding: 24px;
+  text-align: center;
+}
+
+.qr-box {
+  background: #FFFFFF;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  display: inline-block;
+  margin: 16px 0;
+  box-shadow: 0 8px 30px rgba(255, 107, 74, 0.2);
+  border: 1px solid var(--primary-border);
+}
+
+.qr-image {
+  width: 230px;
+  height: 230px;
+  display: block;
+}
+
+.bank-info-box {
+  background: #FAF3EE;
+  border: 1px solid #EAE0D7;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin: 16px 0;
+  text-align: left;
+}
+
+.bank-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #F0E6DE;
+  font-size: 0.9rem;
+}
+
+.bank-row:last-child {
+  border-bottom: none;
+}
+
+.bank-label {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.bank-val {
+  font-weight: 700;
+  color: var(--text-pure);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.copy-badge {
+  background: #FFEFEA;
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid #FFD4C7;
+}
+
+.copy-badge:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+.payment-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: #FFF5F0;
+  border: 1px solid var(--primary-border);
+  margin-top: 16px;
+  font-size: 0.9rem;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.payment-status-bar.success {
+  background: #ECFDF5;
+  border-color: #A7F3D0;
+  color: #059669;
+}
+
+.pulse-dot {
+  width: 10px;
+  height: 10px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: pulseSubtle 1.2s infinite;
+}

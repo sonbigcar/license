@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RevitHub - Nền Tảng Revit Tools, Family, Template & Custom Automation</title>
+  <meta name="description" content="Chuyên cung cấp Revit Add-in, Family .RFA, Project Template .RTE và Dịch vụ lập trình tools, tạo template Revit theo yêu cầu doanh nghiệp.">
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/store.css">
+  <link rel="stylesheet" href="css/checkout.css">
+  <link rel="stylesheet" href="css/portal.css">
+  <style>
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="app-wrapper">
+    <!-- SITE NAVBAR -->
+    <header class="site-header">
+      <div class="nav-container">
+        <!-- Brand Logo -->
+        <div class="brand-logo" onclick="window.storeApp.switchMainView('storefrontView')">
+          <div class="brand-icon">R</div>
+          <div class="brand-text">
+            <h1>RevitHub</h1>
+            <span>AEC • BIM • Studio</span>
+          </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav>
+          <ul class="nav-menu">
+            <li class="nav-item active" data-view="storefrontView">🏪 Khám Phá</li>
+            <li class="nav-item" data-view="customServiceView">✍️ Dịch Vụ Thuê Viết</li>
+            <li class="nav-item" data-view="libraryView">📁 Thư Viện Của Tôi</li>
+            <li class="nav-item" data-view="licenseView">🔑 Bản Quyền Của Tôi</li>
+            <!-- TAB QUẢN LÝ TÀI KHOẢN: CHỈ HIỂN THỊ KHI LÀ TÀI KHOẢN ADMIN -->
+            <li id="navItemAdmin" class="nav-item" data-view="adminView" style="display: none; color: #ff5722; font-weight: 800;">
+              👑 Quản Lý Tài Khoản
+            </li>
+          </ul>
+        </nav>
+
+        <!-- Nav Actions: Cart & Nút Đăng Nhập / Đăng Ký trên cùng -->
+        <div class="nav-actions">
+          <button id="cartBtn" class="cart-btn" aria-label="Xem giỏ hàng">
+            🛒 Giỏ hàng
+            <span id="cartBadge" class="cart-count" style="display: none;">0</span>
+          </button>
+          
+          <!-- Vị trí nút Đăng Nhập / Đăng Ký trên cùng -->
+          <div id="userNavProfile"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 1. STOREFRONT VIEW -->
+    <main id="storefrontView">
+      <!-- 3 ICON / PORTAL CARDS TO BẢN ĐẠI DIỆN 3 TRỤ CỘT CHÍNH -->
+      <section class="pillars-section">
+        <div class="pillars-header">
+          <div class="pillars-tagline">⚡ Nền Tảng Công Nghệ & Tài Nguyên BIM Đương Đại</div>
+          <h2 class="pillars-title">Chọn Trải Nghiệm Của Bạn</h2>
+        </div>
+
+        <div class="pillars-grid">
+          <!-- CARD 1: TOOLS (REVIT ADD-IN) -->
+          <div class="pillar-card" onclick="window.storeApp.navigateToPillar('tools')">
+            <div class="pillar-media">
+              <img src="assets/card_tools.jpg" alt="Revit Tools & Add-ins">
+              <div class="pillar-overlay"></div>
+              <span class="badge badge-tool pillar-badge-float">Revit Add-in</span>
+              <div class="pillar-icon-box">⚙️</div>
+            </div>
+            <div class="pillar-content">
+              <h3 class="pillar-title">Revit Tools</h3>
+              <p class="pillar-desc">
+                Bộ công cụ tiện ích tự động hóa thiết kế, tối ưu 90% thời gian xử lý MEP né dầm né cột, xuất hồ sơ ISO 19650 và rải thép tự động. Quản lý bản quyền linh hoạt theo máy tính.
+              </p>
+              <div class="pillar-cta">
+                <span>Khám Phá Công Cụ</span>
+                <span style="font-size: 1.2rem;">→</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 2: FAMILY & TEMPLATE -->
+          <div class="pillar-card" onclick="window.storeApp.navigateToPillar('family_template')">
+            <div class="pillar-media">
+              <img src="assets/card_family.jpg" alt="Revit Family & Project Templates">
+              <div class="pillar-overlay"></div>
+              <span class="badge badge-family pillar-badge-float">Family & Template</span>
+              <div class="pillar-icon-box">📦</div>
+            </div>
+            <div class="pillar-content">
+              <h3 class="pillar-title">Family & Template</h3>
+              <p class="pillar-desc">
+                Thư viện Family RFA chuẩn LOD 350 đầy đủ tham số catalog TCVN/quốc tế và bộ File Template (.RTE) mẫu dự án thiết lập sẵn View Template, Pipe/Duct System, Filter màu đồng bộ.
+              </p>
+              <div class="pillar-cta">
+                <span>Xem Thư Viện & File Mẫu</span>
+                <span style="font-size: 1.2rem;">→</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 3: DỊCH VỤ THUÊ VIẾT TOOLS VÀ TẠO TEMPLATE -->
+          <div class="pillar-card" onclick="window.storeApp.navigateToPillar('custom_service')">
+            <div class="pillar-media">
+              <img src="assets/card_custom.jpg" alt="Dịch vụ thuê viết Tools và Tạo Template">
+              <div class="pillar-overlay"></div>
+              <span class="badge badge-custom pillar-badge-float">Dịch Vụ Theo Yêu Cầu</span>
+              <div class="pillar-icon-box">✍️</div>
+            </div>
+            <div class="pillar-content">
+              <h3 class="pillar-title">Thuê Viết Tools & Tạo Template</h3>
+              <p class="pillar-desc">
+                Nhận lập trình Add-in Revit C# .NET chuyên sâu theo quy trình riêng của từng văn phòng. Xây dựng bộ Template BIM đồng bộ 100% tiêu chuẩn doanh nghiệp và đào tạo chuyển giao.
+              </p>
+              <div class="pillar-cta">
+                <span>Gửi Yêu Cầu Đặt Hàng</span>
+                <span style="font-size: 1.2rem;">→</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CATALOG SẢN PHẨM & BỘ LỌC THÔNG MINH -->
+      <section id="catalogSection" class="catalog-container">
+        <div class="catalog-header-bar">
+          <h2 class="catalog-section-title">Danh Mục Sản Phẩm</h2>
+        </div>
+
+        <!-- KHU VỰC THAO TÁC CỦA ADMIN: THÊM SẢN PHẨM MỚI & NIÊM YẾT GIÁ -->
+        <div id="adminCatalogActionArea"></div>
+
+        <div class="toolbar-card">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="productSearchInput" placeholder="Tìm kiếm Family bơm, van, cửa, template MEP, add-in né dầm né cột..." autocomplete="off">
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <div class="filter-tags">
+              <button class="filter-btn active" data-filter="all">Tất cả</button>
+              <button class="filter-btn" data-filter="tool">⚙️ Revit Tools</button>
+              <button class="filter-btn" data-filter="family_template">📦 Family & Template</button>
+            </div>
+
+            <select id="versionFilterSelect" class="form-control" style="width: auto; padding: 8px 14px; border-radius: var(--radius-full);">
+              <option value="all">Mọi phiên bản Revit</option>
+              <option value="2025">Revit 2025</option>
+              <option value="2024">Revit 2024</option>
+              <option value="2023">Revit 2023</option>
+              <option value="2022">Revit 2022</option>
+              <option value="2021">Revit 2021</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Products Grid Container -->
+        <div id="productsGrid" class="products-grid"></div>
+      </section>
+    </main>
+
+    <!-- 2. DỊCH VỤ THUÊ VIẾT TOOLS & TẠO TEMPLATE VIEW -->
+    <section id="customServiceView" class="hidden">
+      <div class="custom-services-container">
+        <div class="custom-banner">
+          <span class="badge badge-custom" style="margin-bottom: 14px;">Bespoke Automation & BIM Services</span>
+          <h2>Dịch Vụ Thuê Viết Tools & Tạo Template Theo Yêu Cầu</h2>
+          <p>
+            Bạn có quy trình thiết kế riêng cần tự động hóa? Đội ngũ kỹ sư lập trình Revit API của chúng tôi giúp bạn xây dựng Add-in độc quyền và bộ Template chuẩn hóa doanh nghiệp, tiết kiệm hàng trăm giờ làm việc mỗi tháng.
+          </p>
+        </div>
+
+        <!-- Quy trình làm việc 4 bước -->
+        <h3 style="font-family: var(--font-heading); font-size: 1.5rem; color: var(--text-pure); margin-bottom: 20px;">
+          Quy Trình Triển Khai Chuyên Nghiệp
+        </h3>
+        <div class="workflow-grid">
+          <div class="workflow-card">
+            <div class="workflow-step">01</div>
+            <h4 class="workflow-title">Khảo Sát & Tiếp Nhận</h4>
+            <p class="workflow-desc">Phân tích bài toán, quy trình dựng hình hoặc tiêu chuẩn bản vẽ mà công ty bạn cần tối ưu.</p>
+          </div>
+          <div class="workflow-card">
+            <div class="workflow-step">02</div>
+            <h4 class="workflow-title">Phát Triển & Bản Thử Nghiệm</h4>
+            <p class="workflow-desc">Lập trình Add-in C# hoặc cấu hình Template mẫu, bàn giao bản thử nghiệm để bạn kiểm tra trực tiếp.</p>
+          </div>
+          <div class="workflow-card">
+            <div class="workflow-step">03</div>
+            <h4 class="workflow-title">Nghiệm Thu & Tinh Chỉnh</h4>
+            <p class="workflow-desc">Tiếp thu phản hồi từ các chủ trì và kỹ sư thực tế, tối ưu hóa giao diện và tốc độ xử lý.</p>
+          </div>
+          <div class="workflow-card">
+            <div class="workflow-step">04</div>
+            <h4 class="workflow-title">Bàn Giao & Bảo Hành</h4>
+            <p class="workflow-desc">Cài đặt hàng loạt, bàn giao tài liệu hướng dẫn sử dụng và bảo hành kỹ thuật 12 tháng liên tục.</p>
+          </div>
+        </div>
+
+        <!-- Form Đặt Hàng -->
+        <div class="request-form-card">
+          <h3 style="font-family: var(--font-heading); font-size: 1.6rem; color: var(--text-pure); margin-bottom: 8px;">
+            Gửi Yêu Cầu Báo Giá & Tư Vấn Kỹ Thuật
+          </h3>
+          <p style="color: var(--text-muted); margin-bottom: 24px; font-size: 0.94rem;">
+            Vui lòng điền thông tin nhu cầu của bạn. Đội ngũ kỹ sư trưởng sẽ phản hồi và gửi phương án trong vòng 24 giờ.
+          </p>
+
+          <form id="customServiceForm">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+              <div class="form-group">
+                <label>Họ tên / Đơn vị yêu cầu *</label>
+                <input type="text" id="reqClientName" class="form-control" placeholder="Ví dụ: Công ty Tư Vấn Thiết Kế ABC" required>
+              </div>
+              <div class="form-group">
+                <label>Email liên hệ *</label>
+                <input type="email" id="reqEmail" class="form-control" placeholder="name@company.com" required>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+              <div class="form-group">
+                <label>Số điện thoại / Zalo *</label>
+                <input type="tel" id="reqPhone" class="form-control" placeholder="0901234567" required>
+              </div>
+              <div class="form-group">
+                <label>Loại dịch vụ bạn quan tâm</label>
+                <select id="reqServiceType" class="form-control">
+                  <option value="Viết Add-in Revit Riêng">1. Thuê lập trình Add-in Revit riêng (C# .NET)</option>
+                  <option value="Xây dựng Bộ Template Chuẩn">2. Xây dựng bộ Template dự án chuẩn hóa (.RTE)</option>
+                  <option value="Tạo Thư Viện Family Theo Catalog">3. Dựng thư viện Family tham số theo Catalog</option>
+                  <option value="Gói Giải Pháp Toàn Diện">4. Gói giải pháp toàn diện (Tools + Template + Family)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Tiêu đề bài toán cần giải quyết *</label>
+              <input type="text" id="reqTitle" class="form-control" placeholder="Ví dụ: Tự động đánh số thiết bị PCCC và xuất bảng khối lượng..." required>
+            </div>
+
+            <div class="form-group">
+              <label>Mô tả chi tiết yêu cầu & link tài liệu tham khảo (nếu có)</label>
+              <textarea id="reqDesc" class="form-control" rows="4" placeholder="Mô tả cụ thể các bước bạn đang làm thủ công hoặc dán link Google Drive chứa file bản vẽ mẫu..."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 10px;">
+              ⚡ Gửi Yêu Cầu Cho Đội Ngũ Kỹ Sư RevitHub
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. USER LIBRARY VIEW -->
+    <section id="libraryView" class="hidden">
+      <div class="portal-container">
+        <div class="portal-header">
+          <span class="badge badge-family">Thư Viện Bản Quyền</span>
+          <h2 class="portal-title">Family & Template Của Tôi</h2>
+          <p style="color: var(--text-muted);">
+            Các sản phẩm Family (.RFA) và Template (.RTE) bạn đã mua. Bấm tải xuống để nhận liên kết Signed URL bảo mật có hiệu lực trong 15 phút.
+          </p>
+        </div>
+
+        <div id="userPurchasedList" class="library-grid"></div>
+      </div>
+    </section>
+
+    <!-- 4. USER LICENSES VIEW -->
+    <section id="licenseView" class="hidden">
+      <div class="portal-container">
+        <div class="portal-header">
+          <span class="badge badge-tool">Quản Lý Thuê Bao</span>
+          <h2 class="portal-title">Bản Quyền Revit Add-in Tools</h2>
+          <p style="color: var(--text-muted);">
+            Xem License Key, kiểm tra ngày hết hạn và quản lý danh sách máy tính (HWID / Machine ID) đã kích hoạt Add-in.
+          </p>
+        </div>
+
+        <div id="userLicensesList"></div>
+      </div>
+    </section>
+
+    <!-- 5. ADMIN VIEW (BAO GỒM TAB QUẢN LÝ TÀI KHOẢN) -->
+    <section id="adminView" class="hidden"></section>
+
+    <!-- FOOTER -->
+    <footer class="site-footer" style="margin-top: 80px; background: #FAF2EC; border-top: var(--border-light); padding: 48px 32px 24px;">
+      <div style="max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 30px;">
+        <div>
+          <div class="brand-logo" style="margin-bottom: 14px;">
+            <div class="brand-icon">R</div>
+            <div class="brand-text">
+              <h1>RevitHub</h1>
+              <span>AEC • BIM • Studio</span>
+            </div>
+          </div>
+          <p style="color: var(--text-muted); max-width: 360px; font-size: 0.9rem; line-height: 1.6;">
+            Nền tảng thương mại điện tử chuyên nghiệp cung cấp Revit Tools, Family, Template và dịch vụ tùy biến tự động hóa hàng đầu cho ngành AEC Việt Nam.
+          </p>
+        </div>
+
+        <div>
+          <h4 style="font-family: var(--font-heading); color: var(--text-pure); margin-bottom: 14px;">Trụ Cột Sản Phẩm</h4>
+          <ul style="list-style: none; font-size: 0.9rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 10px;">
+            <li style="cursor: pointer;" onclick="window.storeApp.navigateToPillar('tools')">• Revit Tools & Add-in Tự Động Hóa</li>
+            <li style="cursor: pointer;" onclick="window.storeApp.navigateToPillar('family_template')">• Revit Family & Project Templates</li>
+            <li style="cursor: pointer;" onclick="window.storeApp.navigateToPillar('custom_service')">• Dịch Vụ Thuê Viết Tools & Tạo Template</li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 style="font-family: var(--font-heading); color: var(--text-pure); margin-bottom: 14px;">Bảo Mật & Pháp Lý</h4>
+          <ul style="list-style: none; font-size: 0.9rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 10px;">
+            <li>• Lưu trữ Private Storage Cloudflare R2</li>
+            <li>• Signed URL tải file hết hạn sau 15 phút</li>
+            <li>• Đối soát thanh toán tự động VietQR Napas 24/7</li>
+            <li>• License Server kiểm soát Hardware ID</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="max-width: 1400px; margin: 36px auto 0; padding-top: 20px; border-top: 1px solid #EAE0D7; text-align: center; font-size: 0.84rem; color: var(--text-dim);">
+        © 2026 RevitHub Solutions. Vận hành trên hạ tầng Cloudflare & Supabase Serverless.
+      </div>
+    </footer>
+  </div>
+
+  <!-- ====================================================================
+       MODAL AUTH: ĐĂNG NHẬP HOẶC ĐĂNG KÝ TRÊN CÙNG (ĐƯỢC ĐẶT NGOÀI FOOTER)
+       ==================================================================== -->
+  <div id="authModalOverlay" class="modal-overlay">
+    <div class="modal-content auth-modal">
+      <div class="modal-header">
+        <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-pure);">Tài Khoản Kỹ Sư RevitHub</h3>
+        <button id="closeAuthModal" class="modal-close">✕</button>
+      </div>
+
+      <div style="padding: 24px;">
+        <div class="auth-tabs">
+          <button id="tabBtnLogin" class="auth-tab-btn active" onclick="window.storeApp.switchAuthTab('login')">
+            Đăng Nhập
+          </button>
+          <button id="tabBtnRegister" class="auth-tab-btn" onclick="window.storeApp.switchAuthTab('register')">
+            Đăng Ký Mới
+          </button>
+        </div>
+
+        <!-- FORM ĐĂNG NHẬP -->
+        <form id="authLoginForm" onsubmit="window.storeApp.handleLoginSubmit(event)">
+          <div class="form-group">
+            <label>Email của bạn</label>
+            <input type="email" id="loginEmail" class="form-control" placeholder="engineer.bim@gmail.com" required>
+          </div>
+          <div class="form-group">
+            <label>Mật khẩu</label>
+            <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
+            Đăng Nhập Vào Hệ Thống
+          </button>
+
+          <!-- Nút truy cập nhanh theo yêu cầu để kiểm tra phân quyền Admin -->
+          <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #F0E6DE; text-align: center;">
+            <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px;">Lối tắt đăng nhập thử nghiệm:</p>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn btn-secondary btn-sm" style="flex: 1;" onclick="window.storeApp.quickLoginAsEngineer()">
+                👤 Kỹ Sư Thường
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" style="flex: 1; border-color: var(--primary); color: var(--primary);" onclick="window.storeApp.quickLoginAsAdmin()">
+                👑 Quản Trị Admin
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <!-- FORM ĐĂNG KÝ -->
+        <form id="authRegisterForm" class="hidden" onsubmit="window.storeApp.handleRegisterSubmit(event)">
+          <div class="form-group">
+            <label>Họ và Tên đầy đủ *</label>
+            <input type="text" id="regName" class="form-control" placeholder="Nguyễn Văn A" required>
+          </div>
+          <div class="form-group">
+            <label>Email *</label>
+            <input type="email" id="regEmail" class="form-control" placeholder="name@company.com" required>
+          </div>
+          <div class="form-group">
+            <label>Số điện thoại</label>
+            <input type="tel" id="regPhone" class="form-control" placeholder="0901234567">
+          </div>
+          <div class="form-group">
+            <label>Công ty / Tổ chức</label>
+            <input type="text" id="regCompany" class="form-control" placeholder="BIM Consulting JSC">
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
+            Tạo Tài Khoản Kỹ Sư
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL ADMIN: THÊM SẢN PHẨM MỚI & NIÊM YẾT GIÁ
+       ==================================================================== -->
+  <div id="productEditorModalOverlay" class="modal-overlay">
+    <div class="modal-content" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3 id="productEditorTitle" style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-pure);">
+          Thêm Sản Phẩm Mới & Niêm Yết Giá
+        </h3>
+        <button id="closeProductEditorModal" class="modal-close">✕</button>
+      </div>
+
+      <div style="padding: 24px;">
+        <form id="productEditorForm" onsubmit="window.storeApp.handleProductEditorSubmit(event)">
+          <input type="hidden" id="prodEditId">
+
+          <div class="form-group">
+            <label>Tên Sản Phẩm *</label>
+            <input type="text" id="prodEditName" class="form-control" placeholder="Ví dụ: Van Cân Bằng Tự Động Kết Nối BMS" required>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label>Phân Loại Sản Phẩm *</label>
+              <select id="prodEditType" class="form-control">
+                <option value="tool">⚙️ Revit Tools (Add-in)</option>
+                <option value="family">📦 Revit Family (.RFA)</option>
+                <option value="template">📄 Project Template (.RTE)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Chuyên Mục *</label>
+              <input type="text" id="prodEditCategory" class="form-control" placeholder="Ví dụ: MEP - HVAC hoặc Kiến Trúc" required>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label>Giá Niêm Yết (VNĐ) *</label>
+              <input type="number" id="prodEditPrice" class="form-control" placeholder="500000" required>
+            </div>
+            <div class="form-group">
+              <label>Giá Khuyến Mãi (VNĐ)</label>
+              <input type="number" id="prodEditSalePrice" class="form-control" placeholder="350000">
+            </div>
+            <div class="form-group">
+              <label>Chu Kỳ Thanh Toán</label>
+              <select id="prodEditCycle" class="form-control">
+                <option value="one_time">Mua 1 lần (Trọn đời)</option>
+                <option value="yearly">Thuê bao 1 Năm</option>
+                <option value="monthly">Thuê bao 1 Tháng</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Link Video Review Sản Phẩm (YouTube Embed URL hoặc MP4)</label>
+            <input type="url" id="prodEditVideo" class="form-control" placeholder="https://www.youtube.com/embed/5qap5aO4i9A">
+            <small style="color: var(--text-dim); font-size: 0.78rem;">Video sẽ hiển thị trực tiếp cho khách hàng xem cách dùng sản phẩm trên Revit.</small>
+          </div>
+
+          <div class="form-group">
+            <label>Link Ảnh Xem Trước (Thumbnail URL)</label>
+            <input type="text" id="prodEditThumb" class="form-control" placeholder="assets/card_family.jpg">
+          </div>
+
+          <div class="form-group">
+            <label>Mô Tả Chi Tiết & Thông Số Kỹ Thuật BIM</label>
+            <textarea id="prodEditDesc" class="form-control" rows="3" placeholder="Mô tả các tính năng nổi bật, phiên bản Revit hỗ trợ, LOD, catalog..."></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+            💾 Lưu & Niêm Yết Sản Phẩm Lên Cửa Hàng
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL ADMIN: CẤP GIẤY PHÉP BẢN QUYỀN MỚI THỦ CÔNG
+       ==================================================================== -->
+  <div id="createLicenseModalOverlay" class="modal-overlay">
+    <div class="modal-content" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-pure);">
+          ✨ Cấp Giấy Phép Bản Quyền Add-in Mới
+        </h3>
+        <button id="closeCreateLicenseModal" class="modal-close" onclick="window.adminPanel.closeManualLicenseModal()">✕</button>
+      </div>
+
+      <div style="padding: 24px;">
+        <form id="createLicenseForm" onsubmit="window.adminPanel.handleManualLicenseSubmit(event)">
+          <div class="form-group">
+            <label>Chọn Phần Mềm / Add-in Revit *</label>
+            <select id="licAddinSelect" class="form-control" required></select>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label>Email Kỹ Sư / Khách Hàng *</label>
+              <input type="email" id="licCustomerEmail" class="form-control" placeholder="engineer@bimfirm.com" required>
+            </div>
+            <div class="form-group">
+              <label>Họ Tên Khách Hàng</label>
+              <input type="text" id="licCustomerName" class="form-control" placeholder="Ví dụ: Nguyễn Văn A">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Tên Doanh Nghiệp / Tổ Chức Đăng Ký</label>
+            <input type="text" id="licCompany" class="form-control" placeholder="Ví dụ: Vinabim Solutions Corp">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label>Thời Hạn Bản Quyền *</label>
+              <select id="licDurationSelect" class="form-control">
+                <option value="365">1 Năm (Thuê bao Thường niên - 365 Ngày)</option>
+                <option value="30">1 Tháng (30 Ngày)</option>
+                <option value="7">Dùng Thử 7 Ngày (Trial Period)</option>
+                <option value="1095">3 Năm (Thuê bao Dài hạn - 1095 Ngày)</option>
+                <option value="36500">Vĩnh Viễn (Lifetime Perpetual - 100 Năm)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Số Máy Trạm Kích Hoạt (HWID) *</label>
+              <select id="licMaxMachinesSelect" class="form-control">
+                <option value="1">1 Máy (Cá nhân Standalone)</option>
+                <option value="3">3 Máy (Team Thiết kế Nhỏ)</option>
+                <option value="5">5 Máy (Studio Vừa)</option>
+                <option value="10">10 Máy (Phòng BIM Doanh Nghiệp)</option>
+                <option value="50">50 Máy (Enterprise Toàn Công Ty)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Ghi Chú Hợp Đồng / Lý Do Cấp</label>
+            <input type="text" id="licNote" class="form-control" placeholder="Ví dụ: Hợp đồng số 04/2026/BIM-CORP...">
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+            🔑 Sinh Mã Key & Cấp Bản Quyền Ngay
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL ADMIN: QUẢN LÝ TRẠM MÁY TÍNH & HARDWARE ID (HWID)
+       ==================================================================== -->
+  <div id="licenseDevicesModalOverlay" class="modal-overlay">
+    <div class="modal-content" style="max-width: 820px;">
+      <div class="modal-header">
+        <h3 id="licenseDevicesModalTitle" style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-pure);">
+          🖥️ Danh Sách Máy Trạm Kích Hoạt (Hardware ID)
+        </h3>
+        <button id="closeLicenseDevicesModal" class="modal-close" onclick="window.adminPanel.closeLicenseDevicesModal()">✕</button>
+      </div>
+
+      <div id="licenseDevicesModalBody" style="padding: 24px;">
+        <!-- Nội dung sẽ được render động -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL USER: HƯỚNG DẪN KÍCH HOẠT ADD-IN TRONG AUTODESK REVIT
+       ==================================================================== -->
+  <div id="licenseGuideModalOverlay" class="modal-overlay">
+    <div class="modal-content" style="max-width: 760px;">
+      <div class="modal-header">
+        <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-pure);">
+          📖 Hướng Dẫn Kích Hoạt Add-in Trong Autodesk Revit
+        </h3>
+        <button id="closeLicenseGuideModal" class="modal-close" onclick="window.storeApp.closeLicenseGuideModal()">✕</button>
+      </div>
+
+      <div style="padding: 24px;">
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">
+          Để kích hoạt bản quyền trên máy tính làm việc của bạn, hãy làm theo 3 bước đơn giản dưới đây:
+        </p>
+
+        <div class="license-guide-grid">
+          <div class="license-guide-card">
+            <div class="license-guide-step-num">1</div>
+            <h4 style="font-weight: 800; color: var(--text-pure); margin-bottom: 8px;">Cài Đặt Add-in</h4>
+            <p style="font-size: 0.88rem; color: var(--text-muted);">
+              Tải bộ cài đặt <code>.EXE</code> từ mục "Bản Quyền Của Tôi", chạy trình cài đặt và khởi động phần mềm <strong>Autodesk Revit</strong> (Hỗ trợ Revit 2021 đến 2025).
+            </p>
+          </div>
+
+          <div class="license-guide-card">
+            <div class="license-guide-step-num">2</div>
+            <h4 style="font-weight: 800; color: var(--text-pure); margin-bottom: 8px;">Mở Hộp Thoại License</h4>
+            <p style="font-size: 0.88rem; color: var(--text-muted);">
+              Trên thanh Ribbon của Revit, tìm Tab <strong>RevitHub</strong> hoặc <strong>Store Tools</strong> &gt; Nhấp vào biểu tượng <strong>🔑 Giấy Phép (License)</strong>.
+            </p>
+          </div>
+
+          <div class="license-guide-card">
+            <div class="license-guide-step-num">3</div>
+            <h4 style="font-weight: 800; color: var(--text-pure); margin-bottom: 8px;">Nhập Key & Hoàn Tất</h4>
+            <p style="font-size: 0.88rem; color: var(--text-muted);">
+              Dán mã Key dạng <code>REVIT-XXXX-XXXX-XXXX</code> và bấm <strong>Kích Hoạt</strong>. Hệ thống sẽ xác thực Hardware ID chỉ trong 2 giây!
+            </p>
+          </div>
+        </div>
+
+        <div style="background: #FFF5F0; border: 1.5px solid var(--primary-border); border-radius: var(--radius-lg); padding: 18px; margin-top: 20px;">
+          <h5 style="font-weight: 800; color: var(--primary-deep); margin-bottom: 6px;">💡 Mẹo: Máy tính không có Internet (Air-gapped Network)?</h5>
+          <p style="font-size: 0.86rem; color: var(--text-pure); line-height: 1.5;">
+            Đối với máy trạm nội bộ của phòng thiết kế tuyệt mật không kết nối mạng ngoài: Bạn chỉ cần bấm <strong>"Tải File License Offline (.LIC)"</strong> trên website, sau đó trong Revit chọn <em>"Nạp file bản quyền .LIC"</em> là kích hoạt vĩnh viễn không cần Internet.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CART DRAWER -->
+  <div id="cartOverlay" class="cart-drawer-overlay"></div>
+  <aside id="cartDrawer" class="cart-drawer">
+    <div class="drawer-header">
+      <h3 class="drawer-title">🛒 Giỏ hàng của bạn</h3>
+      <button id="closeCartBtn" class="modal-close" aria-label="Đóng giỏ hàng">✕</button>
+    </div>
+    <div id="cartItemsList" class="drawer-body"></div>
+    <div class="drawer-footer">
+      <div class="summary-row summary-total">
+        <span>Tổng thanh toán:</span>
+        <span id="cartTotalAmount" style="color: var(--primary);">0 ₫</span>
+      </div>
+      <button id="checkoutBtn" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 14px;">
+        Tiến hành Thanh toán VietQR
+      </button>
+    </div>
+  </aside>
+
+  <!-- PRODUCT DETAIL MODAL (KÈM VIDEO REVIEW) -->
+  <div id="detailModalOverlay" class="modal-overlay">
+    <div class="modal-content" style="max-width: 860px;">
+      <div class="modal-header">
+        <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-pure);">Thông Tin Chi Tiết & Video Review</h3>
+        <button id="closeDetailModal" class="modal-close">✕</button>
+      </div>
+      <div id="detailModalBody"></div>
+    </div>
+  </div>
+
+  <!-- VIETQR AUTOMATIC PAYMENT MODAL -->
+  <div id="paymentModalOverlay" class="modal-overlay">
+    <div class="modal-content payment-modal">
+      <div class="modal-header">
+        <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-pure);">Cổng Thanh Toán Tự Động VietQR</h3>
+        <button id="closePaymentModal" class="modal-close">✕</button>
+      </div>
+      <div id="paymentModalBody"></div>
+    </div>
+  </div>
+
+  <!-- Javascript Modules -->
+  <script src="js/data.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/payment.js"></script>
+  <script src="js/download.js"></script>
+  <script src="js/license.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/store.js"></script>
+</body>
+</html>

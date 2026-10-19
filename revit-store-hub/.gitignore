@@ -1,0 +1,17 @@
+# Visual Studio temporary files
+.vs/
+*.vsidx
+*.suo
+*.user
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Cloudflare Wrangler
+.wrangler/
+
+# OS files
+Thumbs.db
+.DS_Store
+*.log

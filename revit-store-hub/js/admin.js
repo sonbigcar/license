@@ -1,0 +1,840 @@
+/**
+ * ==============================================================================
+ * REVIT BIM STORE - ADMIN DASHBOARD & ACCOUNT MANAGEMENT CONTROLLER
+ * Quản lý Tài Khoản Người Dùng, Sản Phẩm, Đơn Hàng, Bản Quyền & Dịch Vụ
+ * ==============================================================================
+ */
+
+class AdminPanel {
+  constructor() {
+    this.currentTab = 'accounts'; // Mặc định mở Tab Quản lý tài khoản
+    this.licenseSearchQuery = '';
+    this.licenseStatusFilter = 'all';
+  }
+
+  render() {
+    const user = window.authManager.getCurrentUser();
+    const container = document.getElementById('adminView');
+    if (!container) return;
+
+    if (!user || user.role !== 'admin') {
+      container.innerHTML = `
+        <div class="portal-container" style="text-align: center; padding: 100px 20px;">
+          <div style="font-size: 3.5rem; margin-bottom: 16px;">🛡️</div>
+          <h2 style="font-family: var(--font-heading); font-size: 2rem;">Khu Vực Quản Trị Hệ Thống (Admin Only)</h2>
+          <p style="color: var(--text-muted); max-width: 500px; margin: 12px auto 24px;">
+            Tab này chỉ hiển thị và cho phép truy cập đối với tài khoản có quyền Quản Trị Viên (Admin).
+          </p>
+          <button class="btn btn-primary" onclick="window.storeApp.quickLoginAsAdmin()">
+            👑 Đăng Nhập Tài Khoản Admin Ngay (Demo)
+          </button>
+        </div>
+      `;
+      return;
+    }
+
+    const accounts = window.dataStore.getAccounts();
+    const orders = window.dataStore.getOrders();
+    const products = window.dataStore.getProducts();
+    const licenses = window.dataStore.getLicenses();
+    const requests = window.dataStore.getCustomRequests();
+    const logs = window.dataStore.get('download_logs') || [];
+
+    const totalRevenue = orders
+      .filter(o => o.status === 'paid')
+      .reduce((sum, o) => sum + o.total_amount, 0);
+
+    container.innerHTML = `
+      <div class="portal-container">
+        <div class="portal-header">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <span class="badge badge-admin">Master Administrator Portal</span>
+              <h2 class="portal-title">Bảng Điều Khiển & Quản Lý Tài Khoản</h2>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button class="btn btn-secondary btn-sm" onclick="window.storeApp.switchMainView('storefrontView')">
+                ← Về Cửa Hàng
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Thống kê tổng quan -->
+        <div class="admin-stats-grid">
+          <div class="glass-panel admin-stat-card">
+            <span style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase;">Doanh thu thực nhận</span>
+            <div style="font-family: var(--font-heading); font-size: 1.8rem; font-weight: 800; color: var(--success); margin-top: 6px;">
+              ${window.storeApp.formatCurrency(totalRevenue)}
+            </div>
+          </div>
+
+          <div class="glass-panel admin-stat-card" style="border-left-color: var(--primary);">
+            <span style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase;">Tổng số tài khoản</span>
+            <div style="font-family: var(--font-heading); font-size: 1.8rem; font-weight: 800; color: #fff; margin-top: 6px;">
+              ${accounts.length} Người dùng
+            </div>
+          </div>
+
+          <div class="glass-panel admin-stat-card" style="border-left-color: #c084fc;">
+            <span style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase;">Yêu cầu dịch vụ custom</span>
+            <div style="font-family: var(--font-heading); font-size: 1.8rem; font-weight: 800; color: #fff; margin-top: 6px;">
+              ${requests.length} Đơn vị
+            </div>
+          </div>
+
+          <div class="glass-panel admin-stat-card" style="border-left-color: var(--warning);">
+            <span style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase;">Lượt tải file bảo mật</span>
+            <div style="font-family: var(--font-heading); font-size: 1.8rem; font-weight: 800; color: #fff; margin-top: 6px;">
+              ${logs.length}
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Sub-tabs (Đặc biệt có Tab Quản Lý Tài Khoản) -->
+        <div class="portal-tabs">
+          <button class="portal-tab-btn ${this.currentTab === 'accounts' ? 'active' : ''}" onclick="window.adminPanel.switchTab('accounts')">
+            👥 Quản Lý Tài Khoản (${accounts.length})
+          </button>
+          <button class="portal-tab-btn ${this.currentTab === 'orders' ? 'active' : ''}" onclick="window.adminPanel.switchTab('orders')">
+            📦 Quản Lý Đơn Hàng (${orders.length})
+          </button>
+          <button class="portal-tab-btn ${this.currentTab === 'products' ? 'active' : ''}" onclick="window.adminPanel.switchTab('products')">
+            🏷️ Quản Lý Sản Phẩm (${products.length})
+          </button>
+          <button class="portal-tab-btn ${this.currentTab === 'requests' ? 'active' : ''}" onclick="window.adminPanel.switchTab('requests')">
+            ✍️ Yêu Cầu Thuê Viết Tools & Template (${requests.length})
+          </button>
+          <button class="portal-tab-btn ${this.currentTab === 'licenses' ? 'active' : ''}" onclick="window.adminPanel.switchTab('licenses')">
+            🔑 Quản Lý Giấy Phép (${licenses.length})
+          </button>
+        </div>
+
+        <div id="adminTabContent">
+          ${this.getTabContent(this.currentTab, { accounts, orders, products, licenses, requests, logs })}
+        </div>
+      </div>
+    `;
+  }
+
+  switchTab(tab) {
+    this.currentTab = tab;
+    this.render();
+  }
+
+  getTabContent(tab, data) {
+    if (tab === 'accounts') {
+      return this.renderAccountsTable(data.accounts);
+    } else if (tab === 'orders') {
+      return this.renderOrdersTable(data.orders);
+    } else if (tab === 'products') {
+      return this.renderProductsTable(data.products);
+    } else if (tab === 'requests') {
+      return this.renderRequestsTable(data.requests);
+    } else if (tab === 'licenses') {
+      return this.renderLicensesTable(data.licenses);
+    }
+    return '';
+  }
+
+  /**
+   * BẢNG QUẢN LÝ TÀI KHOẢN NGƯỜI DÙNG (YÊU CẦU TRỌNG TÂM CỦA KHÁCH)
+   */
+  renderAccountsTable(accounts) {
+    return `
+      <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+        <p style="color: var(--text-muted); font-size: 0.92rem;">
+          Danh sách toàn bộ tài khoản kỹ sư và quản trị viên trong hệ thống.
+        </p>
+        <button class="btn btn-primary btn-sm" onclick="window.adminPanel.addNewAccountPrompt()">
+          + Tạo Tài Khoản Mới
+        </button>
+      </div>
+
+      <div class="admin-table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Họ và Tên</th>
+              <th>Email</th>
+              <th>Số điện thoại</th>
+              <th>Công ty / Đơn vị</th>
+              <th>Phân quyền</th>
+              <th>Trạng thái</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${accounts.map(acc => `
+              <tr>
+                <td><strong>${acc.full_name}</strong></td>
+                <td style="font-family: var(--font-mono); color: var(--primary);">${acc.email}</td>
+                <td>${acc.phone || '-'}</td>
+                <td>${acc.company || 'Cá nhân'}</td>
+                <td>
+                  <span class="badge ${acc.role === 'admin' ? 'badge-admin' : 'account-badge-customer'}">
+                    ${acc.role === 'admin' ? '👑 Admin' : '👤 Kỹ sư'}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge ${acc.status === 'active' ? 'badge-family' : 'badge-admin'}">
+                    ${acc.status === 'active' ? 'Hoạt động' : 'Đã khóa'}
+                  </span>
+                </td>
+                <td>
+                  <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.toggleRole('${acc.id}')" title="Đổi quyền Admin / Customer">
+                      ${acc.role === 'admin' ? 'Hạ quyền Kỹ sư' : 'Nâng quyền Admin'}
+                    </button>
+                    <button class="btn btn-secondary btn-sm" style="color: ${acc.status === 'active' ? 'var(--danger)' : 'var(--success)'};" onclick="window.adminPanel.toggleStatus('${acc.id}')">
+                      ${acc.status === 'active' ? 'Khóa' : 'Mở khóa'}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  renderRequestsTable(requests) {
+    return `
+      <div style="margin-bottom: 16px;">
+        <p style="color: var(--text-muted); font-size: 0.92rem;">
+          Yêu cầu đặt hàng lập trình Add-in và xây dựng bộ Template chuẩn hóa do các đơn vị gửi về.
+        </p>
+      </div>
+
+      <div class="admin-table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Đơn vị / Khách hàng</th>
+              <th>Liên hệ</th>
+              <th>Loại dịch vụ</th>
+              <th>Tiêu đề & Yêu cầu</th>
+              <th>Ngày gửi</th>
+              <th>Tiến độ</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${requests.map(req => `
+              <tr>
+                <td><strong>${req.customer_name}</strong></td>
+                <td>
+                  ${req.contact_email}<br>
+                  <small style="color: var(--text-dim);">${req.phone}</small>
+                </td>
+                <td><span class="badge badge-custom">${req.service_type}</span></td>
+                <td>
+                  <strong>${req.title}</strong>
+                  <p style="font-size: 0.84rem; color: var(--text-muted); margin-top: 4px;">${req.description}</p>
+                </td>
+                <td>${new Date(req.created_at).toLocaleDateString('vi-VN')}</td>
+                <td>
+                  <span class="badge ${req.status === 'completed' ? 'badge-family' : (req.status === 'in_progress' ? 'badge-tool' : 'badge-custom')}">
+                    ${req.status === 'completed' ? 'Đã hoàn thành' : (req.status === 'in_progress' ? 'Đang thực hiện' : 'Tiếp nhận mới')}
+                  </span>
+                </td>
+                <td>
+                  <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.updateRequestStatus('${req.id}')">
+                    Chuyển trạng thái
+                  </button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  renderOrdersTable(orders) {
+    if (orders.length === 0) {
+      return `<p style="padding: 24px; color: var(--text-muted);">Chưa có đơn hàng nào.</p>`;
+    }
+
+    return `
+      <div class="admin-table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Mã Đơn</th>
+              <th>Khách hàng</th>
+              <th>Sản phẩm</th>
+              <th>Tổng tiền</th>
+              <th>Cổng TT</th>
+              <th>Thời gian</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${orders.map(o => `
+              <tr>
+                <td style="font-family: var(--font-mono); font-weight: 700; color: var(--primary);">#${o.order_code}</td>
+                <td>
+                  <strong>${o.user_name || 'Khách'}</strong><br>
+                  <small style="color: var(--text-dim);">${o.user_email}</small>
+                </td>
+                <td>
+                  <ul style="list-style: none; padding: 0; font-size: 0.85rem;">
+                    ${(o.items || []).map(i => `<li>• ${i.name}</li>`).join('')}
+                  </ul>
+                </td>
+                <td style="font-weight: 800; color: #fff;">${window.storeApp.formatCurrency(o.total_amount)}</td>
+                <td><span class="badge badge-version">VietQR Napas 24/7</span></td>
+                <td>${new Date(o.created_at).toLocaleString('vi-VN')}</td>
+                <td>
+                  <span class="badge ${o.status === 'paid' ? 'badge-family' : 'badge-custom'}">
+                    ${o.status === 'paid' ? 'Đã Thanh Toán' : 'Chờ Chuyển Khoản'}
+                  </span>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  renderProductsTable(products) {
+    return `
+      <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+        <p style="color: var(--text-muted); font-size: 0.92rem;">
+          Quản lý toàn bộ danh mục Revit Tools, Family và Project Templates.
+        </p>
+        <button class="btn btn-primary btn-sm" onclick="window.storeApp.openProductEditorModal()">
+          ✨ + Thêm Sản Phẩm & Niêm Yết Giá Mới
+        </button>
+      </div>
+      <div class="admin-table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Tên Sản Phẩm</th>
+              <th>Loại</th>
+              <th>Chuyên mục</th>
+              <th>Giá niêm yết</th>
+              <th>Video Review</th>
+              <th>Trạng thái</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${products.map(p => `
+              <tr>
+                <td><strong>${p.name}</strong></td>
+                <td>
+                  <span class="badge ${p.product_type === 'tool' ? 'badge-tool' : (p.product_type === 'template' ? 'badge-template' : 'badge-family')}">
+                    ${p.product_type.toUpperCase()}
+                  </span>
+                </td>
+                <td>${p.category}</td>
+                <td style="font-weight: 800; color: var(--primary);">${window.storeApp.formatCurrency(p.sale_price || p.price)}</td>
+                <td>
+                  ${p.video_url ? '<span class="badge badge-tool">🎬 Có Video</span>' : '<span style="color: var(--text-dim); font-size: 0.8rem;">Chưa có</span>'}
+                </td>
+                <td><span class="badge badge-family">Đang bán</span></td>
+                <td>
+                  <div style="display: flex; gap: 6px;">
+                    <button class="btn btn-secondary btn-sm" onclick="window.storeApp.openProductEditorModal('${p.id}')" title="Sửa & Niêm Yết Giá">
+                      ✏️ Sửa
+                    </button>
+                    <button class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="if(confirm('Xóa sản phẩm này?')){ window.dataStore.deleteProduct('${p.id}'); window.adminPanel.render(); }" title="Xóa">
+                      🗑️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  renderLicensesTable() {
+    const stats = window.licenseManager.getLicenseStats();
+    const filteredLicenses = window.licenseManager.filterLicenses(this.licenseSearchQuery, this.licenseStatusFilter);
+    const now = new Date();
+
+    return `
+      <!-- THỐNG KÊ CHỈ SỐ LICENSE (METRIC CARDS) -->
+      <div class="license-metrics-grid">
+        <div class="license-metric-box">
+          <div class="license-metric-icon" style="background: var(--primary-light); color: var(--primary);">🔑</div>
+          <div class="license-metric-info">
+            <div class="license-metric-num">${stats.total}</div>
+            <div class="license-metric-label">Tổng Key Phát Hành</div>
+          </div>
+        </div>
+
+        <div class="license-metric-box">
+          <div class="license-metric-icon" style="background: #ECFDF5; color: #059669;">🟢</div>
+          <div class="license-metric-info">
+            <div class="license-metric-num" style="color: #059669;">${stats.active}</div>
+            <div class="license-metric-label">Key Đang Kích Hoạt</div>
+          </div>
+        </div>
+
+        <div class="license-metric-box">
+          <div class="license-metric-icon" style="background: #FFFBEB; color: #D97706;">⚠️</div>
+          <div class="license-metric-info">
+            <div class="license-metric-num" style="color: #D97706;">${stats.expiringSoon}</div>
+            <div class="license-metric-label">Sắp Hết Hạn (≤ 30 Ngày)</div>
+          </div>
+        </div>
+
+        <div class="license-metric-box">
+          <div class="license-metric-icon" style="background: #EFF6FF; color: #2563EB;">🖥️</div>
+          <div class="license-metric-info">
+            <div class="license-metric-num" style="color: #2563EB;">${stats.totalDevices}</div>
+            <div class="license-metric-label">Trạm Máy Đang Kết Nối</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- THANH CÔNG CỤ TÌM KIẾM, LỌC VÀ HÀNH ĐỘNG -->
+      <div class="license-toolbar">
+        <div class="license-filter-group">
+          <input type="text" class="license-search-input" placeholder="🔍 Tìm theo Key, Khách hàng, Email, Tên Tool..." value="${this.licenseSearchQuery}" oninput="window.adminPanel.handleLicenseSearch(this.value)">
+          
+          <select class="form-control" style="width: auto; padding: 8px 14px; border-radius: var(--radius-full);" onchange="window.adminPanel.handleLicenseFilter(this.value)">
+            <option value="all" ${this.licenseStatusFilter === 'all' ? 'selected' : ''}>Mọi trạng thái (${stats.total})</option>
+            <option value="active" ${this.licenseStatusFilter === 'active' ? 'selected' : ''}>🟢 Đang hoạt động (${stats.active})</option>
+            <option value="expiring" ${this.licenseStatusFilter === 'expiring' ? 'selected' : ''}>⚠️ Sắp hết hạn (≤ 30 ngày)</option>
+            <option value="expired" ${this.licenseStatusFilter === 'expired' ? 'selected' : ''}>⛔ Đã hết hạn (${stats.expired})</option>
+            <option value="suspended" ${this.licenseStatusFilter === 'suspended' ? 'selected' : ''}>⏸️ Tạm khóa (${stats.suspended})</option>
+          </select>
+        </div>
+
+        <div class="license-action-bar">
+          <button class="btn btn-primary btn-sm" onclick="window.adminPanel.openManualLicenseModal()">
+            ✨ + Cấp Giấy Phép Thủ Công Mới
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="window.licenseManager.exportLicensesCsv()">
+            📥 Xuất Báo Cáo CSV (Excel)
+          </button>
+        </div>
+      </div>
+
+      <!-- BẢNG CHI TIẾT GIẤY PHÉP -->
+      <div class="admin-table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>License Key</th>
+              <th>Khách Hàng & Doanh Nghiệp</th>
+              <th>Sản Phẩm Add-in</th>
+              <th>Gói & Máy Trạm</th>
+              <th>Hạn Sử Dụng & Tiến Trình</th>
+              <th>Trạng Thái</th>
+              <th>Quản Trị Bản Quyền</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filteredLicenses.length === 0 ? `
+              <tr>
+                <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                  Không tìm thấy giấy phép nào phù hợp với bộ lọc.
+                </td>
+              </tr>
+            ` : filteredLicenses.map(l => {
+              const exp = new Date(l.expiry_date);
+              const remainingDays = Math.round((exp - now) / (1000 * 60 * 60 * 24));
+              const isExpired = remainingDays <= 0 || l.status === 'expired';
+              const isNearExpiry = remainingDays > 0 && remainingDays <= 30;
+              const usedMachines = (l.activations || []).length;
+              const isFull = usedMachines >= l.max_machines;
+
+              let statusBadge = `<span class="badge badge-family">🟢 Hoạt Động</span>`;
+              if (l.status === 'suspended') {
+                statusBadge = `<span class="badge badge-admin">⏸️ Tạm Khóa</span>`;
+              } else if (isExpired) {
+                statusBadge = `<span class="badge" style="background:#FFE4E6; color:#E11D48; border:1px solid #FECDD3;">⛔ Hết Hạn</span>`;
+              } else if (isNearExpiry) {
+                statusBadge = `<span class="badge badge-custom">⚠️ Còn ${remainingDays} ngày</span>`;
+              }
+
+              return `
+                <tr>
+                  <td>
+                    <div style="font-family: var(--font-mono); font-weight: 800; color: var(--primary); font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                      <span>${l.license_key}</span>
+                      <button style="border:none; background:none; cursor:pointer; font-size:0.85rem;" title="Sao chép Key" onclick="navigator.clipboard.writeText('${l.license_key}'); alert('Đã sao chép: ${l.license_key}');">📋</button>
+                    </div>
+                    <small style="color: var(--text-dim); font-size: 0.76rem;">${l.plan_name || 'Bản quyền điện tử'}</small>
+                  </td>
+
+                  <td>
+                    <strong style="color: var(--text-pure);">${l.user_name || 'Khách Vãng Lai'}</strong><br>
+                    <small style="font-family: var(--font-mono); color: var(--text-muted);">${l.user_email}</small><br>
+                    <span style="font-size: 0.78rem; color: var(--text-dim);">🏢 ${l.company || 'Cá nhân'}</span>
+                  </td>
+
+                  <td>
+                    <strong>${l.product_name}</strong>
+                    <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 2px;">
+                      Phiên bản: <span class="badge badge-version" style="font-size: 0.7rem; padding: 2px 6px;">${l.version || 'v2.4.0'}</span>
+                    </div>
+                  </td>
+
+                  <td>
+                    <div class="station-pill ${isFull ? 'full' : ''}" onclick="window.adminPanel.openLicenseDevicesModal('${l.id}')" title="Bấm để xem & quản lý chi tiết máy trạm">
+                      <span>🖥️</span>
+                      <span>${usedMachines} / ${l.max_machines} máy</span>
+                      <span style="font-size: 0.7rem; opacity: 0.8;">(Xem)</span>
+                    </div>
+                    <div style="font-size: 0.74rem; color: var(--text-dim); margin-top: 4px;">
+                      ${isFull ? '⚠️ Đã đạt giới hạn máy' : `Còn trống ${l.max_machines - usedMachines} slot`}
+                    </div>
+                  </td>
+
+                  <td>
+                    <div style="font-size: 0.88rem; font-weight: 700; color: ${isExpired ? 'var(--danger)' : (isNearExpiry ? 'var(--warning)' : 'var(--text-pure)')};">
+                      ${exp.toLocaleDateString('vi-VN')}
+                    </div>
+                    <div style="font-size: 0.78rem; color: var(--text-dim);">
+                      ${isExpired ? `Đã quá hạn ${Math.abs(remainingDays)} ngày` : `Còn lại ${remainingDays} ngày`}
+                    </div>
+                  </td>
+
+                  <td>${statusBadge}</td>
+
+                  <td>
+                    <div class="license-action-cell">
+                      <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.openLicenseDevicesModal('${l.id}')" title="Xem danh sách HWID máy trạm">
+                        🖥️ Máy Trạm
+                      </button>
+                      <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.renewLicensePrompt('${l.id}')" title="Gia hạn thời gian sử dụng">
+                        ⚡ Gia Hạn
+                      </button>
+                      <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.adjustMaxMachinesPrompt('${l.id}', ${l.max_machines})" title="Thay đổi hạn mức số máy">
+                        💻 Đổi Slot
+                      </button>
+                      <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.resetLicenseDevicesPrompt('${l.id}')" title="Reset toàn bộ máy tính để khách cài lại">
+                        🔄 Reset
+                      </button>
+                      <button class="btn btn-secondary btn-sm" style="color: ${l.status === 'suspended' ? 'var(--success)' : 'var(--danger)'};" onclick="window.adminPanel.toggleLicenseStatus('${l.id}')" title="${l.status === 'suspended' ? 'Mở khóa key' : 'Tạm khóa key'}">
+                        ${l.status === 'suspended' ? '▶️ Mở' : '⏸️ Khóa'}
+                      </button>
+                      <button class="btn btn-secondary btn-sm" onclick="window.licenseManager.exportOfflineLicenseFile('${l.id}')" title="Tải file .LIC cho máy Offline">
+                        📄 .LIC
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  handleLicenseSearch(val) {
+    this.licenseSearchQuery = val;
+    const container = document.getElementById('adminTabContent');
+    if (container && this.currentTab === 'licenses') {
+      container.innerHTML = this.renderLicensesTable();
+    }
+  }
+
+  handleLicenseFilter(val) {
+    this.licenseStatusFilter = val;
+    const container = document.getElementById('adminTabContent');
+    if (container && this.currentTab === 'licenses') {
+      container.innerHTML = this.renderLicensesTable();
+    }
+  }
+
+  openManualLicenseModal() {
+    const modal = document.getElementById('createLicenseModalOverlay');
+    const select = document.getElementById('licAddinSelect');
+    if (!modal || !select) return;
+
+    const tools = window.dataStore.getProducts().filter(p => p.product_type === 'tool');
+    select.innerHTML = tools.map(t => `<option value="${t.id}">${t.name} (v${t.metadata?.version || '2.4.0'})</option>`).join('');
+
+    // Reset fields
+    const emailInput = document.getElementById('licCustomerEmail');
+    const nameInput = document.getElementById('licCustomerName');
+    const companyInput = document.getElementById('licCompany');
+    const noteInput = document.getElementById('licNote');
+    if (emailInput) emailInput.value = '';
+    if (nameInput) nameInput.value = '';
+    if (companyInput) companyInput.value = '';
+    if (noteInput) noteInput.value = '';
+
+    modal.classList.add('active');
+  }
+
+  closeManualLicenseModal() {
+    const modal = document.getElementById('createLicenseModalOverlay');
+    if (modal) modal.classList.remove('active');
+  }
+
+  handleManualLicenseSubmit(event) {
+    event.preventDefault();
+    const productId = document.getElementById('licAddinSelect').value;
+    const product = window.dataStore.getProductById(productId);
+    const email = document.getElementById('licCustomerEmail').value.trim();
+    const name = document.getElementById('licCustomerName').value.trim();
+    const company = document.getElementById('licCompany').value.trim();
+    const durationDays = Number(document.getElementById('licDurationSelect').value) || 365;
+    const maxMachines = Number(document.getElementById('licMaxMachinesSelect').value) || 1;
+    const note = document.getElementById('licNote').value.trim();
+
+    if (!product || !email) {
+      alert('Vui lòng chọn sản phẩm và nhập email khách hàng!');
+      return;
+    }
+
+    const newLic = window.licenseManager.createManualLicense({
+      product_id: product.id,
+      product_name: product.name,
+      user_email: email,
+      user_name: name || email.split('@')[0],
+      company: company || 'Doanh Nghiệp Đối Tác',
+      duration_days: durationDays,
+      max_machines: maxMachines,
+      subscription_type: durationDays <= 30 ? 'monthly' : 'yearly',
+      plan_name: `Gói Cấp Thủ Công (${maxMachines} Máy)`,
+      note: note || 'Cấp trực tiếp từ Admin Console'
+    });
+
+    this.closeManualLicenseModal();
+    alert(`🎉 ĐÃ CẤP GIẤY PHÉP THÀNH CÔNG!\n\n• Mã License Key: ${newLic.license_key}\n• Khách hàng: ${newLic.user_name} (${newLic.user_email})\n• Số máy trạm: ${newLic.max_machines} máy\n• Hạn dùng: ${new Date(newLic.expiry_date).toLocaleDateString('vi-VN')}`);
+    this.render();
+  }
+
+  openLicenseDevicesModal(licenseId) {
+    const licenses = window.dataStore.getLicenses();
+    const lic = licenses.find(l => l.id === licenseId);
+    if (!lic) return;
+
+    const modal = document.getElementById('licenseDevicesModalOverlay');
+    const title = document.getElementById('licenseDevicesModalTitle');
+    const body = document.getElementById('licenseDevicesModalBody');
+    if (!modal || !body) return;
+
+    if (title) {
+      title.innerHTML = `🖥️ Máy Trạm Đã Kích Hoạt: <span style="font-family:var(--font-mono); color:var(--primary); font-size:1.05rem;">${lic.license_key}</span>`;
+    }
+
+    const activations = lic.activations || [];
+
+    body.innerHTML = `
+      <div style="background: #FAF3EE; border: 1px solid #EAE0D7; border-radius: var(--radius-lg); padding: 18px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h4 style="font-size: 1.1rem; color: var(--text-pure); font-weight: 800; margin-bottom: 4px;">${lic.product_name}</h4>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+              Khách hàng: <strong>${lic.user_name}</strong> (${lic.user_email}) • Đơn vị: <strong>${lic.company || 'Cá nhân'}</strong>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <span class="badge ${activations.length >= lic.max_machines ? 'badge-custom' : 'badge-family'}">
+              Đang dùng ${activations.length} / ${lic.max_machines} máy
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <h5 style="font-weight: 800; color: var(--text-pure); font-size: 0.95rem;">Danh Sách Máy Trạm (Workstations)</h5>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary btn-sm" onclick="window.adminPanel.adminSimulateDeviceActivation('${lic.id}')">
+            💻 Giả Lập Kích Hoạt Máy Mới (Revit API)
+          </button>
+          <button class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="window.adminPanel.resetLicenseDevicesPrompt('${lic.id}')">
+            🔄 Reset Toàn Bộ Máy
+          </button>
+        </div>
+      </div>
+
+      ${activations.length === 0 ? `
+        <div style="text-align: center; padding: 36px 20px; background: #FFFBF9; border: 1px dashed #EAE0D7; border-radius: var(--radius-lg); color: var(--text-muted);">
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">💻</div>
+          <p>Chưa có máy tính trạm nào kích hoạt key này.</p>
+          <small style="color: var(--text-dim);">Khi kỹ sư dán mã key vào Revit Add-in, máy tính trạm sẽ lập tức xuất hiện tại đây.</small>
+        </div>
+      ` : `
+        <div>
+          ${activations.map(act => `
+            <div class="device-card-item">
+              <div class="device-info-col">
+                <div class="device-icon-box">🖥️</div>
+                <div>
+                  <div style="font-weight: 800; color: var(--text-pure); font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                    <span>${act.machine_name || 'BIM Workstation'}</span>
+                    <button style="border:none; background:none; cursor:pointer; font-size:0.85rem;" title="Đổi tên máy" onclick="window.adminPanel.adminRenameDevice('${lic.id}', '${act.machine_id}', '${act.machine_name || ''}')">✏️</button>
+                  </div>
+                  <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--primary); margin-top: 2px;">
+                    HWID: ${act.machine_id}
+                  </div>
+                  <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 4px;">
+                    HĐH: <strong>${act.os_info || 'Windows 11'}</strong> • Bản Revit: <span class="badge badge-version" style="font-size: 0.68rem; padding: 1px 6px;">${act.revit_version || '2025'}</span> • IP: ${act.ip_address || '118.70.182.45'}
+                  </div>
+                  <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 2px;">
+                    Heartbeat gần nhất: ${new Date(act.last_checked_at).toLocaleString('vi-VN')}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <button class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="window.adminPanel.adminDeactivateDevice('${lic.id}', '${act.machine_id}')">
+                  🗑️ Gỡ Máy Này
+                </button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `}
+    `;
+
+    modal.classList.add('active');
+  }
+
+  closeLicenseDevicesModal() {
+    const modal = document.getElementById('licenseDevicesModalOverlay');
+    if (modal) modal.classList.remove('active');
+  }
+
+  adminRenameDevice(licenseId, machineId, currentName) {
+    const newName = prompt('Nhập tên gợi nhớ mới cho máy tính trạm này:', currentName);
+    if (newName && newName.trim()) {
+      window.licenseManager.renameMachine(licenseId, machineId, newName.trim());
+      this.openLicenseDevicesModal(licenseId);
+      this.render();
+    }
+  }
+
+  adminDeactivateDevice(licenseId, machineId) {
+    if (confirm('Bạn có chắc muốn gỡ bỏ máy tính trạm này? Khe kích hoạt sẽ được giải phóng để kỹ sư có thể kích hoạt trên máy mới.')) {
+      window.licenseManager.deactivateSingleMachine(licenseId, machineId);
+      this.openLicenseDevicesModal(licenseId);
+      this.render();
+    }
+  }
+
+  adminSimulateDeviceActivation(licenseId) {
+    const licenses = window.dataStore.getLicenses();
+    const lic = licenses.find(l => l.id === licenseId);
+    if (!lic) return;
+
+    const randomId = Math.random().toString(16).substring(2, 8).toUpperCase();
+    const hwid = 'HWID-STATION-' + randomId;
+    const machineName = 'PC Trạm Thiết Kế ' + randomId;
+
+    const result = window.licenseManager.verifyLicenseApi(lic.license_key, hwid, machineName, '2025');
+    if (result.valid) {
+      alert(`✅ KÍCH HOẠT MÁY MỚI THÀNH CÔNG!\n\n• Thiết bị: ${machineName}\n• Hardware ID: ${hwid}\n• Revit API Version: 2025\n• Đã liên kết: ${result.machines_used}/${result.max_machines} máy.`);
+    } else {
+      alert(`❌ KÍCH HOẠT KHÔNG THÀNH CÔNG: ${result.message}`);
+    }
+
+    this.openLicenseDevicesModal(licenseId);
+    this.render();
+  }
+
+  toggleLicenseStatus(licenseId) {
+    const updated = window.licenseManager.toggleLicenseStatus(licenseId);
+    if (updated) {
+      this.render();
+    }
+  }
+
+  renewLicensePrompt(licenseId) {
+    const daysStr = prompt('Nhập số ngày muốn gia hạn (Ví dụ: 365 = 1 năm, 30 = 1 tháng, 1095 = 3 năm):', '365');
+    if (!daysStr) return;
+    const days = Number(daysStr);
+    if (isNaN(days) || days <= 0) {
+      alert('Số ngày không hợp lệ!');
+      return;
+    }
+    const updated = window.licenseManager.renewLicense(licenseId, days);
+    if (updated) {
+      alert(`Đã gia hạn thành công thêm ${days} ngày! Hạn mới: ${new Date(updated.expiry_date).toLocaleDateString('vi-VN')}`);
+      this.render();
+    }
+  }
+
+  adjustMaxMachinesPrompt(licenseId, currentMax) {
+    const newMaxStr = prompt(`Hạn mức số máy hiện tại: ${currentMax} máy.\nNhập số lượng máy tối đa mới cho phép kích hoạt:`, currentMax);
+    if (!newMaxStr) return;
+    const newMax = Number(newMaxStr);
+    if (isNaN(newMax) || newMax < 1) {
+      alert('Số lượng máy phải từ 1 trở lên!');
+      return;
+    }
+    const updated = window.licenseManager.adjustMaxMachines(licenseId, newMax);
+    if (updated) {
+      alert(`Đã cập nhật hạn mức thành công: ${newMax} máy!`);
+      this.render();
+    }
+  }
+
+  resetLicenseDevicesPrompt(licenseId) {
+    if (confirm('⚠️ BẠN CÓ CHẮC CHẮN MUỐN RESET TOÀN BỘ MÁY TRẠM?\n\nMọi máy tính đang liên kết với key này sẽ bị hủy kích hoạt. Khách hàng sẽ phải nhập lại key từ Revit để liên kết lại.')) {
+      window.licenseManager.resetAllActivations(licenseId);
+      this.closeLicenseDevicesModal();
+      alert('Đã reset toàn bộ máy trạm thành công!');
+      this.render();
+    }
+  }
+
+  toggleRole(accId) {
+    const accounts = window.dataStore.getAccounts();
+    const acc = accounts.find(a => a.id === accId);
+    if (!acc) return;
+    acc.role = acc.role === 'admin' ? 'customer' : 'admin';
+    window.dataStore.saveAccount(acc);
+    alert(`Đã chuyển quyền của ${acc.full_name} thành: ${acc.role.toUpperCase()}`);
+    this.render();
+  }
+
+  toggleStatus(accId) {
+    const accounts = window.dataStore.getAccounts();
+    const acc = accounts.find(a => a.id === accId);
+    if (!acc) return;
+    acc.status = acc.status === 'active' ? 'suspended' : 'active';
+    window.dataStore.saveAccount(acc);
+    this.render();
+  }
+
+  updateRequestStatus(reqId) {
+    const requests = window.dataStore.getCustomRequests();
+    const req = requests.find(r => r.id === reqId);
+    if (!req) return;
+    if (req.status === 'new') req.status = 'in_progress';
+    else if (req.status === 'in_progress') req.status = 'completed';
+    else req.status = 'new';
+    window.dataStore.save('custom_requests', requests);
+    this.render();
+  }
+
+  addNewAccountPrompt() {
+    const email = prompt('Nhập Email:');
+    if (!email) return;
+    const name = prompt('Nhập Họ và tên:');
+    const role = confirm('Cấp quyền Admin? Bấm OK nếu là Admin, Cancel nếu là Kỹ sư') ? 'admin' : 'customer';
+    window.dataStore.saveAccount({
+      id: 'acc-' + Date.now().toString(16),
+      email,
+      full_name: name || email.split('@')[0],
+      phone: '0901234567',
+      company: 'BIM Engineering Corp',
+      role,
+      status: 'active',
+      created_at: new Date().toISOString()
+    });
+    alert('Đã tạo tài khoản mới thành công!');
+    this.render();
+  }
+}
+
+window.adminPanel = new AdminPanel();

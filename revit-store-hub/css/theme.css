@@ -1,0 +1,283 @@
+/* ==========================================================================
+   REVIT BIM STORE - SOFT PEACH & WARM CREAM THEME (INSPIRED BY REFERENCE)
+   Tông màu cam đào nhẹ nhàng, ấm áp, thanh lịch, sang trọng và giàu tính nghệ thuật
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* Warm Cream & Peach Palette (Tham khảo mẫu hình ảnh của người dùng) */
+  --bg-deep: #F5EBE4;
+  --bg-main: #FAF3EE;
+  --bg-surface: #FFFFFF;
+  --bg-surface-alt: #F8EFEA;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #FFF9F5;
+  --bg-overlay: rgba(26, 20, 16, 0.55);
+
+  /* Warm Peach & Terracotta Orange Master Colors */
+  --primary: #FF6B4A;            /* Cam đào san hô chủ đạo */
+  --primary-hover: #FF522B;      /* Cam rực hơn khi hover */
+  --primary-light: #FFEFEA;      /* Nền cam phớt cực nhẹ */
+  --primary-border: #FFD4C7;     /* Viền cam đào nhạt */
+  --primary-deep: #D94824;
+
+  /* Artistic Gradients từ hình mẫu */
+  --gradient-peach: linear-gradient(135deg, #FF7E5F 0%, #FEB47B 100%);
+  --gradient-soft-peach: linear-gradient(135deg, #FFF0EA 0%, #FFE3D8 100%);
+  --gradient-orange-card: linear-gradient(180deg, rgba(255, 126, 95, 0.08) 0%, rgba(254, 180, 123, 0.02) 100%);
+  --gradient-hero: radial-gradient(circle at 10% 15%, rgba(255, 126, 95, 0.22) 0%, transparent 40%),
+                   radial-gradient(circle at 90% 85%, rgba(254, 180, 123, 0.18) 0%, transparent 45%),
+                   radial-gradient(circle at 50% 50%, rgba(255, 240, 234, 0.6) 0%, transparent 70%);
+
+  /* Secondary Accents */
+  --accent-blue: #0077B6;
+  --accent-emerald: #10B981;
+  --accent-purple: #8B5CF6;
+
+  /* Status Colors */
+  --success: #059669;
+  --success-bg: #ECFDF5;
+  --warning: #D97706;
+  --warning-bg: #FFFBEB;
+  --danger: #E11D48;
+  --danger-bg: #FFF1F2;
+
+  /* Typography */
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: 'Outfit', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Dark Charcoal Text for Crisp Legibility on Warm Light Background */
+  --text-pure: #0F1113;
+  --text-main: #1E2022;
+  --text-muted: #555E68;
+  --text-dim: #7C8692;
+
+  /* Fine Hairline Borders & Elegant Soft Shadows */
+  --border-light: 1px solid #EAE0D7;
+  --border-subtle: 1px solid rgba(255, 107, 74, 0.2);
+  --border-glow: 1px solid rgba(255, 107, 74, 0.5);
+  --shadow-sm: 0 2px 8px rgba(180, 120, 90, 0.06);
+  --shadow-md: 0 8px 24px -4px rgba(180, 120, 90, 0.1);
+  --shadow-lg: 0 16px 36px -6px rgba(180, 120, 90, 0.16);
+  --shadow-peach: 0 8px 25px rgba(255, 107, 74, 0.28);
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 9999px;
+  --transition-smooth: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Reset & Base Setup */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  background-image: var(--gradient-hero);
+  background-attachment: fixed;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+/* Glass & Surface Cards */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: var(--border-light);
+  box-shadow: var(--shadow-md);
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.badge-tool {
+  background: #FFF0EB;
+  color: #FF5722;
+  border: 1px solid #FFCCBC;
+}
+
+.badge-family {
+  background: #ECFDF5;
+  color: #059669;
+  border: 1px solid #A7F3D0;
+}
+
+.badge-template {
+  background: #F5F3FF;
+  color: #7C3AED;
+  border: 1px solid #DDD6FE;
+}
+
+.badge-custom {
+  background: #FFFBEB;
+  color: #D97706;
+  border: 1px solid #FDE68A;
+}
+
+.badge-admin {
+  background: var(--gradient-peach);
+  color: #FFFFFF;
+  border: none;
+  box-shadow: var(--shadow-peach);
+}
+
+/* Button Components */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: var(--radius-full);
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all var(--transition-smooth);
+}
+
+.btn-primary {
+  background: var(--gradient-peach);
+  color: #FFFFFF;
+  box-shadow: var(--shadow-peach);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.06);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(255, 107, 74, 0.35);
+}
+
+.btn-secondary {
+  background: #FFFFFF;
+  color: var(--text-main);
+  border: var(--border-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-secondary:hover {
+  background: #FFF5F0;
+  border-color: var(--primary-border);
+  color: var(--primary);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1.5px solid var(--primary);
+  color: var(--primary);
+}
+
+.btn-outline:hover {
+  background: var(--primary-light);
+  border-color: var(--primary-hover);
+}
+
+.btn-sm {
+  padding: 6px 14px;
+  font-size: 0.82rem;
+}
+
+.btn-lg {
+  padding: 14px 30px;
+  font-size: 1.05rem;
+}
+
+/* Modal Overlay & Base System (Khắc phục triệt để lỗi không hiện và thừa cuối trang) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-overlay);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-smooth), visibility var(--transition-smooth);
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-content {
+  background: #FFFFFF;
+  border-radius: var(--radius-xl);
+  border: var(--border-light);
+  box-shadow: var(--shadow-lg);
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  transform: translateY(20px) scale(0.98);
+  transition: transform var(--transition-smooth);
+}
+
+.modal-overlay.active .modal-content {
+  transform: translateY(0) scale(1);
+}
+
+.modal-header {
+  padding: 20px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #F0E6DE;
+  background: #FFFBF9;
+}
+
+.modal-close {
+  background: #F3EAE3;
+  border: none;
+  color: var(--text-muted);
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: all var(--transition-smooth);
+}
+
+.modal-close:hover {
+  background: #FFE5DB;
+  color: var(--primary);
+}
