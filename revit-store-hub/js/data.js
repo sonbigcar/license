@@ -20,6 +20,96 @@ class DataStore {
     };
     this.initDefaultData();
     this.fetchRemoteProducts();
+    this.fetchRemoteBankConfig();
+  }
+
+  /**
+   * TỰ ĐỘNG ĐỒNG BỘ CẤU HÌNH TÀI KHOẢN NHẬN TIỀN TỪ MÁY CHỦ TRUNG TÂM
+   * Đảm bảo mọi máy tính / điện thoại của khách hàng đều nhận tiền vào đúng 1 STK của Admin
+   */
+  async fetchRemoteBankConfig() {
+    const candidateUrls = [
+      'data/bank_config.json?t=' + Date.now(),
+      'https://raw.githubusercontent.com/sonbigcar/license/main/revit-store-hub/data/bank_config.json?t=' + Date.now()
+    ];
+
+    for (const url of candidateUrls) {
+      try {
+        const res = await fetch(url, { cache: 'no-store' });
+        if (res.ok) {
+          const remoteBankCfg = await res.json();
+          if (remoteBankCfg && remoteBankCfg.accountNo) {
+            this.save('bank_config', remoteBankCfg);
+            if (window.adminPanel && window.adminPanel.currentTab === 'settings') {
+              window.adminPanel.render();
+            }
+            return remoteBankCfg;
+          }
+        }
+      } catch (err) {
+        // Fallback
+      }
+    }
+  }
+
+  /**
+   * ĐỒNG BỘ TÀI KHOẢN NGÂN HÀNG LÊN MÁY CHỦ GITHUB TRUNG TÂM
+   */
+  async syncBankConfigToGitHub(config) {
+    const { owner, repo, token } = this.GITHUB_CONFIG;
+    const path = 'revit-store-hub/data/bank_config.json';
+    if (!token) return { success: false, message: 'Chưa cấu hình GitHub Token' };
+
+    try {
+      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+      let sha = null;
+      try {
+        const getRes = await fetch(apiUrl, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        if (getRes.ok) {
+          const fileData = await getRes.json();
+          sha = fileData.sha;
+        }
+      } catch (e) {}
+
+      const jsonStr = JSON.stringify(config, null, 2);
+      const utf8Bytes = new TextEncoder().encode(jsonStr);
+      let binary = '';
+      for (let i = 0; i < utf8Bytes.length; i++) {
+        binary += String.fromCharCode(utf8Bytes[i]);
+      }
+      const base64Content = btoa(binary);
+
+      const putBody = {
+        message: `Admin update receiving bank account (${config.accountNo} - ${config.bankName}) [skip ci]`,
+        content: base64Content,
+        branch: 'main'
+      };
+      if (sha) putBody.sha = sha;
+
+      const putRes = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(putBody)
+      });
+
+      if (putRes.ok) {
+        return { success: true };
+      } else {
+        const errJson = await putRes.json();
+        return { success: false, message: errJson.message || 'Lỗi HTTP ' + putRes.status };
+      }
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
   }
 
   /**
@@ -317,68 +407,27 @@ class DataStore {
       this.save('products', defaultProducts);
     }
 
-    // 2. DỮ LIỆU TÀI KHOẢN NGƯỜI DÙNG (Dành cho Admin quản lý)
+    // 2. DỮ LIỆU TÀI KHOẢN NGƯỜI DÙNG: Chỉ lưu 1 tài khoản Admin chính chủ duy nhất (sonbigcar)
+    const defaultAccounts = [
+      {
+        id: 'acc-admin-01',
+        email: 'admin@doanson.com',
+        username: 'sonbigcar',
+        full_name: 'Đoàn Thanh Sơn (Admin)',
+        phone: '0908123456',
+        company: 'DoanSon BIM Studio',
+        role: 'admin',
+        status: 'active',
+        created_at: '2026-01-01T00:00:00Z',
+        orders_count: 0
+      }
+    ];
+
     if (!localStorage.getItem(this.STORAGE_PREFIX + 'accounts')) {
-      const defaultAccounts = [
-        {
-          id: 'acc-admin-01',
-          email: 'admin@doanson.com',
-          username: 'sonbigcar',
-          full_name: 'Đoàn Thanh Sơn (Admin)',
-          phone: '0908123456',
-          company: 'DoanSon BIM Studio',
-          role: 'admin',
-          status: 'active',
-          created_at: '2026-01-01T00:00:00Z',
-          orders_count: 0
-        },
-        {
-          id: 'acc-admin-02',
-          email: 'admin@revitstore.vn',
-          username: 'admin',
-          full_name: 'Quản Trị Viên Hệ Thống',
-          phone: '0909999888',
-          company: 'DoanSon BIM Studio',
-          role: 'admin',
-          status: 'active',
-          created_at: '2026-01-01T00:00:00Z',
-          orders_count: 0
-        },
-        {
-          id: 'acc-user-01',
-          email: 'engineer.bim@gmail.com',
-          full_name: 'Đoàn Sơn - BIM Coordinator',
-          phone: '0908123456',
-          company: 'MEP BIM Solutions Vietnam',
-          role: 'customer',
-          status: 'active',
-          created_at: '2026-02-15T08:30:00Z',
-          orders_count: 3
-        },
-        {
-          id: 'acc-user-02',
-          email: 'nguyen.hvac@vinabim.com',
-          full_name: 'Nguyễn Văn Hùng - Kỹ Sư HVAC',
-          phone: '0912345678',
-          company: 'VinaBIM Engineering',
-          role: 'customer',
-          status: 'active',
-          created_at: '2026-03-10T14:20:00Z',
-          orders_count: 1
-        },
-        {
-          id: 'acc-user-03',
-          email: 'tran.arc@designstudio.vn',
-          full_name: 'Trần Minh Quân - Chủ Trì Kiến Trúc',
-          phone: '0987654321',
-          company: 'S-Design Architects',
-          role: 'customer',
-          status: 'active',
-          created_at: '2026-03-22T09:15:00Z',
-          orders_count: 2
-        }
-      ];
       this.save('accounts', defaultAccounts);
+    } else {
+      // Tự động dọn dẹp các tài khoản ảo mẫu nếu còn lưu trong trình duyệt
+      this.cleanupDummyAccounts();
     }
 
     // 3. DỮ LIỆU ĐẶT HÀNG DỊCH VỤ THUÊ VIẾT TOOLS & TẠO TEMPLATE
@@ -621,9 +670,39 @@ class DataStore {
     };
   }
 
-  saveBankConfig(config) {
+  async saveBankConfig(config) {
     this.save('bank_config', config);
-    return config;
+    // Tự động đẩy file cấu hình lên GitHub để mọi máy tính người dùng truy cập web đều nhận STK mới
+    return await this.syncBankConfigToGitHub(config);
+  }
+
+  /**
+   * DỌN DẸP TOÀN BỘ TÀI KHOẢN ẢO MẶC ĐỊNH
+   * Giữ lại duy nhất 1 tài khoản chính chủ của Admin (sonbigcar) và các tài khoản người dùng đăng ký thật
+   */
+  cleanupDummyAccounts() {
+    const dummyIds = ['acc-admin-02', 'acc-user-01', 'acc-user-02', 'acc-user-03'];
+    const dummyEmails = ['admin@revitstore.vn', 'engineer.bim@gmail.com', 'nguyen.hvac@vinabim.com', 'tran.arc@designstudio.vn'];
+    let accounts = this.getAccounts();
+    accounts = accounts.filter(a => !dummyIds.includes(a.id) && !dummyEmails.includes(a.email));
+
+    // Đảm bảo tài khoản sonbigcar luôn tồn tại
+    if (!accounts.some(a => a.username === 'sonbigcar' || a.email === 'admin@doanson.com')) {
+      accounts.unshift({
+        id: 'acc-admin-01',
+        email: 'admin@doanson.com',
+        username: 'sonbigcar',
+        full_name: 'Đoàn Thanh Sơn (Admin)',
+        phone: '0908123456',
+        company: 'DoanSon BIM Studio',
+        role: 'admin',
+        status: 'active',
+        created_at: '2026-01-01T00:00:00Z',
+        orders_count: 0
+      });
+    }
+    this.save('accounts', accounts);
+    return accounts;
   }
 }
 

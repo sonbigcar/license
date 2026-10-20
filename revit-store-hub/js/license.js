@@ -14,110 +14,14 @@ class LicenseManager {
   initDefaultLicenses() {
     const existing = window.dataStore.get('licenses');
     if (!existing || existing.length === 0) {
-      const now = new Date();
-
-      // 1. License đang hoạt động còn hạn dài (Gói Team 3 máy)
-      const exp1 = new Date();
-      exp1.setFullYear(now.getFullYear() + 1);
-
-      // 2. License sắp hết hạn trong 10 ngày (Để kiểm thử cảnh báo gia hạn)
-      const exp2 = new Date();
-      exp2.setDate(now.getDate() + 10);
-
-      // 3. License đã hết hạn (Expired)
-      const exp3 = new Date();
-      exp3.setDate(now.getDate() - 15);
-
-      const defaultLicenses = [
-        {
-          id: 'lic-pro-001',
-          license_key: 'REVIT-9A4B-88F1-2C3D',
-          user_id: 'acc-user-01',
-          user_email: 'engineer.bim@gmail.com',
-          user_name: 'Đoàn Sơn - BIM Coordinator',
-          company: 'MEP BIM Solutions Vietnam',
-          product_id: 'tool-001',
-          product_name: 'MEP Auto Routing & Smart Elevation Pro',
-          subscription_type: 'yearly',
-          plan_name: 'Gói Chuyên Nghiệp (Team 3 Máy)',
-          max_machines: 3,
-          status: 'active', // 'active', 'suspended', 'expired'
-          start_date: new Date(now.getTime() - 60 * 24 * 3600 * 1000).toISOString(),
-          expiry_date: exp1.toISOString(),
-          download_url: 'https://vault.revitstore.vn/tools/MEP_Routing_Pro_v2.4.0_Setup.exe',
-          version: 'v2.4.0',
-          activations: [
-            {
-              machine_id: 'HWID-BIM-STATION-01',
-              machine_name: 'DELL Precision 5820 (Bàn Trưởng Phòng)',
-              os_info: 'Windows 11 Pro 64-bit',
-              revit_version: '2025',
-              ip_address: '118.70.182.45',
-              activated_at: new Date(now.getTime() - 60 * 24 * 3600 * 1000).toISOString(),
-              last_checked_at: new Date().toISOString()
-            },
-            {
-              machine_id: 'HWID-LAPTOP-MOBILE-02',
-              machine_name: 'ThinkPad P16s (Laptop Đi Công Trường)',
-              os_info: 'Windows 10 Pro 64-bit',
-              revit_version: '2024',
-              ip_address: '118.70.182.45',
-              activated_at: new Date(now.getTime() - 20 * 24 * 3600 * 1000).toISOString(),
-              last_checked_at: new Date(now.getTime() - 2 * 3600 * 1000).toISOString()
-            }
-          ]
-        },
-        {
-          id: 'lic-pro-002',
-          license_key: 'REVIT-77C1-44E2-99FA',
-          user_id: 'acc-user-01',
-          user_email: 'engineer.bim@gmail.com',
-          user_name: 'Đoàn Sơn - BIM Coordinator',
-          company: 'MEP BIM Solutions Vietnam',
-          product_id: 'tool-002',
-          product_name: 'Batch Sheet Exporter & Auto Renaming Pro',
-          subscription_type: 'yearly',
-          plan_name: 'Gói Cá Nhân (1 Máy)',
-          max_machines: 1,
-          status: 'active',
-          start_date: new Date(now.getTime() - 355 * 24 * 3600 * 1000).toISOString(),
-          expiry_date: exp2.toISOString(), // Sắp hết hạn trong 10 ngày
-          download_url: 'https://vault.revitstore.vn/tools/Batch_Sheet_Exporter_Setup.zip',
-          version: 'v1.8.2',
-          activations: [
-            {
-              machine_id: 'HWID-BIM-STATION-01',
-              machine_name: 'DELL Precision 5820 (Máy Chính)',
-              os_info: 'Windows 11 Pro 64-bit',
-              revit_version: '2024',
-              ip_address: '118.70.182.45',
-              activated_at: new Date(now.getTime() - 355 * 24 * 3600 * 1000).toISOString(),
-              last_checked_at: new Date().toISOString()
-            }
-          ]
-        },
-        {
-          id: 'lic-pro-003',
-          license_key: 'REVIT-11D9-AA33-FF88',
-          user_id: 'acc-user-02',
-          user_email: 'nguyen.hvac@vinabim.com',
-          user_name: 'Nguyễn Văn Hùng - Kỹ Sư HVAC',
-          company: 'VinaBIM Engineering',
-          product_id: 'tool-003',
-          product_name: 'Rebar Detailer & Auto Scheduling Pro',
-          subscription_type: 'monthly',
-          plan_name: 'Gói Dùng Thử (Trial)',
-          max_machines: 1,
-          status: 'expired', // Đã hết hạn
-          start_date: new Date(now.getTime() - 45 * 24 * 3600 * 1000).toISOString(),
-          expiry_date: exp3.toISOString(),
-          download_url: 'https://vault.revitstore.vn/tools/Rebar_Detailer_Setup.exe',
-          version: 'v3.1.0',
-          activations: []
-        }
-      ];
-
-      window.dataStore.save('licenses', defaultLicenses);
+      window.dataStore.save('licenses', []);
+    } else {
+      // Dọn dẹp các license mẫu của tài khoản ảo cũ
+      const dummyEmails = ['engineer.bim@gmail.com', 'nguyen.hvac@vinabim.com'];
+      const cleaned = existing.filter(l => !dummyEmails.includes(l.user_email));
+      if (cleaned.length !== existing.length) {
+        window.dataStore.save('licenses', cleaned);
+      }
     }
   }
 

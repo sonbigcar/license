@@ -109,7 +109,7 @@ class AdminPanel {
             🔑 Quản Lý Giấy Phép (${licenses.length})
           </button>
           <button class="portal-tab-btn ${this.currentTab === 'settings' ? 'active' : ''}" onclick="window.adminPanel.switchTab('settings')">
-            🏦 Cài Đặt Ngân Hàng VietQR
+            🏦 Cấu Hình Tài Khoản Nhận Tiền
           </button>
         </div>
 
@@ -147,13 +147,18 @@ class AdminPanel {
    */
   renderAccountsTable(accounts) {
     return `
-      <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
-        <p style="color: var(--text-muted); font-size: 0.92rem;">
-          Danh sách toàn bộ tài khoản kỹ sư và quản trị viên trong hệ thống.
+      <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <p style="color: var(--text-muted); font-size: 0.92rem; margin: 0;">
+          Danh sách tài khoản hệ thống (Chỉ cần 1 tài khoản Admin chính chủ <strong>sonbigcar</strong>).
         </p>
-        <button class="btn btn-primary btn-sm" onclick="window.adminPanel.addNewAccountPrompt()">
-          + Tạo Tài Khoản Mới
-        </button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary btn-sm" onclick="window.adminPanel.addNewAccountPrompt()">
+            + Tạo Tài Khoản Mới
+          </button>
+          <button class="btn btn-secondary btn-sm" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.4);" onclick="window.adminPanel.cleanupDummyAccounts()" title="Xóa bỏ toàn bộ các tài khoản ảo mẫu mặc định, chỉ giữ lại tài khoản sonbigcar">
+            🧹 Xóa Các Tài Khoản Ảo Mặc Định
+          </button>
+        </div>
       </div>
 
       <div class="admin-table-container">
@@ -744,60 +749,100 @@ class AdminPanel {
 
   renderSettingsTab() {
     const bankCfg = window.dataStore.getBankConfig();
+    const previewQrUrl = `https://img.vietqr.io/image/${bankCfg.bankId}-${bankCfg.accountNo}-compact2.png?amount=50000&addInfo=DOANSON%20DEMO&accountName=${encodeURIComponent(bankCfg.accountName)}`;
+
     return `
-      <div style="background: #FFFFFF; border: var(--border-light); border-radius: var(--radius-xl); padding: 28px; box-shadow: var(--shadow-sm); max-width: 680px;">
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
-          <div style="font-size: 2.2rem;">🏦</div>
-          <div>
-            <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-pure); margin-bottom: 2px;">
-              Cấu Hình Tài Khoản Nhận Tiền VietQR Napas 24/7
-            </h3>
-            <p style="font-size: 0.86rem; color: var(--text-muted); margin: 0;">
-              Khách hàng quét mã VietQR sẽ tự động chuyển tiền trực tiếp đến tài khoản ngân hàng này.
+      <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px; align-items: start;">
+        <!-- CỘT TRÁI: FORM CÀI ĐẶT 1 TÀI KHOẢN NHẬN TIỀN DUY NHẤT -->
+        <div style="background: #FFFFFF; border: var(--border-light); border-radius: var(--radius-xl); padding: 28px; box-shadow: var(--shadow-sm);">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <div style="font-size: 2.2rem;">🏦</div>
+            <div>
+              <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-pure); margin-bottom: 2px;">
+                Cấu Hình Tài Khoản Nhận Tiền VietQR Napas 24/7
+              </h3>
+              <p style="font-size: 0.86rem; color: var(--text-muted); margin: 0;">
+                Hệ thống sử dụng DUY NHẤT 1 tài khoản này để tạo mã VietQR tự động cho khách hàng.
+              </p>
+            </div>
+          </div>
+
+          <!-- BANNER TRẠNG THÁI 1 TÀI KHOẢN DUY NHẤT -->
+          <div style="background: #ECFDF5; border: 1.5px solid #A7F3D0; border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #065F46; font-size: 0.92rem; margin-bottom: 4px;">
+              <span>🟢</span>
+              <span>1 Tài khoản nhận tiền duy nhất đang kích hoạt toàn hệ thống</span>
+            </div>
+            <p style="font-size: 0.84rem; color: #047857; margin: 0; line-height: 1.5;">
+              Ngân hàng: <strong>${bankCfg.bankName}</strong> | STK: <strong style="letter-spacing: 0.5px;">${bankCfg.accountNo}</strong> | Chủ TK: <strong>${bankCfg.accountName}</strong>
             </p>
           </div>
+
+          <form onsubmit="window.adminPanel.handleSaveBankSettings(event)">
+            <div class="form-group">
+              <label>Ngân hàng nhận tiền *</label>
+              <select id="cfgBankSelect" class="form-control" required>
+                <option value="970422|Ngân hàng TMCP Quân Đội (MB Bank)" ${bankCfg.bankId === '970422' ? 'selected' : ''}>MB Bank (Ngân hàng TMCP Quân Đội - BIN 970422)</option>
+                <option value="970436|Ngân hàng Ngoại thương Việt Nam (Vietcombank)" ${bankCfg.bankId === '970436' || bankCfg.bankId === 'VCB' ? 'selected' : ''}>Vietcombank (BIN 970436)</option>
+                <option value="970407|Ngân hàng Kỹ thương Việt Nam (Techcombank)" ${bankCfg.bankId === '970407' || bankCfg.bankId === 'TCB' ? 'selected' : ''}>Techcombank (BIN 970407)</option>
+                <option value="970432|Ngân hàng Việt Nam Thịnh Vượng (VPBank)" ${bankCfg.bankId === '970432' || bankCfg.bankId === 'VPB' ? 'selected' : ''}>VPBank (BIN 970432)</option>
+                <option value="970416|Ngân hàng Á Châu (ACB)" ${bankCfg.bankId === '970416' || bankCfg.bankId === 'ACB' ? 'selected' : ''}>ACB (BIN 970416)</option>
+                <option value="970418|Ngân hàng Đầu tư và Phát triển (BIDV)" ${bankCfg.bankId === '970418' || bankCfg.bankId === 'BIDV' ? 'selected' : ''}>BIDV (BIN 970418)</option>
+                <option value="970405|Ngân hàng Nông nghiệp (Agribank)" ${bankCfg.bankId === '970405' ? 'selected' : ''}>Agribank (BIN 970405)</option>
+                <option value="970423|Ngân hàng Tiên Phong (TPBank)" ${bankCfg.bankId === '970423' ? 'selected' : ''}>TPBank (BIN 970423)</option>
+                <option value="970403|Ngân hàng TMCP Sài Gòn Thương Tín (Sacombank)" ${bankCfg.bankId === '970403' ? 'selected' : ''}>Sacombank (BIN 970403)</option>
+                <option value="970448|Ngân hàng Phương Đông (OCB)" ${bankCfg.bankId === '970448' ? 'selected' : ''}>OCB (BIN 970448)</option>
+                <option value="970415|Ngân hàng Công Thương Việt Nam (VietinBank)" ${bankCfg.bankId === '970415' ? 'selected' : ''}>VietinBank (BIN 970415)</option>
+                <option value="970429|Ngân hàng Sài Gòn (SCB)" ${bankCfg.bankId === '970429' ? 'selected' : ''}>SCB (BIN 970429)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Số tài khoản thụ hưởng (STK) *</label>
+              <input type="text" id="cfgAccountNo" class="form-control" value="${bankCfg.accountNo || ''}" placeholder="Ví dụ: 0908123456" required>
+            </div>
+
+            <div class="form-group">
+              <label>Tên chủ tài khoản (In hoa không dấu) *</label>
+              <input type="text" id="cfgAccountName" class="form-control" value="${bankCfg.accountName || ''}" placeholder="Ví dụ: DOAN THANH SON" required>
+            </div>
+
+            <div class="form-group">
+              <label>Cú pháp tiền tố chuyển khoản</label>
+              <input type="text" class="form-control" value="DOANSON <Mã_Đơn_Hàng>" disabled style="background: #F3EAE3; color: var(--text-muted);">
+              <small style="color: var(--text-dim); margin-top: 4px; display: block;">Hệ thống tự động nối tiền tố DOANSON với mã đơn hàng 6 số để nhận diện giao dịch.</small>
+            </div>
+
+            <button type="submit" id="saveBankBtn" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+              💾 Lưu Cấu Hình & Đồng Bộ Toàn Hệ Thống
+            </button>
+          </form>
         </div>
 
-        <form onsubmit="window.adminPanel.handleSaveBankSettings(event)">
-          <div class="form-group">
-            <label>Ngân hàng nhận tiền *</label>
-            <select id="cfgBankSelect" class="form-control" required>
-              <option value="970422|Ngân hàng TMCP Quân Đội (MB Bank)" ${bankCfg.bankId === '970422' ? 'selected' : ''}>MB Bank (Ngân hàng TMCP Quân Đội - BIN 970422)</option>
-              <option value="970436|Ngân hàng Ngoại thương Việt Nam (Vietcombank)" ${bankCfg.bankId === '970436' || bankCfg.bankId === 'VCB' ? 'selected' : ''}>Vietcombank (BIN 970436)</option>
-              <option value="970407|Ngân hàng Kỹ thương Việt Nam (Techcombank)" ${bankCfg.bankId === '970407' || bankCfg.bankId === 'TCB' ? 'selected' : ''}>Techcombank (BIN 970407)</option>
-              <option value="970432|Ngân hàng Việt Nam Thịnh Vượng (VPBank)" ${bankCfg.bankId === '970432' || bankCfg.bankId === 'VPB' ? 'selected' : ''}>VPBank (BIN 970432)</option>
-              <option value="970416|Ngân hàng Á Châu (ACB)" ${bankCfg.bankId === '970416' || bankCfg.bankId === 'ACB' ? 'selected' : ''}>ACB (BIN 970416)</option>
-              <option value="970418|Ngân hàng Đầu tư và Phát triển (BIDV)" ${bankCfg.bankId === '970418' || bankCfg.bankId === 'BIDV' ? 'selected' : ''}>BIDV (BIN 970418)</option>
-              <option value="970405|Ngân hàng Nông nghiệp (Agribank)" ${bankCfg.bankId === '970405' ? 'selected' : ''}>Agribank (BIN 970405)</option>
-              <option value="970423|Ngân hàng Tiên Phong (TPBank)" ${bankCfg.bankId === '970423' ? 'selected' : ''}>TPBank (BIN 970423)</option>
-            </select>
+        <!-- CỘT PHẢI: XEM TRƯỚC MÃ VIETQR TRỰC TIẾP -->
+        <div style="background: #FFFFFF; border: var(--border-light); border-radius: var(--radius-xl); padding: 24px; box-shadow: var(--shadow-sm); text-align: center;">
+          <h4 style="font-family: var(--font-heading); font-size: 1.05rem; color: var(--text-pure); margin-bottom: 6px;">
+            📱 Xem Trước Mã VietQR
+          </h4>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px;">
+            Bạn có thể dùng App Ngân hàng quét thử mã này ngay trên màn hình để kiểm tra STK và Tên chủ tài khoản:
+          </p>
+
+          <div style="background: #F8FAFC; border: 2px dashed #CBD5E1; border-radius: var(--radius-lg); padding: 16px; display: inline-block; margin-bottom: 14px;">
+            <img src="${previewQrUrl}" alt="Xem trước mã VietQR" style="max-width: 220px; width: 100%; height: auto; border-radius: 8px;">
           </div>
 
-          <div class="form-group">
-            <label>Số tài khoản thụ hưởng (STK) *</label>
-            <input type="text" id="cfgAccountNo" class="form-control" value="${bankCfg.accountNo || ''}" placeholder="Ví dụ: 0908123456" required>
+          <div style="font-size: 0.85rem; color: var(--text-pure); background: #FAF3EE; padding: 10px 14px; border-radius: var(--radius-md); text-align: left; line-height: 1.6;">
+            <div>🏦 <strong>${bankCfg.bankName}</strong></div>
+            <div>💳 STK: <strong>${bankCfg.accountNo}</strong></div>
+            <div>👤 Tên: <strong>${bankCfg.accountName}</strong></div>
           </div>
-
-          <div class="form-group">
-            <label>Tên chủ tài khoản (In hoa không dấu) *</label>
-            <input type="text" id="cfgAccountName" class="form-control" value="${bankCfg.accountName || ''}" placeholder="Ví dụ: DOAN THANH SON" required>
-          </div>
-
-          <div class="form-group">
-            <label>Cú pháp tiền tố chuyển khoản</label>
-            <input type="text" class="form-control" value="DOANSON <Mã_Đơn_Hàng>" disabled style="background: #F3EAE3; color: var(--text-muted);">
-            <small style="color: var(--text-dim); margin-top: 4px; display: block;">Hệ thống tự động nối tiền tố DOANSON với mã đơn hàng 6 số để nhận diện giao dịch.</small>
-          </div>
-
-          <button type="submit" class="btn btn-primary" style="margin-top: 10px;">
-            💾 Lưu Cấu Hình Ngân Hàng
-          </button>
-        </form>
+        </div>
       </div>
     `;
   }
 
-  handleSaveBankSettings(e) {
+  async handleSaveBankSettings(e) {
     e.preventDefault();
     const bankVal = document.getElementById('cfgBankSelect').value.split('|');
     const bankId = bankVal[0];
@@ -810,7 +855,14 @@ class AdminPanel {
       return;
     }
 
-    window.dataStore.saveBankConfig({
+    const btn = document.getElementById('saveBankBtn');
+    const origText = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Đang lưu & đồng bộ lên máy chủ trung tâm...';
+    }
+
+    const res = await window.dataStore.saveBankConfig({
       bankId,
       bankName,
       accountNo,
@@ -818,7 +870,17 @@ class AdminPanel {
       template: 'compact2'
     });
 
-    alert('✅ ĐÃ LƯU THÔNG TIN TÀI KHOẢN NGÂN HÀNG THÀNH CÔNG!\nKhách hàng quét mã VietQR sẽ chuyển tiền trực tiếp vào tài khoản này.');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origText;
+    }
+
+    if (res && res.success) {
+      alert(`🎉 ĐÃ ĐỒNG BỘ THÀNH CÔNG TÀI KHOẢN NHẬN TIỀN LÊN MÁY CHỦ!\n\n• Ngân hàng: ${bankName}\n• Số tài khoản: ${accountNo}\n• Chủ tài khoản: ${accountName}\n\nMọi khách hàng mua sản phẩm trên máy tính hoặc điện thoại đều sẽ quét mã VietQR thanh toán vào tài khoản này.`);
+    } else {
+      alert(`Đã lưu cấu hình tài khoản nhận tiền vào bộ nhớ!\n(Lưu ý: Đang đồng bộ nền sang máy chủ trung tâm)`);
+    }
+
     this.render();
   }
 
@@ -996,6 +1058,14 @@ class AdminPanel {
       alert(`🎉 Đã đồng bộ thành công ${products.length} sản phẩm lên máy chủ trung tâm!\nMọi người dùng mở website trên máy tính của họ sẽ thấy ngay danh mục này.`);
     } else {
       alert(`⚠️ Đồng bộ thất bại: ${res ? res.message : 'Lỗi kết nối'}\nBạn vẫn có thể dùng nút 'Xuất File JSON' để nạp sang máy khác.`);
+    }
+  }
+
+  cleanupDummyAccounts() {
+    if (confirm('Bạn có chắc chắn muốn dọn dẹp và xóa toàn bộ các tài khoản ảo mặc định (như admin@revitstore.vn, engineer.bim...)?\nHệ thống sẽ chỉ giữ lại duy nhất 1 tài khoản chính chủ của bạn (sonbigcar).')) {
+      const remaining = window.dataStore.cleanupDummyAccounts();
+      alert(`🎉 Đã dọn dẹp thành công!\nHiện tại hệ thống chỉ còn ${remaining.length} tài khoản thực tế (Admin sonbigcar).`);
+      this.render();
     }
   }
 }

@@ -70,9 +70,8 @@ class AuthManager {
     const isOwnerOrAdmin = 
       input === 'sonbigcar' || 
       input === 'son190799' || 
-      input === 'admin@doanson.com' || 
-      input === 'admin@revitstore.vn' ||
-      input.startsWith('admin');
+      input === 'admin@doanson.com' ||
+      input === 'admin';
 
     // Kiểm tra mật khẩu cho tài khoản quản trị
     if (isOwnerOrAdmin) {
