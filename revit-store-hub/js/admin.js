@@ -319,15 +319,18 @@ class AdminPanel {
         <p style="color: var(--text-muted); font-size: 0.92rem; margin: 0;">
           Quản lý toàn bộ danh mục Revit Tools, Family và Project Templates.
         </p>
-        <div style="display: flex; gap: 8px;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <button class="btn btn-primary btn-sm" onclick="window.storeApp.openProductEditorModal()">
             ✨ + Thêm Sản Phẩm & Niêm Yết Giá Mới
           </button>
+          <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.forceSyncToCloud(this)" title="Đồng bộ danh sách sản phẩm hiện tại lên máy chủ trung tâm">
+            ☁️ Đồng Bộ Ngay Lên Máy Chủ
+          </button>
           <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.exportProductsJson()" title="Xuất file JSON danh mục sản phẩm để đồng bộ sang máy khác">
-            📤 Xuất File Dữ Liệu Sản Phẩm
+            📤 Xuất File JSON
           </button>
           <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.importProductsJson()" title="Nhập file JSON danh mục sản phẩm từ máy khác">
-            📥 Nạp File Dữ Liệu Sản Phẩm
+            📥 Nạp File JSON
           </button>
         </div>
       </div>
@@ -972,6 +975,28 @@ class AdminPanel {
       reader.readAsText(file);
     };
     input.click();
+  }
+
+  async forceSyncToCloud(btnEl) {
+    const origText = btnEl ? btnEl.innerHTML : '';
+    if (btnEl) {
+      btnEl.disabled = true;
+      btnEl.innerHTML = '⏳ Đang đồng bộ...';
+    }
+
+    const products = window.dataStore.getProducts();
+    const res = await window.dataStore.syncProductsToGitHub(products);
+
+    if (btnEl) {
+      btnEl.disabled = false;
+      btnEl.innerHTML = origText;
+    }
+
+    if (res && res.success) {
+      alert(`🎉 Đã đồng bộ thành công ${products.length} sản phẩm lên máy chủ trung tâm!\nMọi người dùng mở website trên máy tính của họ sẽ thấy ngay danh mục này.`);
+    } else {
+      alert(`⚠️ Đồng bộ thất bại: ${res ? res.message : 'Lỗi kết nối'}\nBạn vẫn có thể dùng nút 'Xuất File JSON' để nạp sang máy khác.`);
+    }
   }
 }
 
