@@ -187,12 +187,15 @@ class AdminPanel {
                   </span>
                 </td>
                 <td>
-                  <div style="display: flex; gap: 8px;">
+                  <div style="display: flex; gap: 6px;">
                     <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.toggleRole('${acc.id}')" title="Đổi quyền Admin / Customer">
                       ${acc.role === 'admin' ? 'Hạ quyền Kỹ sư' : 'Nâng quyền Admin'}
                     </button>
                     <button class="btn btn-secondary btn-sm" style="color: ${acc.status === 'active' ? 'var(--danger)' : 'var(--success)'};" onclick="window.adminPanel.toggleStatus('${acc.id}')">
                       ${acc.status === 'active' ? 'Khóa' : 'Mở khóa'}
+                    </button>
+                    <button class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="window.adminPanel.deleteAccountPrompt('${acc.id}', '${acc.full_name}')" title="Xóa tài khoản này">
+                      🗑️ Xóa
                     </button>
                   </div>
                 </td>
@@ -245,9 +248,14 @@ class AdminPanel {
                   </span>
                 </td>
                 <td>
-                  <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.updateRequestStatus('${req.id}')">
-                    Chuyển trạng thái
-                  </button>
+                  <div style="display: flex; gap: 6px;">
+                    <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.updateRequestStatus('${req.id}')">
+                      Chuyển trạng thái
+                    </button>
+                    <button class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="window.adminPanel.deleteRequestPrompt('${req.id}')" title="Xóa yêu cầu">
+                      🗑️ Xóa
+                    </button>
+                  </div>
                 </td>
               </tr>
             `).join('')}
@@ -307,13 +315,21 @@ class AdminPanel {
 
   renderProductsTable(products) {
     return `
-      <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
-        <p style="color: var(--text-muted); font-size: 0.92rem;">
+      <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <p style="color: var(--text-muted); font-size: 0.92rem; margin: 0;">
           Quản lý toàn bộ danh mục Revit Tools, Family và Project Templates.
         </p>
-        <button class="btn btn-primary btn-sm" onclick="window.storeApp.openProductEditorModal()">
-          ✨ + Thêm Sản Phẩm & Niêm Yết Giá Mới
-        </button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary btn-sm" onclick="window.storeApp.openProductEditorModal()">
+            ✨ + Thêm Sản Phẩm & Niêm Yết Giá Mới
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.exportProductsJson()" title="Xuất file JSON danh mục sản phẩm để đồng bộ sang máy khác">
+            📤 Xuất File Dữ Liệu Sản Phẩm
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.importProductsJson()" title="Nhập file JSON danh mục sản phẩm từ máy khác">
+            📥 Nạp File Dữ Liệu Sản Phẩm
+          </button>
+        </div>
       </div>
       <div class="admin-table-container">
         <table class="data-table">
@@ -879,6 +895,27 @@ class AdminPanel {
     this.render();
   }
 
+  deleteAccountPrompt(accId, accName) {
+    const currentUser = window.authManager.getCurrentUser();
+    if (currentUser && currentUser.id === accId) {
+      alert('Không thể xóa tài khoản bạn đang đăng nhập!');
+      return;
+    }
+    if (confirm(`⚠️ Bạn có chắc chắn muốn xóa tài khoản "${accName}"?\nHành động này không thể hoàn tác.`)) {
+      window.dataStore.deleteAccount(accId);
+      alert(`Đã xóa tài khoản "${accName}" thành công!`);
+      this.render();
+    }
+  }
+
+  deleteRequestPrompt(reqId) {
+    if (confirm('⚠️ Bạn có chắc chắn muốn xóa yêu cầu dịch vụ này?')) {
+      window.dataStore.deleteCustomRequest(reqId);
+      alert('Đã xóa yêu cầu thành công!');
+      this.render();
+    }
+  }
+
   addNewAccountPrompt() {
     const email = prompt('Nhập Email:');
     if (!email) return;
@@ -892,10 +929,49 @@ class AdminPanel {
       company: 'BIM Engineering Corp',
       role,
       status: 'active',
-      created_at: new Date().toISOString()
     });
     alert('Đã tạo tài khoản mới thành công!');
     this.render();
+  }
+
+  exportProductsJson() {
+    const products = window.dataStore.getProducts();
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(products, null, 2));
+    const dlAnchor = document.createElement('a');
+    dlAnchor.setAttribute("href", dataStr);
+    dlAnchor.setAttribute("download", `DoanSon_Products_Backup_${new Date().toISOString().slice(0, 10)}.json`);
+    document.body.appendChild(dlAnchor);
+    dlAnchor.click();
+    dlAnchor.remove();
+    alert('✅ Đã xuất file JSON thành công! Bạn có thể mang file này nạp sang máy tính hoặc trình duyệt khác.');
+  }
+
+  importProductsJson() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const imported = JSON.parse(event.target.result);
+          if (Array.isArray(imported)) {
+            window.dataStore.save('products', imported);
+            alert(`🎉 Nạp thành công ${imported.length} sản phẩm vào cơ sở dữ liệu!`);
+            this.render();
+            if (window.storeApp) window.storeApp.renderProducts();
+          } else {
+            alert('File JSON không đúng cấu trúc danh sách sản phẩm!');
+          }
+        } catch (err) {
+          alert('Lỗi đọc file JSON: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
   }
 }
 

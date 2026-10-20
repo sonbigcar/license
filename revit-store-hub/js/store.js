@@ -268,10 +268,18 @@ class StoreApp {
   handleLoginSubmit(e) {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value.trim();
-    if (!email) return;
+    const pass = (document.getElementById('loginPassword') ? document.getElementById('loginPassword').value : '').trim();
+    if (!email) {
+      alert('Vui lòng nhập Email hoặc Tên đăng nhập.');
+      return;
+    }
+    if (!pass) {
+      alert('Vui lòng nhập Mật khẩu.');
+      return;
+    }
 
     try {
-      const user = window.authManager.login(email);
+      const user = window.authManager.login(email, pass);
       this.closeAuthModal();
       alert(`Chào mừng ${user.full_name} đã đăng nhập!`);
       if (user.role === 'admin') {

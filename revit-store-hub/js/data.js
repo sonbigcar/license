@@ -369,6 +369,12 @@ class DataStore {
     this.save('accounts', accounts);
   }
 
+  deleteAccount(accountId) {
+    let accounts = this.getAccounts();
+    accounts = accounts.filter(a => a.id !== accountId);
+    this.save('accounts', accounts);
+  }
+
   getCustomRequests() {
     return this.get('custom_requests');
   }
@@ -376,6 +382,12 @@ class DataStore {
   saveCustomRequest(req) {
     const requests = this.getCustomRequests();
     requests.unshift(req);
+    this.save('custom_requests', requests);
+  }
+
+  deleteCustomRequest(reqId) {
+    let requests = this.getCustomRequests();
+    requests = requests.filter(r => r.id !== reqId);
     this.save('custom_requests', requests);
   }
 

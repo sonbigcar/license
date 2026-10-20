@@ -48,12 +48,17 @@ class AuthManager {
   }
 
   /**
-   * Đăng nhập người dùng (hỗ trợ Email hoặc Username)
+   * Đăng nhập người dùng (bắt buộc kiểm tra mật khẩu)
    */
   login(identifier, password = '') {
     const input = (identifier || '').trim().toLowerCase();
+    const pass = (password || '').trim();
+
     if (!input) {
       throw new Error('Vui lòng nhập Email hoặc Tên đăng nhập.');
+    }
+    if (!pass) {
+      throw new Error('Vui lòng nhập Mật khẩu.');
     }
 
     const accounts = window.dataStore.getAccounts();
@@ -69,11 +74,23 @@ class AuthManager {
       input === 'admin@revitstore.vn' ||
       input.startsWith('admin');
 
+    // Kiểm tra mật khẩu cho tài khoản quản trị
+    if (isOwnerOrAdmin) {
+      if (pass !== 'Son190799' && (account && account.password && account.password !== pass)) {
+        throw new Error('Mật khẩu quản trị viên không chính xác. Vui lòng kiểm tra lại!');
+      }
+    } else if (account && account.password) {
+      if (account.password !== pass) {
+        throw new Error('Mật khẩu không chính xác. Vui lòng thử lại!');
+      }
+    }
+
     if (!account) {
       account = {
         id: 'acc-' + Date.now().toString(16),
         email: input.includes('@') ? input : `${input}@doanson.com`,
         username: input.includes('@') ? input.split('@')[0] : input,
+        password: pass,
         full_name: isOwnerOrAdmin ? 'Đoàn Thanh Sơn (Admin)' : (input.includes('@') ? input.split('@')[0].toUpperCase() : input.toUpperCase()),
         phone: '0908123456',
         company: isOwnerOrAdmin ? 'DoanSon BIM Studio' : 'BIM Engineering Corp',
@@ -82,8 +99,13 @@ class AuthManager {
         created_at: new Date().toISOString()
       };
       window.dataStore.saveAccount(account);
-    } else if (isOwnerOrAdmin && account.role !== 'admin') {
-      account.role = 'admin';
+    } else {
+      if (isOwnerOrAdmin && account.role !== 'admin') {
+        account.role = 'admin';
+      }
+      if (!account.password) {
+        account.password = pass;
+      }
       window.dataStore.saveAccount(account);
     }
 
