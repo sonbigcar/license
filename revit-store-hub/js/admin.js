@@ -276,6 +276,12 @@ class AdminPanel {
     }
 
     return `
+      <div style="margin-bottom: 14px;">
+        <p style="color: var(--text-muted); font-size: 0.92rem; margin: 0;">
+          Danh sách toàn bộ đơn hàng. Bạn cần kiểm tra tài khoản ngân hàng và bấm <strong>"Duyệt Đã Nhận Tiền"</strong> để hệ thống cấp bản quyền cho khách.
+        </p>
+      </div>
+
       <div class="admin-table-container">
         <table class="data-table">
           <thead>
@@ -287,6 +293,7 @@ class AdminPanel {
               <th>Cổng TT</th>
               <th>Thời gian</th>
               <th>Trạng thái</th>
+              <th>Thao Tác Duyệt Đơn</th>
             </tr>
           </thead>
           <tbody>
@@ -306,9 +313,31 @@ class AdminPanel {
                 <td><span class="badge badge-version">VietQR Napas 24/7</span></td>
                 <td>${new Date(o.created_at).toLocaleString('vi-VN')}</td>
                 <td>
-                  <span class="badge ${o.status === 'paid' ? 'badge-family' : 'badge-custom'}">
-                    ${o.status === 'paid' ? 'Đã Thanh Toán' : 'Chờ Chuyển Khoản'}
-                  </span>
+                  ${o.status === 'paid' 
+                    ? '<span class="badge badge-family">🟢 Đã Thanh Toán</span>'
+                    : (o.status === 'pending_approval'
+                        ? '<span class="badge" style="background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; font-weight: 700;">🔔 Khách Báo Đã CK (Chờ Duyệt)</span>'
+                        : (o.status === 'cancelled'
+                            ? '<span class="badge badge-admin">❌ Đã Hủy</span>'
+                            : '<span class="badge badge-version">⏳ Chờ Chuyển Khoản</span>'))
+                  }
+                </td>
+                <td>
+                  <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    ${o.status !== 'paid' ? `
+                      <button class="btn btn-primary btn-sm" onclick="window.adminPanel.approveOrderPrompt(${o.order_code}, ${o.total_amount})" title="Kiểm tra tiền đã vào tài khoản và bấm duyệt để cấp license">
+                        ✅ Duyệt Đã Nhận Tiền
+                      </button>
+                      <button class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="window.adminPanel.rejectOrderPrompt(${o.order_code})" title="Từ chối đơn hàng">
+                        ❌ Hủy đơn
+                      </button>
+                    ` : `
+                      <span style="color: var(--success); font-weight: 700; font-size: 0.85rem; padding: 4px 6px;">✓ Đã Kích Hoạt</span>
+                    `}
+                    <button class="btn btn-secondary btn-sm" style="color: var(--text-dim);" onclick="window.adminPanel.deleteOrderPrompt('${o.id}')" title="Xóa đơn hàng này">
+                      🗑️
+                    </button>
+                  </div>
                 </td>
               </tr>
             `).join('')}
@@ -1065,6 +1094,43 @@ class AdminPanel {
     if (confirm('Bạn có chắc chắn muốn dọn dẹp và xóa toàn bộ các tài khoản ảo mặc định (như admin@revitstore.vn, engineer.bim...)?\nHệ thống sẽ chỉ giữ lại duy nhất 1 tài khoản chính chủ của bạn (sonbigcar).')) {
       const remaining = window.dataStore.cleanupDummyAccounts();
       alert(`🎉 Đã dọn dẹp thành công!\nHiện tại hệ thống chỉ còn ${remaining.length} tài khoản thực tế (Admin sonbigcar).`);
+      this.render();
+    }
+  }
+
+  async approveOrderPrompt(orderCode, totalAmount) {
+    const formattedAmount = window.storeApp ? window.storeApp.formatCurrency(totalAmount) : `${totalAmount} ₫`;
+    if (confirm(`⚠️ XÁC NHẬN DUYỆT ĐƠN HÀNG #${orderCode}\n\nBạn có chắc chắn tài khoản ngân hàng của bạn đã nhận được số tiền ${formattedAmount}?\n\nSau khi bấm OK, hệ thống sẽ kích hoạt sản phẩm và cấp License bản quyền cho khách hàng ngay lập tức.`)) {
+      try {
+        const res = await window.paymentGateway.approveOrderByAdmin(orderCode);
+        if (res && res.success) {
+          alert(`🎉 ĐÃ DUYỆT ĐƠN HÀNG #${orderCode} THÀNH CÔNG!\nKhách hàng đã nhận được bản quyền và có thể tải sản phẩm ngay.`);
+          this.render();
+        }
+      } catch (err) {
+        alert('Lỗi duyệt đơn hàng: ' + err.message);
+      }
+    }
+  }
+
+  async rejectOrderPrompt(orderCode) {
+    const reason = prompt('Nhập lý do từ chối đơn hàng (Ví dụ: Chưa nhận được tiền trong tài khoản):', 'Chưa nhận được tiền chuyển khoản');
+    if (!reason) return;
+    try {
+      await window.paymentGateway.rejectOrderByAdmin(orderCode, reason);
+      alert(`Đã từ chối đơn hàng #${orderCode}.`);
+      this.render();
+    } catch (err) {
+      alert('Lỗi: ' + err.message);
+    }
+  }
+
+  deleteOrderPrompt(orderId) {
+    if (confirm('⚠️ Bạn có chắc muốn xóa lịch sử đơn hàng này?\nHành động này không thể hoàn tác.')) {
+      let orders = window.dataStore.getOrders();
+      orders = orders.filter(o => o.id !== orderId);
+      window.dataStore.save('orders', orders);
+      alert('Đã xóa đơn hàng thành công!');
       this.render();
     }
   }

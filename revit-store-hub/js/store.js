@@ -885,10 +885,17 @@ class StoreApp {
           <span>Đang chờ chuyển khoản từ ứng dụng ngân hàng...</span>
         </div>
 
+        <div id="paymentPendingNoticeBox"></div>
+
         <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
           <button id="btnConfirmPaid" class="btn btn-primary btn-lg" style="width: 100%; font-weight: 800; font-size: 1rem;" onclick="window.storeApp.handleConfirmPaymentClicked(${order.order_code})">
             ✅ Tôi Đã Chuyển Khoản Thành Công
           </button>
+          ${window.authManager.isAdmin() ? `
+            <button class="btn btn-secondary btn-sm" style="color: var(--primary); font-weight: 700; border-color: var(--primary); padding: 8px;" onclick="window.storeApp.handleAdminInstantApprove(${order.order_code})" title="Chức năng dành riêng cho Admin sonbigcar để kiểm thử cấp bản quyền">
+              ⚡ [Admin Test] Duyệt & Kích Hoạt Ngay Lập Tức
+            </button>
+          ` : ''}
           <div style="display: flex; gap: 8px;">
             <a href="${qrUrl}" download="VietQR_DoanSon_${order.order_code}.png" class="btn btn-secondary btn-sm" style="flex: 1; text-align: center; text-decoration: none;" target="_blank">
               📥 Tải Ảnh Mã QR
@@ -920,7 +927,7 @@ class StoreApp {
       }
     }, 1000);
 
-    // Lắng nghe trạng thái realtime
+    // Lắng nghe trạng thái realtime (tự động mở khóa khi Admin bấm Duyệt trong tab Quản lý Đơn Hàng)
     window.paymentGateway.startPaymentPolling(order.order_code, (status, updatedOrder) => {
       if (status === 'paid') {
         this.handlePaymentCompletedSuccessfully(updatedOrder);
@@ -932,19 +939,70 @@ class StoreApp {
     const btn = document.getElementById('btnConfirmPaid');
     if (btn) {
       btn.disabled = true;
-      btn.innerHTML = '⏳ Đang xác nhận chuyển khoản...';
+      btn.innerHTML = '⏳ Đang gửi thông báo đối soát...';
     }
 
     try {
-      const res = await window.paymentGateway.confirmPaymentByCustomer(orderCode);
+      const res = await window.paymentGateway.notifyCustomerTransferred(orderCode);
       if (res && res.success) {
-        this.handlePaymentCompletedSuccessfully(res.order, res.generatedKeys);
+        if (res.isPaid) {
+          this.handlePaymentCompletedSuccessfully(res.order);
+        } else {
+          this.showPaymentPendingApprovalNotice(res.order);
+        }
       }
     } catch (e) {
-      alert('Không thể xác nhận đơn hàng: ' + e.message);
+      alert('Không thể gửi thông báo: ' + e.message);
       if (btn) {
         btn.disabled = false;
         btn.innerHTML = '✅ Tôi Đã Chuyển Khoản Thành Công';
+      }
+    }
+  }
+
+  showPaymentPendingApprovalNotice(order) {
+    const statusBox = document.getElementById('paymentStatusBox');
+    if (statusBox) {
+      statusBox.className = 'payment-status-bar warning';
+      statusBox.innerHTML = `
+        <span>⏳ Đã gửi thông báo chuyển khoản! Đang chờ Admin xác nhận số dư...</span>
+      `;
+    }
+
+    const btn = document.getElementById('btnConfirmPaid');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Đã Gửi Thông Báo - Đang Chờ Admin Duyệt Tiền';
+      btn.style.opacity = '0.75';
+    }
+
+    const noticeBox = document.getElementById('paymentPendingNoticeBox');
+    if (noticeBox) {
+      noticeBox.innerHTML = `
+        <div style="background: #FFFBEB; border: 1.5px solid #FCD34D; border-radius: var(--radius-lg); padding: 16px; margin-top: 14px; text-align: left;">
+          <h4 style="font-weight: 700; color: #92400E; margin-bottom: 6px; font-size: 0.95rem;">
+            ⏳ Đã ghi nhận thông báo chuyển khoản đơn hàng #${order.order_code}
+          </h4>
+          <p style="font-size: 0.85rem; color: #78350F; line-height: 1.5; margin-bottom: 8px;">
+            Hệ thống đang đối soát với tài khoản ngân hàng. Sau khi Admin kiểm tra tài khoản đã nhận đúng <strong>${this.formatCurrency(order.total_amount)}</strong>, sản phẩm và bản quyền sẽ tự động được kích hoạt ngay lập tức!
+          </p>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">
+            💡 Bạn có thể giữ nguyên cửa sổ này chờ duyệt tự động, hoặc xem trạng thái đơn trong mục <strong>"Bản Quyền Của Tôi"</strong>.
+          </p>
+        </div>
+      `;
+    }
+  }
+
+  async handleAdminInstantApprove(orderCode) {
+    if (confirm(`⚡ [CHẾ ĐỘ ADMIN TEST]\nBạn có muốn duyệt kích hoạt ngay đơn hàng #${orderCode} để kiểm thử bản quyền?`)) {
+      try {
+        const res = await window.paymentGateway.approveOrderByAdmin(orderCode);
+        if (res && res.success) {
+          this.handlePaymentCompletedSuccessfully(res.order, res.generatedKeys);
+        }
+      } catch (err) {
+        alert('Lỗi duyệt: ' + err.message);
       }
     }
   }

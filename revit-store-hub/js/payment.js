@@ -180,9 +180,11 @@ class PaymentGateway {
   }
 
   /**
-   * Khách hàng bấm xác nhận "Tôi đã chuyển khoản thành công"
+   * Khách hàng bấm báo "Tôi đã chuyển khoản thành công"
+   * Trạng thái chuyển sang: 'pending_approval' (Đang chờ Admin kiểm tra tài khoản ngân hàng và duyệt)
+   * TUYỆT ĐỐI KHÔNG TỰ ĐỘNG CẤP LICENSE KHI CHƯA ĐƯỢC ADMIN DUYỆT HOẶC CHƯA CÓ WEBHOOK NGÂN HÀNG
    */
-  async confirmPaymentByCustomer(orderCode) {
+  async notifyCustomerTransferred(orderCode) {
     const orders = window.dataStore.getOrders();
     const order = orders.find(o => o.order_code === Number(orderCode));
 
@@ -191,16 +193,72 @@ class PaymentGateway {
     }
 
     if (order.status === 'paid') {
-      return { success: true, message: 'Đơn hàng này đã được xác nhận thanh toán trước đó.', order };
+      return { success: true, isPaid: true, message: 'Đơn hàng này đã được xác nhận thanh toán trước đó.', order };
     }
 
-    const result = this.fulfillOrder(order);
+    order.status = 'pending_approval';
+    order.notified_at = new Date().toISOString();
+    window.dataStore.saveOrder(order);
+
     return {
       success: true,
-      message: 'Xác nhận thanh toán thành công!',
+      isPaid: false,
+      message: 'Đã ghi nhận thông báo chuyển khoản! Đơn hàng đang được Admin kiểm tra số dư.',
+      order
+    };
+  }
+
+  /**
+   * ADMIN XÁC NHẬN ĐÃ NHẬN TIỀN & DUYỆT ĐƠN HÀNG (CẤP LICENSE / FILE CHO KHÁCH)
+   */
+  async approveOrderByAdmin(orderCode) {
+    const orders = window.dataStore.getOrders();
+    const order = orders.find(o => o.order_code === Number(orderCode));
+
+    if (!order) {
+      throw new Error(`Không tìm thấy đơn hàng mã #${orderCode}`);
+    }
+
+    if (order.status === 'paid') {
+      return { success: true, message: 'Đơn hàng này đã được thanh toán và duyệt trước đó.', order };
+    }
+
+    order.approved_by = 'Admin';
+    order.approved_at = new Date().toISOString();
+    const result = this.fulfillOrder(order);
+
+    return {
+      success: true,
+      message: 'Đã duyệt thanh toán thành công và cấp bản quyền cho khách hàng!',
       order: result.order,
       generatedKeys: result.generatedKeys
     };
+  }
+
+  /**
+   * ADMIN TỪ CHỐI / HỦY ĐƠN HÀNG CHƯA NHẬN ĐƯỢC TIỀN
+   */
+  async rejectOrderByAdmin(orderCode, reason = 'Chưa nhận được tiền chuyển khoản') {
+    const orders = window.dataStore.getOrders();
+    const order = orders.find(o => o.order_code === Number(orderCode));
+
+    if (!order) {
+      throw new Error(`Không tìm thấy đơn hàng mã #${orderCode}`);
+    }
+
+    order.status = 'cancelled';
+    order.cancelled_at = new Date().toISOString();
+    order.cancel_reason = reason;
+    window.dataStore.saveOrder(order);
+
+    return { success: true, message: 'Đã từ chối đơn hàng thành công!', order };
+  }
+
+  /**
+   * Khách hàng bấm xác nhận (backward compatibility wrapper)
+   */
+  async confirmPaymentByCustomer(orderCode) {
+    return await this.notifyCustomerTransferred(orderCode);
   }
 
   /**
