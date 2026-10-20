@@ -212,10 +212,23 @@ class DataStore {
       const defaultAccounts = [
         {
           id: 'acc-admin-01',
+          email: 'admin@doanson.com',
+          username: 'sonbigcar',
+          full_name: 'Đoàn Thanh Sơn (Admin)',
+          phone: '0908123456',
+          company: 'DoanSon BIM Studio',
+          role: 'admin',
+          status: 'active',
+          created_at: '2026-01-01T00:00:00Z',
+          orders_count: 0
+        },
+        {
+          id: 'acc-admin-02',
           email: 'admin@revitstore.vn',
+          username: 'admin',
           full_name: 'Quản Trị Viên Hệ Thống',
           phone: '0909999888',
-          company: 'RevitHub Core Team',
+          company: 'DoanSon BIM Studio',
           role: 'admin',
           status: 'active',
           created_at: '2026-01-01T00:00:00Z',
@@ -466,6 +479,23 @@ class DataStore {
       console.warn('[Supabase Sync] Lỗi kết nối cloud:', e.message);
     }
     return null;
+  }
+
+  getBankConfig() {
+    const saved = this.get('bank_config');
+    if (saved && saved.accountNo) return saved;
+    return {
+      bankId: '970422', // MB Bank
+      bankName: 'Ngân hàng TMCP Quân Đội (MB Bank)',
+      accountNo: '0908123456',
+      accountName: 'DOAN THANH SON',
+      template: 'compact2'
+    };
+  }
+
+  saveBankConfig(config) {
+    this.save('bank_config', config);
+    return config;
   }
 }
 

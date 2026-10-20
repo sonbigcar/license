@@ -25,8 +25,8 @@ class AdminPanel {
           <p style="color: var(--text-muted); max-width: 500px; margin: 12px auto 24px;">
             Tab này chỉ hiển thị và cho phép truy cập đối với tài khoản có quyền Quản Trị Viên (Admin).
           </p>
-          <button class="btn btn-primary" onclick="window.storeApp.quickLoginAsAdmin()">
-            👑 Đăng Nhập Tài Khoản Admin Ngay (Demo)
+          <button class="btn btn-primary" onclick="window.storeApp.openAuthModal()">
+            🔐 Đăng Nhập Tài Khoản Quản Trị
           </button>
         </div>
       `;
@@ -108,6 +108,9 @@ class AdminPanel {
           <button class="portal-tab-btn ${this.currentTab === 'licenses' ? 'active' : ''}" onclick="window.adminPanel.switchTab('licenses')">
             🔑 Quản Lý Giấy Phép (${licenses.length})
           </button>
+          <button class="portal-tab-btn ${this.currentTab === 'settings' ? 'active' : ''}" onclick="window.adminPanel.switchTab('settings')">
+            🏦 Cài Đặt Ngân Hàng VietQR
+          </button>
         </div>
 
         <div id="adminTabContent">
@@ -133,6 +136,8 @@ class AdminPanel {
       return this.renderRequestsTable(data.requests);
     } else if (tab === 'licenses') {
       return this.renderLicensesTable(data.licenses);
+    } else if (tab === 'settings') {
+      return this.renderSettingsTab();
     }
     return '';
   }
@@ -647,9 +652,6 @@ class AdminPanel {
       <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <h5 style="font-weight: 800; color: var(--text-pure); font-size: 0.95rem;">Danh Sách Máy Trạm (Workstations)</h5>
         <div style="display: flex; gap: 8px;">
-          <button class="btn btn-primary btn-sm" onclick="window.adminPanel.adminSimulateDeviceActivation('${lic.id}')">
-            💻 Giả Lập Kích Hoạt Máy Mới (Revit API)
-          </button>
           <button class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="window.adminPanel.resetLicenseDevicesPrompt('${lic.id}')">
             🔄 Reset Toàn Bộ Máy
           </button>
@@ -721,23 +723,83 @@ class AdminPanel {
     }
   }
 
-  adminSimulateDeviceActivation(licenseId) {
-    const licenses = window.dataStore.getLicenses();
-    const lic = licenses.find(l => l.id === licenseId);
-    if (!lic) return;
+  renderSettingsTab() {
+    const bankCfg = window.dataStore.getBankConfig();
+    return `
+      <div style="background: #FFFFFF; border: var(--border-light); border-radius: var(--radius-xl); padding: 28px; box-shadow: var(--shadow-sm); max-width: 680px;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+          <div style="font-size: 2.2rem;">🏦</div>
+          <div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-pure); margin-bottom: 2px;">
+              Cấu Hình Tài Khoản Nhận Tiền VietQR Napas 24/7
+            </h3>
+            <p style="font-size: 0.86rem; color: var(--text-muted); margin: 0;">
+              Khách hàng quét mã VietQR sẽ tự động chuyển tiền trực tiếp đến tài khoản ngân hàng này.
+            </p>
+          </div>
+        </div>
 
-    const randomId = Math.random().toString(16).substring(2, 8).toUpperCase();
-    const hwid = 'HWID-STATION-' + randomId;
-    const machineName = 'PC Trạm Thiết Kế ' + randomId;
+        <form onsubmit="window.adminPanel.handleSaveBankSettings(event)">
+          <div class="form-group">
+            <label>Ngân hàng nhận tiền *</label>
+            <select id="cfgBankSelect" class="form-control" required>
+              <option value="970422|Ngân hàng TMCP Quân Đội (MB Bank)" ${bankCfg.bankId === '970422' ? 'selected' : ''}>MB Bank (Ngân hàng TMCP Quân Đội - BIN 970422)</option>
+              <option value="970436|Ngân hàng Ngoại thương Việt Nam (Vietcombank)" ${bankCfg.bankId === '970436' || bankCfg.bankId === 'VCB' ? 'selected' : ''}>Vietcombank (BIN 970436)</option>
+              <option value="970407|Ngân hàng Kỹ thương Việt Nam (Techcombank)" ${bankCfg.bankId === '970407' || bankCfg.bankId === 'TCB' ? 'selected' : ''}>Techcombank (BIN 970407)</option>
+              <option value="970432|Ngân hàng Việt Nam Thịnh Vượng (VPBank)" ${bankCfg.bankId === '970432' || bankCfg.bankId === 'VPB' ? 'selected' : ''}>VPBank (BIN 970432)</option>
+              <option value="970416|Ngân hàng Á Châu (ACB)" ${bankCfg.bankId === '970416' || bankCfg.bankId === 'ACB' ? 'selected' : ''}>ACB (BIN 970416)</option>
+              <option value="970418|Ngân hàng Đầu tư và Phát triển (BIDV)" ${bankCfg.bankId === '970418' || bankCfg.bankId === 'BIDV' ? 'selected' : ''}>BIDV (BIN 970418)</option>
+              <option value="970405|Ngân hàng Nông nghiệp (Agribank)" ${bankCfg.bankId === '970405' ? 'selected' : ''}>Agribank (BIN 970405)</option>
+              <option value="970423|Ngân hàng Tiên Phong (TPBank)" ${bankCfg.bankId === '970423' ? 'selected' : ''}>TPBank (BIN 970423)</option>
+            </select>
+          </div>
 
-    const result = window.licenseManager.verifyLicenseApi(lic.license_key, hwid, machineName, '2025');
-    if (result.valid) {
-      alert(`✅ KÍCH HOẠT MÁY MỚI THÀNH CÔNG!\n\n• Thiết bị: ${machineName}\n• Hardware ID: ${hwid}\n• Revit API Version: 2025\n• Đã liên kết: ${result.machines_used}/${result.max_machines} máy.`);
-    } else {
-      alert(`❌ KÍCH HOẠT KHÔNG THÀNH CÔNG: ${result.message}`);
+          <div class="form-group">
+            <label>Số tài khoản thụ hưởng (STK) *</label>
+            <input type="text" id="cfgAccountNo" class="form-control" value="${bankCfg.accountNo || ''}" placeholder="Ví dụ: 0908123456" required>
+          </div>
+
+          <div class="form-group">
+            <label>Tên chủ tài khoản (In hoa không dấu) *</label>
+            <input type="text" id="cfgAccountName" class="form-control" value="${bankCfg.accountName || ''}" placeholder="Ví dụ: DOAN THANH SON" required>
+          </div>
+
+          <div class="form-group">
+            <label>Cú pháp tiền tố chuyển khoản</label>
+            <input type="text" class="form-control" value="DOANSON <Mã_Đơn_Hàng>" disabled style="background: #F3EAE3; color: var(--text-muted);">
+            <small style="color: var(--text-dim); margin-top: 4px; display: block;">Hệ thống tự động nối tiền tố DOANSON với mã đơn hàng 6 số để nhận diện giao dịch.</small>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="margin-top: 10px;">
+            💾 Lưu Cấu Hình Ngân Hàng
+          </button>
+        </form>
+      </div>
+    `;
+  }
+
+  handleSaveBankSettings(e) {
+    e.preventDefault();
+    const bankVal = document.getElementById('cfgBankSelect').value.split('|');
+    const bankId = bankVal[0];
+    const bankName = bankVal[1];
+    const accountNo = document.getElementById('cfgAccountNo').value.trim();
+    const accountName = document.getElementById('cfgAccountName').value.trim().toUpperCase();
+
+    if (!accountNo || !accountName) {
+      alert('Vui lòng điền đủ Số tài khoản và Tên chủ tài khoản.');
+      return;
     }
 
-    this.openLicenseDevicesModal(licenseId);
+    window.dataStore.saveBankConfig({
+      bankId,
+      bankName,
+      accountNo,
+      accountName,
+      template: 'compact2'
+    });
+
+    alert('✅ ĐÃ LƯU THÔNG TIN TÀI KHOẢN NGÂN HÀNG THÀNH CÔNG!\nKhách hàng quét mã VietQR sẽ chuyển tiền trực tiếp vào tài khoản này.');
     this.render();
   }
 

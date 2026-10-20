@@ -30,6 +30,22 @@
   cursor: pointer;
 }
 
+.brand-logo-img {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 14px rgba(212, 143, 56, 0.28);
+  border: 1px solid rgba(212, 143, 56, 0.25);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  display: block;
+}
+
+.brand-logo:hover .brand-logo-img {
+  transform: scale(1.06);
+  box-shadow: 0 6px 20px rgba(212, 143, 56, 0.42);
+}
+
 .brand-icon {
   width: 42px;
   height: 42px;

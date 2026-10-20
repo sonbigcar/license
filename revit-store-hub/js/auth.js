@@ -48,24 +48,42 @@ class AuthManager {
   }
 
   /**
-   * Đăng nhập người dùng
+   * Đăng nhập người dùng (hỗ trợ Email hoặc Username)
    */
-  login(email, password = '') {
+  login(identifier, password = '') {
+    const input = (identifier || '').trim().toLowerCase();
+    if (!input) {
+      throw new Error('Vui lòng nhập Email hoặc Tên đăng nhập.');
+    }
+
     const accounts = window.dataStore.getAccounts();
-    let account = accounts.find(a => a.email.toLowerCase() === email.toLowerCase());
+    let account = accounts.find(a => 
+      a.email.toLowerCase() === input || 
+      (a.username && a.username.toLowerCase() === input)
+    );
+
+    const isOwnerOrAdmin = 
+      input === 'sonbigcar' || 
+      input === 'son190799' || 
+      input === 'admin@doanson.com' || 
+      input === 'admin@revitstore.vn' ||
+      input.startsWith('admin');
 
     if (!account) {
-      // Nếu chưa có tài khoản, tự động tạo mới dạng customer
       account = {
         id: 'acc-' + Date.now().toString(16),
-        email: email,
-        full_name: email.split('@')[0].toUpperCase(),
-        phone: '0901234567',
-        company: 'BIM Contractor JSC',
-        role: email.includes('admin') ? 'admin' : 'customer',
+        email: input.includes('@') ? input : `${input}@doanson.com`,
+        username: input.includes('@') ? input.split('@')[0] : input,
+        full_name: isOwnerOrAdmin ? 'Đoàn Thanh Sơn (Admin)' : (input.includes('@') ? input.split('@')[0].toUpperCase() : input.toUpperCase()),
+        phone: '0908123456',
+        company: isOwnerOrAdmin ? 'DoanSon BIM Studio' : 'BIM Engineering Corp',
+        role: isOwnerOrAdmin ? 'admin' : 'customer',
         status: 'active',
         created_at: new Date().toISOString()
       };
+      window.dataStore.saveAccount(account);
+    } else if (isOwnerOrAdmin && account.role !== 'admin') {
+      account.role = 'admin';
       window.dataStore.saveAccount(account);
     }
 
@@ -89,6 +107,7 @@ class AuthManager {
     const newAccount = {
       id: 'acc-' + Date.now().toString(16),
       email: email,
+      username: email.split('@')[0],
       full_name: fullName,
       phone: phone || '',
       company: company || '',
@@ -100,24 +119,6 @@ class AuthManager {
     window.dataStore.saveAccount(newAccount);
     this.saveUser(newAccount);
     return newAccount;
-  }
-
-  /**
-   * Chuyển nhanh giữa Kỹ sư thường và Admin để trải nghiệm
-   */
-  switchRole(role) {
-    if (!this.currentUser) {
-      // Đăng nhập demo theo role
-      if (role === 'admin') {
-        this.login('admin@revitstore.vn');
-      } else {
-        this.login('engineer.bim@gmail.com');
-      }
-      return;
-    }
-
-    this.currentUser.role = role;
-    this.saveUser(this.currentUser);
   }
 
   logout() {

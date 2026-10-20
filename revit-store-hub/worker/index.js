@@ -88,7 +88,7 @@ export default {
         const bankBin = '970422'; // Ngân hàng Quân Đội MB
         const bankAcc = '0908123456';
         const bankName = 'DOAN SON';
-        const qrUrl = `https://img.vietqr.io/image/${bankBin}-${bankAcc}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(`REVITHUB ${orderCode}`)}&accountName=${encodeURIComponent(bankName)}`;
+        const qrUrl = `https://img.vietqr.io/image/${bankBin}-${bankAcc}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(`DOANSON ${orderCode}`)}&accountName=${encodeURIComponent(bankName)}`;
 
         return new Response(JSON.stringify({
           success: true,

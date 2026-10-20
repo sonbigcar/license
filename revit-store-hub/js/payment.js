@@ -1,22 +1,40 @@
 /**
  * ==============================================================================
- * REVIT BIM STORE - VIETQR & PAYOS REALTIME PAYMENT GATEWAY INTEGRATION
- * Xác thực tự động qua Server-Side Webhook & Polling (Không giả lập client-side)
+ * DOANSON BIM STUDIO - VIETQR & NAPAS 24/7 PAYMENT GATEWAY INTEGRATION
+ * Tích hợp thanh toán quét mã QR tự động & kích hoạt giấy phép tức thì
  * ==============================================================================
  */
 
 class PaymentGateway {
   constructor() {
-    this.BANK_CONFIG = {
-      bankId: 'VCB', // Vietcombank
-      bankName: 'Ngân hàng TMCP Ngoại thương Việt Nam (Vietcombank)',
-      accountNo: '1029384756',
-      accountName: 'CONG TY REVIT BIM SOLUTIONS VN',
-      template: 'compact2'
-    };
-
     this.activePollingInterval = null;
     this.currentOrder = null;
+  }
+
+  /**
+   * Lấy cấu hình tài khoản thụ hưởng từ DataStore
+   */
+  getBankConfig() {
+    if (window.dataStore && typeof window.dataStore.getBankConfig === 'function') {
+      return window.dataStore.getBankConfig();
+    }
+    return {
+      bankId: '970422', // MB Bank
+      bankName: 'Ngân hàng TMCP Quân Đội (MB Bank)',
+      accountNo: '0908123456',
+      accountName: 'DOAN THANH SON',
+      template: 'compact2'
+    };
+  }
+
+  /**
+   * Cập nhật cấu hình tài khoản thụ hưởng
+   */
+  updateBankConfig(newConfig) {
+    if (window.dataStore && typeof window.dataStore.saveBankConfig === 'function') {
+      return window.dataStore.saveBankConfig(newConfig);
+    }
+    return newConfig;
   }
 
   /**
@@ -45,13 +63,13 @@ class PaymentGateway {
         name: item.name,
         product_type: item.product_type,
         price: item.sale_price || item.price,
-        billing_cycle: item.billing_cycle,
+        billing_cycle: item.billing_cycle || 'one_time',
         metadata: item.metadata
       })),
       total_amount: totalAmount,
       status: 'pending', // 'pending' | 'paid' | 'cancelled'
-      payment_provider: 'vietqr_payos',
-      transfer_content: `REVIT ${orderCode}`,
+      payment_provider: 'vietqr_napas',
+      transfer_content: `DOANSON ${orderCode}`,
       notes: notes,
       created_at: new Date().toISOString(),
       paid_at: null
@@ -66,18 +84,18 @@ class PaymentGateway {
    * Tạo URL ảnh VietQR chuẩn Napas 24/7 với số tiền và nội dung chuyển khoản bắt buộc
    */
   getVietQrImageUrl(order) {
+    const cfg = this.getBankConfig();
     const amount = order.total_amount;
     const memo = encodeURIComponent(order.transfer_content);
-    return `https://img.vietqr.io/image/${this.BANK_CONFIG.bankId}-${this.BANK_CONFIG.accountNo}-${this.BANK_CONFIG.template}.png?amount=${amount}&addInfo=${memo}&accountName=${encodeURIComponent(this.BANK_CONFIG.accountName)}`;
+    return `https://img.vietqr.io/image/${cfg.bankId}-${cfg.accountNo}-${cfg.template || 'compact2'}.png?amount=${amount}&addInfo=${memo}&accountName=${encodeURIComponent(cfg.accountName)}`;
   }
 
   /**
-   * Lắng nghe trạng thái thanh toán từ Server (Polling thực tế)
+   * Lắng nghe trạng thái thanh toán từ DataStore / Webhook
    */
   startPaymentPolling(orderCode, onStatusChange) {
     this.stopPaymentPolling();
 
-    // Kiểm tra định kỳ mỗi 3 giây
     this.activePollingInterval = setInterval(() => {
       const orders = window.dataStore.getOrders();
       const updatedOrder = orders.find(o => o.order_code === orderCode);
@@ -88,7 +106,7 @@ class PaymentGateway {
           this.stopPaymentPolling();
         }
       }
-    }, 3000);
+    }, 2000);
   }
 
   stopPaymentPolling() {
@@ -99,46 +117,22 @@ class PaymentGateway {
   }
 
   /**
-   * SERVER-SIDE WEBHOOK PROCESSOR
-   * Nhận thông báo giao dịch có chữ ký HMAC SHA256 từ Ngân hàng / PayOS
-   * Sau khi xác thực chữ ký mới cập nhật order -> paid và cấp quyền
+   * Tự động kích hoạt quyền tải Family/Template và cấp License Key cho Revit Tools
    */
-  processWebhook(payload, signature) {
-    console.log('[Webhook Receiver] Nhận thông báo giao dịch:', payload);
+  fulfillOrder(order) {
+    if (!order) return null;
 
-    // 1. Kiểm tra tính toàn vẹn và chữ ký
-    if (!payload || !payload.orderCode) {
-      return { success: false, message: 'Dữ liệu webhook không hợp lệ' };
-    }
-
-    const orderCode = Number(payload.orderCode);
-    const amount = Number(payload.amount);
-
-    const orders = window.dataStore.getOrders();
-    const order = orders.find(o => o.order_code === orderCode);
-
-    if (!order) {
-      return { success: false, message: `Không tìm thấy đơn hàng mã ${orderCode}` };
-    }
-
-    if (order.status === 'paid') {
-      return { success: true, message: 'Đơn hàng này đã được xác nhận thanh toán trước đó' };
-    }
-
-    if (amount < order.total_amount) {
-      return { success: false, message: 'Số tiền chuyển khoản không khớp với giá trị đơn hàng' };
-    }
-
-    // 2. Xác thực thành công: Cập nhật đơn hàng thành PAID
     order.status = 'paid';
     order.paid_at = new Date().toISOString();
-    order.payment_reference = payload.reference || 'VCB-' + Date.now();
+    order.payment_reference = order.payment_reference || `NAPAS-${order.order_code}-${Date.now().toString(36).toUpperCase()}`;
     window.dataStore.saveOrder(order);
 
-    // 3. Tự động kích hoạt quyền tải Family và sinh License Key cho Revit Tools
+    const generatedKeys = [];
+
+    // Kích hoạt từng sản phẩm trong đơn hàng
     order.items.forEach(item => {
-      if (item.product_type === 'family') {
-        // Cấp quyền tải Family
+      if (item.product_type === 'family' || item.product_type === 'template') {
+        // Cấp quyền tải Family & Template vào Thư Viện Của Tôi
         window.dataStore.addPurchase({
           id: 'pur-' + Date.now().toString(16) + Math.random().toString(16).substring(2, 6),
           user_id: order.user_id,
@@ -148,34 +142,95 @@ class PaymentGateway {
           is_active: true
         });
       } else if (item.product_type === 'tool') {
-        // Cấp giấy phép Revit Tool
+        // Cấp giấy phép bản quyền Revit Add-in vào Bản Quyền Của Tôi
         const licenseKey = window.licenseManager.generateLicenseKey();
         const expiryDate = new Date();
         if (item.billing_cycle === 'monthly') {
           expiryDate.setMonth(expiryDate.getMonth() + 1);
+        } else if (item.billing_cycle === 'lifetime' || item.billing_cycle === 'one_time') {
+          expiryDate.setFullYear(expiryDate.getFullYear() + 50); // Vĩnh viễn
         } else {
-          expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+          expiryDate.setFullYear(expiryDate.getFullYear() + 1); // 1 Năm
         }
 
-        window.dataStore.addLicense({
-          id: 'lic-' + Date.now().toString(16),
+        const newLicense = {
+          id: 'lic-' + Date.now().toString(16) + Math.random().toString(16).substring(2, 5),
           license_key: licenseKey,
           user_id: order.user_id,
+          user_name: order.user_name,
+          user_email: order.user_email,
           product_id: item.product_id,
           order_id: order.id,
           product_name: item.name,
           subscription_type: item.billing_cycle || 'yearly',
-          max_machines: 2, // Gói Pro: tối đa 2 máy tính
+          max_machines: 2, // Gói 2 máy trạm
           status: 'active',
           start_date: new Date().toISOString(),
           expiry_date: expiryDate.toISOString(),
           activations: []
-        });
+        };
+
+        window.dataStore.addLicense(newLicense);
+        generatedKeys.push({ name: item.name, key: licenseKey });
       }
     });
 
-    console.log(`[Webhook Success] Đã xác thực thanh toán thành công cho đơn #${orderCode}. Đã cấp quyền tải và bản quyền!`);
-    return { success: true, message: 'Xác thực thanh toán và cấp quyền thành công', order: order };
+    console.log(`[PaymentGateway] Đã xác nhận đơn #${order.order_code} thành công và cấp quyền hoàn tất.`);
+    return { order, generatedKeys };
+  }
+
+  /**
+   * Khách hàng bấm xác nhận "Tôi đã chuyển khoản thành công"
+   */
+  async confirmPaymentByCustomer(orderCode) {
+    const orders = window.dataStore.getOrders();
+    const order = orders.find(o => o.order_code === Number(orderCode));
+
+    if (!order) {
+      throw new Error(`Không tìm thấy đơn hàng mã #${orderCode}`);
+    }
+
+    if (order.status === 'paid') {
+      return { success: true, message: 'Đơn hàng này đã được xác nhận thanh toán trước đó.', order };
+    }
+
+    const result = this.fulfillOrder(order);
+    return {
+      success: true,
+      message: 'Xác nhận thanh toán thành công!',
+      order: result.order,
+      generatedKeys: result.generatedKeys
+    };
+  }
+
+  /**
+   * SERVER-SIDE WEBHOOK PROCESSOR (Hỗ trợ PayOS / Napas Gateway)
+   */
+  processWebhook(payload, signature) {
+    if (!payload || !payload.orderCode) {
+      return { success: false, message: 'Dữ liệu webhook không hợp lệ' };
+    }
+
+    const orderCode = Number(payload.orderCode);
+    const amount = Number(payload.amount);
+    const orders = window.dataStore.getOrders();
+    const order = orders.find(o => o.order_code === orderCode);
+
+    if (!order) {
+      return { success: false, message: `Không tìm thấy đơn hàng mã #${orderCode}` };
+    }
+
+    if (order.status === 'paid') {
+      return { success: true, message: 'Đơn hàng này đã được thanh toán trước đó' };
+    }
+
+    if (amount && amount < order.total_amount) {
+      return { success: false, message: 'Số tiền chuyển khoản không khớp với giá trị đơn hàng' };
+    }
+
+    order.payment_reference = payload.reference || 'WEBHOOK-' + Date.now();
+    const result = this.fulfillOrder(order);
+    return { success: true, message: 'Xác thực thanh toán và cấp quyền thành công', order: result.order };
   }
 }
 

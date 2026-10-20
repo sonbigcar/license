@@ -242,3 +242,49 @@
   border-radius: 50%;
   animation: pulseSubtle 1.2s infinite;
 }
+
+.qr-timer-badge {
+  background: #FFF5F0;
+  border: 1px solid var(--primary-border);
+  color: var(--primary);
+  font-family: monospace;
+  font-size: 0.92rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+}
+
+.qr-guide-box {
+  background: #FFFFFF;
+  border: 1px dashed #EAE0D7;
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin: 14px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.qr-guide-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.qr-guide-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}

@@ -775,97 +775,188 @@ class StoreApp {
 
   showPaymentModal(order) {
     const qrUrl = window.paymentGateway.getVietQrImageUrl(order);
+    const bankCfg = window.paymentGateway.getBankConfig();
     const modalEl = document.getElementById('paymentModalOverlay');
     const container = document.getElementById('paymentModalBody');
+    if (!container) return;
+
+    this.paymentTimeRemaining = 900; // 15 phút (15:00)
+    if (this.paymentCountdownInterval) clearInterval(this.paymentCountdownInterval);
 
     container.innerHTML = `
       <div class="qr-card-container">
-        <div style="font-size: 0.88rem; color: var(--text-muted);">Đơn hàng: <strong style="color: var(--text-pure);">#${order.order_code}</strong></div>
-        <h3 style="font-family: var(--font-heading); font-size: 1.4rem; color: var(--text-pure); margin-top: 4px;">
-          Thanh toán qua VietQR Tự Động
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-size: 0.88rem; color: var(--text-muted);">
+            Đơn hàng: <strong style="color: var(--text-pure);">#${order.order_code}</strong>
+          </span>
+          <span class="qr-timer-badge" id="qrTimerDisplay">⏳ 15:00</span>
+        </div>
+
+        <h3 style="font-family: var(--font-heading); font-size: 1.35rem; color: var(--text-pure); margin-bottom: 4px;">
+          Thanh Toán VietQR Napas 24/7
         </h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 14px;">
+          Quét mã bằng bất kỳ ứng dụng Ngân hàng nào để kích hoạt ngay
+        </p>
 
         <div class="qr-box">
-          <img class="qr-image" src="${qrUrl}" alt="VietQR Napas 247">
+          <img class="qr-image" src="${qrUrl}" alt="Mã VietQR Thanh Toán">
         </div>
 
         <div class="bank-info-box">
           <div class="bank-row">
             <span class="bank-label">Ngân hàng:</span>
-            <span class="bank-val">${window.paymentGateway.BANK_CONFIG.bankName}</span>
+            <span class="bank-val">${bankCfg.bankName}</span>
           </div>
           <div class="bank-row">
             <span class="bank-label">Số tài khoản:</span>
             <span class="bank-val">
-              ${window.paymentGateway.BANK_CONFIG.accountNo}
-              <span class="copy-badge" onclick="navigator.clipboard.writeText('${window.paymentGateway.BANK_CONFIG.accountNo}'); alert('Đã sao chép STK!');">Sao chép</span>
+              <strong style="letter-spacing: 0.5px;">${bankCfg.accountNo}</strong>
+              <span class="copy-badge" onclick="window.storeApp.copyText('${bankCfg.accountNo}', 'Đã sao chép Số tài khoản!')">📋 Sao chép</span>
+            </span>
+          </div>
+          <div class="bank-row">
+            <span class="bank-label">Chủ tài khoản:</span>
+            <span class="bank-val">
+              <strong>${bankCfg.accountName}</strong>
             </span>
           </div>
           <div class="bank-row">
             <span class="bank-label">Số tiền:</span>
-            <span class="bank-val" style="color: var(--primary); font-size: 1.15rem;">
+            <span class="bank-val" style="color: var(--primary); font-size: 1.15rem; font-weight: 800;">
               ${this.formatCurrency(order.total_amount)}
+              <span class="copy-badge" onclick="window.storeApp.copyText('${order.total_amount}', 'Đã sao chép Số tiền!')">📋 Sao chép</span>
             </span>
           </div>
           <div class="bank-row">
             <span class="bank-label">Nội dung CK:</span>
-            <span class="bank-val" style="color: var(--warning);">
-              ${order.transfer_content}
-              <span class="copy-badge" onclick="navigator.clipboard.writeText('${order.transfer_content}'); alert('Đã sao chép nội dung CK!');">Sao chép</span>
+            <span class="bank-val" style="color: #D9534F;">
+              <strong style="letter-spacing: 0.5px;">${order.transfer_content}</strong>
+              <span class="copy-badge" onclick="window.storeApp.copyText('${order.transfer_content}', 'Đã sao chép Nội dung CK!')">📋 Sao chép</span>
             </span>
+          </div>
+        </div>
+
+        <div class="qr-guide-box">
+          <div class="qr-guide-step">
+            <span class="qr-guide-num">1</span>
+            <span>Mở App Ngân hàng &gt; Chọn <strong>Quét mã QR</strong></span>
+          </div>
+          <div class="qr-guide-step">
+            <span class="qr-guide-num">2</span>
+            <span>Kiểm tra đúng tên <strong>${bankCfg.accountName}</strong> & nội dung <strong>${order.transfer_content}</strong></span>
+          </div>
+          <div class="qr-guide-step">
+            <span class="qr-guide-num">3</span>
+            <span>Xác nhận chuyển tiền trên App, sau đó bấm nút xác nhận bên dưới</span>
           </div>
         </div>
 
         <div id="paymentStatusBox" class="payment-status-bar">
           <div class="pulse-dot"></div>
-          <span>Đang chờ chuyển khoản từ App Ngân hàng...</span>
+          <span>Đang chờ chuyển khoản từ ứng dụng ngân hàng...</span>
         </div>
 
-        <div style="margin-top: 18px; padding-top: 14px; border-top: 1px dashed #EAE0D7; font-size: 0.8rem; color: var(--text-dim);">
-          <p>Mô phỏng Ngân Hàng bắn Webhook Server-Side (Kiểm thử thực tế):</p>
-          <button class="btn btn-secondary btn-sm" style="margin-top: 8px;" onclick="window.storeApp.simulateBankWebhook(${order.order_code}, ${order.total_amount})">
-            ⚡ Bắn Webhook Ngân Hàng Napas Báo Đã Nhận Tiền
+        <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+          <button id="btnConfirmPaid" class="btn btn-primary btn-lg" style="width: 100%; font-weight: 800; font-size: 1rem;" onclick="window.storeApp.handleConfirmPaymentClicked(${order.order_code})">
+            ✅ Tôi Đã Chuyển Khoản Thành Công
           </button>
+          <div style="display: flex; gap: 8px;">
+            <a href="${qrUrl}" download="VietQR_DoanSon_${order.order_code}.png" class="btn btn-secondary btn-sm" style="flex: 1; text-align: center; text-decoration: none;" target="_blank">
+              📥 Tải Ảnh Mã QR
+            </a>
+            <button class="btn btn-secondary btn-sm" style="flex: 1;" onclick="window.storeApp.closePaymentModal()">
+              Đóng / Để Sau
+            </button>
+          </div>
         </div>
       </div>
     `;
 
     modalEl.classList.add('active');
 
+    // Khởi động đồng hồ đếm ngược 15 phút
+    this.paymentCountdownInterval = setInterval(() => {
+      this.paymentTimeRemaining--;
+      const timerEl = document.getElementById('qrTimerDisplay');
+      if (timerEl) {
+        if (this.paymentTimeRemaining <= 0) {
+          clearInterval(this.paymentCountdownInterval);
+          timerEl.textContent = 'Hết hạn';
+          timerEl.style.color = 'var(--danger)';
+        } else {
+          const mins = Math.floor(this.paymentTimeRemaining / 60).toString().padStart(2, '0');
+          const secs = (this.paymentTimeRemaining % 60).toString().padStart(2, '0');
+          timerEl.textContent = `⏳ ${mins}:${secs}`;
+        }
+      }
+    }, 1000);
+
+    // Lắng nghe trạng thái realtime
     window.paymentGateway.startPaymentPolling(order.order_code, (status, updatedOrder) => {
       if (status === 'paid') {
-        const statusBox = document.getElementById('paymentStatusBox');
-        if (statusBox) {
-          statusBox.className = 'payment-status-bar success';
-          statusBox.innerHTML = `
-            <span>✅ Xác nhận đã nhận ${this.formatCurrency(updatedOrder.total_amount)} thành công! Đang kích hoạt quyền...</span>
-          `;
-        }
-
-        this.cart = [];
-        this.saveCart();
-
-        setTimeout(() => {
-          this.closePaymentModal();
-          alert(`🎉 Chúc mừng! Đơn hàng #${order.order_code} đã thanh toán thành công.\nQuyền tải Revit Family/Template và License Key đã được kích hoạt!`);
-          this.switchMainView('libraryView');
-        }, 1500);
+        this.handlePaymentCompletedSuccessfully(updatedOrder);
       }
     });
   }
 
-  simulateBankWebhook(orderCode, amount) {
-    const payload = {
-      orderCode: orderCode,
-      amount: amount,
-      reference: 'VCB-FT-' + Date.now(),
-      transactionDateTime: new Date().toISOString()
-    };
-    const signature = 'HMAC_SHA256_VERIFIED_SIGNATURE_' + orderCode;
-    window.paymentGateway.processWebhook(payload, signature);
+  async handleConfirmPaymentClicked(orderCode) {
+    const btn = document.getElementById('btnConfirmPaid');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Đang xác nhận chuyển khoản...';
+    }
+
+    try {
+      const res = await window.paymentGateway.confirmPaymentByCustomer(orderCode);
+      if (res && res.success) {
+        this.handlePaymentCompletedSuccessfully(res.order, res.generatedKeys);
+      }
+    } catch (e) {
+      alert('Không thể xác nhận đơn hàng: ' + e.message);
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '✅ Tôi Đã Chuyển Khoản Thành Công';
+      }
+    }
+  }
+
+  handlePaymentCompletedSuccessfully(order, generatedKeys = []) {
+    if (this.paymentCountdownInterval) {
+      clearInterval(this.paymentCountdownInterval);
+      this.paymentCountdownInterval = null;
+    }
+
+    const statusBox = document.getElementById('paymentStatusBox');
+    if (statusBox) {
+      statusBox.className = 'payment-status-bar success';
+      statusBox.innerHTML = `
+        <span>✅ Đã xác nhận giao dịch thành công! Đang kích hoạt quyền sử dụng...</span>
+      `;
+    }
+
+    this.cart = [];
+    this.saveCart();
+
+    const hasTools = order.items.some(i => i.product_type === 'tool');
+
+    setTimeout(() => {
+      this.closePaymentModal();
+      if (hasTools) {
+        alert(`🎉 CHÚC MỪNG BẠN ĐÃ MUA THÀNH CÔNG!\n\n• Đơn hàng: #${order.order_code}\n• Bản quyền Revit Tools đã được kích hoạt thành công!\n• Vui lòng sao chép License Key trong mục "Bản Quyền Của Tôi" để kích hoạt trên Revit.`);
+        this.switchMainView('licenseView');
+      } else {
+        alert(`🎉 CHÚC MỪNG BẠN ĐÃ MUA THÀNH CÔNG!\n\n• Đơn hàng: #${order.order_code}\n• File Revit Family / Template đã được mở khóa tải về không giới hạn trong "Thư Viện Của Tôi"!`);
+        this.switchMainView('libraryView');
+      }
+    }, 1200);
   }
 
   closePaymentModal() {
+    if (this.paymentCountdownInterval) {
+      clearInterval(this.paymentCountdownInterval);
+      this.paymentCountdownInterval = null;
+    }
     window.paymentGateway.stopPaymentPolling();
     const modalEl = document.getElementById('paymentModalOverlay');
     if (modalEl) modalEl.classList.remove('active');
@@ -1029,9 +1120,6 @@ class StoreApp {
           <button class="btn btn-secondary btn-sm" onclick="window.storeApp.openLicenseGuideModal()">
             📖 Hướng Dẫn Kích Hoạt Trong Revit
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="window.storeApp.testCloudLicenseServer()">
-            🩺 Kiểm Tra Kết Nối Cloud Server
-          </button>
         </div>
       </div>
     `;
@@ -1139,10 +1227,6 @@ class StoreApp {
                   Bạn có thể liên kết tối đa ${lic.max_machines} máy tính đồng thời. Khi đổi máy trạm, hãy bấm 'Gỡ máy' để giải phóng slot.
                 </p>
               </div>
-
-              <button class="btn btn-secondary btn-sm" onclick="window.storeApp.testAddinActivation('${lic.license_key}')">
-                💻 Giả Lập Kích Hoạt Máy Mới Bằng Revit API
-              </button>
             </div>
 
             ${activations.length === 0 ? `
@@ -1217,18 +1301,15 @@ class StoreApp {
     }
   }
 
-  testAddinActivation(licenseKey) {
-    const machineName = prompt('Nhập tên máy trạm Revit mới:', 'WORKSTATION-LAPTOP-BIM');
-    if (!machineName) return;
-
-    const hwid = 'HWID-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-    const result = window.licenseManager.verifyLicenseApi(licenseKey, hwid, machineName, '2025');
-
-    if (result.valid) {
-      alert(`✅ Revit Add-in C# kết nối máy chủ thành công!\nSản phẩm: ${result.product_name}\nSố máy đã dùng: ${result.machines_used}/${result.max_machines}\nCòn lại: ${result.days_remaining} ngày\nTên máy: ${result.machine_name}`);
-      this.renderUserLicenses();
+  copyText(text, successMsg = 'Đã sao chép vào bộ nhớ tạm!') {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert(successMsg);
+      }).catch(() => {
+        prompt('Sao chép nội dung:', text);
+      });
     } else {
-      alert(`❌ Kích hoạt thất bại: ${result.message}`);
+      prompt('Sao chép nội dung:', text);
     }
   }
 
@@ -1248,11 +1329,6 @@ class StoreApp {
   closeLicenseGuideModal() {
     const modal = document.getElementById('licenseGuideModalOverlay');
     if (modal) modal.classList.remove('active');
-  }
-
-  testCloudLicenseServer() {
-    const latency = Math.floor(Math.random() * 15) + 18; // 18-32ms
-    alert(`🟢 KẾT NỐI MÁY CHỦ BẢN QUYỀN HOÀN TOÀN BÌNH THƯỜNG!\n\n• Trạng thái: Hoạt động (100% Uptime)\n• Độ trễ (Ping): ${latency}ms\n• Giao thức bảo mật: TLS 1.3 / HMAC-SHA256\n• Điểm tiếp nhận: Cloudflare Edge (Hanoi / HCMC DC)\n• Thuật toán kiểm tra: Hardware ID (HWID) Fingerprint v2`);
   }
 }
 

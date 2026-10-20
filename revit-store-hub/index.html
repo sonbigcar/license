@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RevitHub - Nền Tảng Revit Tools, Family, Template & Custom Automation</title>
-  <meta name="description" content="Chuyên cung cấp Revit Add-in, Family .RFA, Project Template .RTE và Dịch vụ lập trình tools, tạo template Revit theo yêu cầu doanh nghiệp.">
+  <title>DoanSon Studio - Nền Tảng Revit Tools, Family & BIM Automation</title>
+  <meta name="description" content="DoanSon Studio (doanson.com) - Chuyên cung cấp Revit Add-in, Family .RFA, Project Template .RTE và Dịch vụ lập trình tools, tạo template Revit theo yêu cầu doanh nghiệp.">
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="apple-touch-icon" href="assets/logo.png">
   
   <!-- CSS Stylesheets -->
   <link rel="stylesheet" href="css/theme.css">
@@ -22,9 +24,9 @@
       <div class="nav-container">
         <!-- Brand Logo -->
         <div class="brand-logo" onclick="window.storeApp.switchMainView('storefrontView')">
-          <div class="brand-icon">R</div>
+          <img src="assets/logo.png" alt="DoanSon Logo" class="brand-logo-img">
           <div class="brand-text">
-            <h1>RevitHub</h1>
+            <h1>DoanSon</h1>
             <span>AEC • BIM • Studio</span>
           </div>
         </div>
@@ -252,7 +254,7 @@
             </div>
 
             <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 10px;">
-              ⚡ Gửi Yêu Cầu Cho Đội Ngũ Kỹ Sư RevitHub
+              ⚡ Gửi Yêu Cầu Cho Đội Ngũ Kỹ Sư DoanSon Studio
             </button>
           </form>
         </div>
@@ -297,9 +299,9 @@
       <div style="max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 30px;">
         <div>
           <div class="brand-logo" style="margin-bottom: 14px;">
-            <div class="brand-icon">R</div>
+            <img src="assets/logo.png" alt="DoanSon Logo" class="brand-logo-img">
             <div class="brand-text">
-              <h1>RevitHub</h1>
+              <h1>DoanSon</h1>
               <span>AEC • BIM • Studio</span>
             </div>
           </div>
@@ -329,7 +331,7 @@
       </div>
 
       <div style="max-width: 1400px; margin: 36px auto 0; padding-top: 20px; border-top: 1px solid #EAE0D7; text-align: center; font-size: 0.84rem; color: var(--text-dim);">
-        © 2026 RevitHub Solutions. Vận hành trên hạ tầng Cloudflare & Supabase Serverless.
+        © 2026 DoanSon Studio (doanson.com). Bản quyền thuộc về DoanSon BIM Automation.
       </div>
     </footer>
   </div>
@@ -340,7 +342,7 @@
   <div id="authModalOverlay" class="modal-overlay">
     <div class="modal-content auth-modal">
       <div class="modal-header">
-        <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-pure);">Tài Khoản Kỹ Sư RevitHub</h3>
+        <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-pure);">Tài Khoản Kỹ Sư DoanSon Studio</h3>
         <button id="closeAuthModal" class="modal-close">✕</button>
       </div>
 
@@ -357,29 +359,16 @@
         <!-- FORM ĐĂNG NHẬP -->
         <form id="authLoginForm" onsubmit="window.storeApp.handleLoginSubmit(event)">
           <div class="form-group">
-            <label>Email của bạn</label>
-            <input type="email" id="loginEmail" class="form-control" placeholder="engineer.bim@gmail.com" required>
+            <label>Email hoặc Tên đăng nhập</label>
+            <input type="text" id="loginEmail" class="form-control" placeholder="engineer@gmail.com hoặc sonbigcar" required>
           </div>
           <div class="form-group">
             <label>Mật khẩu</label>
             <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required>
           </div>
-          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 12px;">
             Đăng Nhập Vào Hệ Thống
           </button>
-
-          <!-- Nút truy cập nhanh theo yêu cầu để kiểm tra phân quyền Admin -->
-          <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #F0E6DE; text-align: center;">
-            <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px;">Lối tắt đăng nhập thử nghiệm:</p>
-            <div style="display: flex; gap: 8px;">
-              <button type="button" class="btn btn-secondary btn-sm" style="flex: 1;" onclick="window.storeApp.quickLoginAsEngineer()">
-                👤 Kỹ Sư Thường
-              </button>
-              <button type="button" class="btn btn-secondary btn-sm" style="flex: 1; border-color: var(--primary); color: var(--primary);" onclick="window.storeApp.quickLoginAsAdmin()">
-                👑 Quản Trị Admin
-              </button>
-            </div>
-          </div>
         </form>
 
         <!-- FORM ĐĂNG KÝ -->
@@ -607,7 +596,7 @@
             <div class="license-guide-step-num">2</div>
             <h4 style="font-weight: 800; color: var(--text-pure); margin-bottom: 8px;">Mở Hộp Thoại License</h4>
             <p style="font-size: 0.88rem; color: var(--text-muted);">
-              Trên thanh Ribbon của Revit, tìm Tab <strong>RevitHub</strong> hoặc <strong>Store Tools</strong> &gt; Nhấp vào biểu tượng <strong>🔑 Giấy Phép (License)</strong>.
+              Trên thanh Ribbon của Revit, tìm Tab <strong>DoanSon Tools</strong> hoặc <strong>Store Tools</strong> &gt; Nhấp vào biểu tượng <strong>🔑 Giấy Phép (License)</strong>.
             </p>
           </div>
 
