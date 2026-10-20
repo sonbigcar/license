@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kích hoạt License - MyRevitAddin</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>MyRevitAddin - Đăng ký License</h1>
+                <p class="subtitle">Hệ thống đăng ký và thanh toán license</p>
+            </div>
+        </header>
+
+        <main>
+            <div class="license-form-container">
+                <div class="form-card">
+                    <div class="card-header">
+                        <h2>Đăng ký License</h2>
+                        <p>Vui lòng nhập thông tin để đăng ký license MyRevitAddin</p>
+                    </div>
+
+                    <form id="licenseForm" class="license-form">
+                        <div class="form-group">
+                            <label for="userName">Tên người dùng *</label>
+                            <input type="text" id="userName" name="userName" 
+                                   placeholder="Nhập họ tên đầy đủ..." required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email *</label>
+                            <input type="email" id="email" name="email" 
+                                   placeholder="Nhập email để nhận license key..." required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone">Số điện thoại *</label>
+                            <input type="tel" id="phone" name="phone" 
+                                   placeholder="Nhập số điện thoại..." required>
+                            <div class="input-help">
+                                Ví dụ: 0901234567
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="company">Công ty/Tổ chức</label>
+                            <input type="text" id="company" name="company" 
+                                   placeholder="Nhập tên công ty (không bắt buộc)...">
+                        </div>
+
+                        <div class="machine-info">
+                            <h3>Thông tin máy tính</h3>
+                            <div class="info-item">
+                                <span class="info-label">Machine ID:</span>
+                                <span id="machineId" class="info-value">Đang tạo...</span>
+                                <button type="button" id="generateMachineId" class="btn-generate">
+                                    Tạo mới
+                                </button>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Trình duyệt:</span>
+                                <span id="browserInfo" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Hệ điều hành:</span>
+                                <span id="osInfo" class="info-value">-</span>
+                            </div>
+                        </div>
+
+                        <div class="payment-info">
+                            <h3>Thông tin thanh toán</h3>
+                            <div class="payment-content">
+                                <div class="payment-details">
+                                    <h4>Chi tiết chuyển khoản:</h4>
+                                    <div class="bank-info">
+                                        <div class="info-row">
+                                            <span class="label">Ngân hàng:</span>
+                                            <span class="value">Vietcombank (VCB)</span>
+                                        </div>
+                                        <div class="info-row">
+                                            <span class="label">Số tài khoản:</span>
+                                            <span class="value">1234567890123</span>
+                                        </div>
+                                        <div class="info-row">
+                                            <span class="label">Chủ tài khoản:</span>
+                                            <span class="value">CONG TY TNHH MYREVITADDIN</span>
+                                        </div>
+                                        <div class="info-row">
+                                            <span class="label">Số tiền:</span>
+                                            <span class="value price">2,500,000 VNĐ</span>
+                                        </div>
+                                        <div class="info-row">
+                                            <span class="label">Nội dung CK:</span>
+                                            <span class="value">LICENSE [Số điện thoại của bạn]</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="qr-section">
+                                    <h4>Quét mã QR để chuyển khoản:</h4>
+                                    <div class="qr-code">
+                                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiNjY2NjY2MiLz4KICA8dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSIxNHB4IiBmaWxsPSIjNzc3Ij5RUiBDb2RlPC90ZXh0Pgo8L3N2Zz4K" alt="QR Code chuyển khoản">
+                                        <p class="qr-note">Quét mã QR bằng app ngân hàng</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" id="validateBtn" class="btn btn-secondary">
+                                Xem trước thông tin
+                            </button>
+                            <button type="submit" id="registerBtn" class="btn btn-primary">
+                                Đăng ký License
+                            </button>
+                        </div>
+                    </form>
+
+                    <div id="result" class="result-section" style="display: none;">
+                        <div class="result-content">
+                            <div class="result-icon">✓</div>
+                            <h3>Kết quả đăng ký</h3>
+                            <div id="resultMessage" class="result-message"></div>
+                            <div id="registrationDetails" class="registration-details"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="footer-content">
+                <p>&copy; 2024 MyRevitAddin. All rights reserved.</p>
+                <div class="footer-links">
+                    <a href="admin/admin.html">Admin Panel</a>
+                    <a href="#" onclick="showAbout()">Về chúng tôi</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Loading overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>Đang xử lý...</p>
+    </div>
+
+    <!-- Modal for messages -->
+    <div id="messageModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Thông báo</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p id="modalMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeModal()" class="btn btn-secondary">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
