@@ -30,30 +30,27 @@
   {
     "id": "tool-002",
     "name": "Batch Sheet Exporter & Auto Renaming Pro",
-    "slug": "batch-sheet-exporter-auto-renaming",
+    "slug": "batch-sheet-exporter---auto-renaming-pro",
     "product_type": "tool",
     "category": "Revit Add-in Tự Động Hóa",
+    "price": 5000,
+    "sale_price": 2500,
+    "billing_cycle": "yearly",
+    "thumbnail_url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
+    "video_url": "https://www.youtube.com/embed/dQw4w9WgXcQ",
     "description": "Công cụ xuất hàng loạt bản vẽ PDF, DWG, NWC theo cú pháp chuẩn ISO 19650. Tự động đánh số và sắp xếp bản vẽ theo tiến độ dự án, tiết kiệm 90% thời gian.",
-    "short_description": "Xuất hàng loạt PDF/DWG/NWC chuẩn ISO 19650, tiết kiệm 90% thời gian.",
+    "short_description": "Công cụ xuất hàng loạt bản vẽ PDF, DWG, NWC theo cú pháp chuẩn ISO 19650. Tự động đánh số và sắp xếp...",
     "revit_versions": [
-      "2021",
       "2022",
       "2023",
       "2024",
       "2025"
     ],
-    "thumbnail_url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
-    "video_url": "https://www.youtube.com/embed/dQw4w9WgXcQ",
-    "price": 950000,
-    "sale_price": 750000,
-    "billing_cycle": "yearly",
     "is_active": true,
     "metadata": {
-      "version": "v1.8.2",
-      "target_revit": "Revit 2021-2025",
-      "file_name": "Batch_Sheet_Exporter_Setup.zip",
-      "file_size": "15.2 MB",
-      "author": "RevitHub Studio"
+      "file_name": "Batch_Sheet_Exporter_&_Auto_Renaming_Pro_Setup.exe",
+      "file_size": "15.0 MB",
+      "lod": "LOD 350"
     }
   },
   {
