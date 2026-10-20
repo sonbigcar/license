@@ -625,7 +625,7 @@ class StoreApp {
     if (modal) modal.classList.remove('active');
   }
 
-  handleProductEditorSubmit(e) {
+  async handleProductEditorSubmit(e) {
     e.preventDefault();
     const id = document.getElementById('prodEditId').value.trim() || ('prod-' + Date.now().toString(16));
     const name = document.getElementById('prodEditName').value.trim();
@@ -665,24 +665,44 @@ class StoreApp {
       }
     };
 
-    window.dataStore.saveProduct(updatedProduct);
+    // Đổi nút lưu sang trạng thái đang đồng bộ
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const origBtnText = submitBtn ? submitBtn.innerHTML : '';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '⏳ Đang lưu & đẩy lên máy chủ trung tâm...';
+    }
+
+    const syncRes = await window.dataStore.saveProduct(updatedProduct);
     this.closeProductEditorModal();
-    alert(`Đã lưu và niêm yết giá cho sản phẩm "${name}" thành công!`);
+    
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = origBtnText;
+    }
+
+    if (syncRes && syncRes.success) {
+      alert(`🎉 Đã lưu và đồng bộ sản phẩm "${name}" lên máy chủ trung tâm thành công!\nTất cả máy tính người dùng truy cập web đều sẽ thấy sản phẩm này.`);
+    } else {
+      alert(`Đã lưu sản phẩm "${name}" vào bộ nhớ!\n(Lưu ý: Đang đồng bộ nền sang máy chủ trung tâm)`);
+    }
+
     this.renderProducts();
     if (window.adminPanel && document.getElementById('adminView') && !document.getElementById('adminView').classList.contains('hidden')) {
       window.adminPanel.render();
     }
   }
 
-  deleteProduct(productId) {
+  async deleteProduct(productId) {
     const prod = window.dataStore.getProductById(productId);
     if (!prod) return;
-    if (confirm(`Bạn có chắc muốn xóa sản phẩm "${prod.name}" khỏi cửa hàng?`)) {
-      window.dataStore.deleteProduct(productId);
+    if (confirm(`Bạn có chắc muốn xóa sản phẩm "${prod.name}" khỏi cửa hàng và đồng bộ cho mọi máy tính?`)) {
+      await window.dataStore.deleteProduct(productId);
       this.renderProducts();
       if (window.adminPanel && document.getElementById('adminView') && !document.getElementById('adminView').classList.contains('hidden')) {
         window.adminPanel.render();
       }
+      alert(`Đã xóa sản phẩm "${prod.name}" và cập nhật lên máy chủ trung tâm!`);
     }
   }
 

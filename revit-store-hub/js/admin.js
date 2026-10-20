@@ -364,7 +364,7 @@ class AdminPanel {
                     <button class="btn btn-secondary btn-sm" onclick="window.storeApp.openProductEditorModal('${p.id}')" title="Sửa & Niêm Yết Giá">
                       ✏️ Sửa
                     </button>
-                    <button class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="if(confirm('Xóa sản phẩm này?')){ window.dataStore.deleteProduct('${p.id}'); window.adminPanel.render(); }" title="Xóa">
+                    <button class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="window.storeApp.deleteProduct('${p.id}')" title="Xóa">
                       🗑️
                     </button>
                   </div>
