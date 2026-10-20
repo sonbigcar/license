@@ -21,6 +21,7 @@ class DataStore {
     this.initDefaultData();
     this.fetchRemoteProducts();
     this.fetchRemoteBankConfig();
+    this.fetchRemoteOrders();
   }
 
   /**
@@ -544,10 +545,11 @@ class DataStore {
     return this.get('custom_requests');
   }
 
-  saveCustomRequest(req) {
+  async saveCustomRequest(req) {
     const requests = this.getCustomRequests();
     requests.unshift(req);
     this.save('custom_requests', requests);
+    await this.syncCustomRequestToGitHub(req);
   }
 
   deleteCustomRequest(reqId) {
@@ -556,19 +558,279 @@ class DataStore {
     this.save('custom_requests', requests);
   }
 
+  async syncCustomRequestToGitHub(req) {
+    const { owner, repo, token } = this.GITHUB_CONFIG;
+    if (!token) return;
+    try {
+      const title = `[CUSTOM REQUEST] ${req.customer_name} - ${req.service_type}`;
+      const body = `### ✍️ Yêu Cầu Thuê Lập Trình & Thiết Kế Mới\n- **Khách hàng:** ${req.customer_name}\n- **Email:** ${req.contact_email}\n- **SĐT:** ${req.phone || 'Chưa cung cấp'}\n- **Loại dịch vụ:** ${req.service_type}\n- **Tiêu đề:** ${req.title}\n- **Mô tả chi tiết:**\n${req.description}\n\n<!-- REQUEST_DATA_JSON_START -->${JSON.stringify(req)}<!-- REQUEST_DATA_JSON_END -->`;
+      await fetch(`https://api.github.com/repos/${owner}/${repo}/issues`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ title, body })
+      });
+    } catch (e) {}
+  }
+
   getOrders() {
     return this.get('orders');
   }
 
-  saveOrder(order) {
+  /**
+   * LƯU ĐƠN HÀNG VÀ TỰ ĐỘNG ĐỒNG BỘ LÊN MÁY CHỦ GITHUB (THỜI GIAN THỰC)
+   * Giúp Admin trên máy tính/điện thoại khác ngay lập tức thấy đơn khách vừa đặt
+   */
+  async saveOrder(order) {
     const orders = this.getOrders();
-    const index = orders.findIndex(o => o.id === order.id);
+    const index = orders.findIndex(o => o.id === order.id || o.order_code === order.order_code);
     if (index >= 0) {
-      orders[index] = order;
+      orders[index] = { ...orders[index], ...order };
     } else {
       orders.unshift(order);
     }
     this.save('orders', orders);
+
+    // Đồng bộ lên máy chủ trung tâm
+    return await this.syncOrderToGitHub(order);
+  }
+
+  /**
+   * ĐỒNG BỘ ĐƠN HÀNG LÊN MÁY CHỦ GITHUB ISSUES
+   */
+  async syncOrderToGitHub(order) {
+    const { owner, repo, token } = this.GITHUB_CONFIG;
+    if (!token) return { success: false, message: 'Chưa có token' };
+
+    // Hàng đợi tuần tự hóa để tránh trùng lặp request khi khách thao tác nhanh
+    this._orderSyncPromises = this._orderSyncPromises || {};
+    if (this._orderSyncPromises[order.order_code]) {
+      try {
+        await this._orderSyncPromises[order.order_code];
+      } catch (e) {}
+    }
+
+    const doSync = async () => {
+      try {
+        // Tìm lại issue_number từ cache nếu đơn hàng chưa có
+        if (!order.github_issue_number) {
+          const cachedOrders = this.get('orders') || [];
+          const matched = cachedOrders.find(o => o.order_code === order.order_code && o.github_issue_number);
+          if (matched) {
+            order.github_issue_number = matched.github_issue_number;
+          }
+        }
+
+        const itemsList = (order.items || []).map(i => `- ${i.name} (${(i.price || 0).toLocaleString('vi-VN')} ₫)`).join('\n');
+        const markdownBody = [
+          `### 📦 Đơn Hàng #${order.order_code}`,
+          `- **Khách hàng:** ${order.user_name || 'Khách'} (${order.user_email || 'Chưa có email'})`,
+          `- **Tổng tiền:** ${(order.total_amount || 0).toLocaleString('vi-VN')} ₫`,
+          `- **Cú pháp chuyển khoản:** ${order.transfer_content || 'DOANSON ' + order.order_code}`,
+          `- **Trạng thái:** \`${order.status}\``,
+          `- **Thời gian đặt:** ${order.created_at}`,
+          order.notified_at ? `- **Khách báo đã chuyển khoản lúc:** ${order.notified_at}` : '',
+          order.paid_at ? `- **Thời gian Admin duyệt:** ${order.paid_at}` : '',
+          `\n#### Danh sách sản phẩm mua:\n${itemsList}`,
+          `\n<!-- ORDER_DATA_JSON_START -->${JSON.stringify(order)}<!-- ORDER_DATA_JSON_END -->`
+        ].filter(Boolean).join('\n');
+
+        const title = `[ORDER #${order.order_code}] ${order.user_name || 'Khách'} - ${(order.total_amount || 0).toLocaleString('vi-VN')}đ (${order.status})`;
+
+        if (order.github_issue_number) {
+          // Cập nhật đơn hàng đã có trên GitHub
+          const patchRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/${order.github_issue_number}`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `token ${token}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              title,
+              body: markdownBody,
+              state: order.status === 'paid' ? 'closed' : 'open'
+            })
+          });
+          if (patchRes.ok) return { success: true, issue_number: order.github_issue_number };
+        } else {
+          // Tạo mới đơn hàng trên GitHub
+          const postRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `token ${token}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              title,
+              body: markdownBody
+            })
+          });
+
+          if (postRes.ok) {
+            const issueData = await postRes.json();
+            order.github_issue_number = issueData.number;
+            // Lưu lại issue number vào cache local
+            const orders = this.getOrders();
+            const idx = orders.findIndex(o => o.order_code === order.order_code);
+            if (idx >= 0) {
+              orders[idx].github_issue_number = issueData.number;
+              this.save('orders', orders);
+            }
+            return { success: true, issue_number: issueData.number };
+          }
+        }
+      } catch (err) {
+        console.warn('[Sync Order] Lỗi đồng bộ đơn hàng:', err.message);
+      }
+      return { success: false };
+    };
+
+    const currentPromise = doSync();
+    this._orderSyncPromises[order.order_code] = currentPromise;
+    return await currentPromise;
+  }
+
+  /**
+   * ĐÓNG HOẶC HỦY ISSUE ĐƠN HÀNG TRÊN GITHUB KHI ADMIN XÓA ĐƠN
+   */
+  async deleteOrderIssue(issueNumber) {
+    const { owner, repo, token } = this.GITHUB_CONFIG;
+    if (!token || !issueNumber) return false;
+    try {
+      const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: `[ORDER DELETED] #${issueNumber}`,
+          state: 'closed',
+          state_reason: 'not_planned'
+        })
+      });
+      return res.ok;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * TẢI TOÀN BỘ ĐƠN HÀNG TỪ MÁY CHỦ GITHUB VỀ (CHO CẢ MÁY ADMIN VÀ KHÁCH)
+   */
+  async fetchRemoteOrders() {
+    const { owner, repo, token } = this.GITHUB_CONFIG;
+    if (!token) return this.getOrders();
+
+    try {
+      const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues?state=all&per_page=100&t=${Date.now()}`, {
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+
+      if (res.ok) {
+        const issues = await res.json();
+        const remoteOrders = [];
+
+        for (const issue of issues) {
+          if (issue.title && issue.title.startsWith('[ORDER #') && issue.body) {
+            const match = issue.body.match(/<!-- ORDER_DATA_JSON_START -->(.*?)<!-- ORDER_DATA_JSON_END -->/s);
+            if (match) {
+              try {
+                const orderData = JSON.parse(match[1]);
+                orderData.github_issue_number = issue.number;
+                if (issue.state === 'closed' && orderData.status !== 'cancelled') {
+                  orderData.status = 'paid';
+                }
+                remoteOrders.push(orderData);
+              } catch (e) {}
+            }
+          }
+        }
+
+        if (remoteOrders.length > 0) {
+          let localOrders = this.get('orders') || [];
+          remoteOrders.forEach(remOrder => {
+            const idx = localOrders.findIndex(loc => loc.order_code === remOrder.order_code);
+            if (idx >= 0) {
+              localOrders[idx] = { ...localOrders[idx], ...remOrder };
+            } else {
+              localOrders.unshift(remOrder);
+            }
+          });
+          // Sắp xếp đơn mới nhất lên đầu
+          localOrders.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+          this.save('orders', localOrders);
+          return localOrders;
+        }
+      }
+    } catch (err) {
+      console.warn('[Fetch Remote Orders] Lỗi tải đơn hàng:', err.message);
+    }
+    return this.getOrders();
+  }
+
+  /**
+   * TẢI YÊU CẦU THIẾT KẾ CUSTOM TỪ MÁY CHỦ GITHUB VỀ
+   */
+  async fetchRemoteCustomRequests() {
+    const { owner, repo, token } = this.GITHUB_CONFIG;
+    if (!token) return this.getCustomRequests();
+
+    try {
+      const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues?state=all&per_page=100&t=${Date.now()}`, {
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+
+      if (res.ok) {
+        const issues = await res.json();
+        const remoteRequests = [];
+
+        for (const issue of issues) {
+          if (issue.title && issue.title.startsWith('[CUSTOM REQUEST]') && issue.body) {
+            const match = issue.body.match(/<!-- REQUEST_DATA_JSON_START -->(.*?)<!-- REQUEST_DATA_JSON_END -->/s);
+            if (match) {
+              try {
+                const reqData = JSON.parse(match[1]);
+                reqData.github_issue_number = issue.number;
+                if (issue.state === 'closed') {
+                  reqData.status = 'completed';
+                }
+                remoteRequests.push(reqData);
+              } catch (e) {}
+            }
+          }
+        }
+
+        if (remoteRequests.length > 0) {
+          let localRequests = this.get('custom_requests') || [];
+          remoteRequests.forEach(remReq => {
+            const idx = localRequests.findIndex(loc => loc.id === remReq.id || (loc.title === remReq.title && loc.customer_name === remReq.customer_name));
+            if (idx >= 0) {
+              localRequests[idx] = { ...localRequests[idx], ...remReq };
+            } else {
+              localRequests.unshift(remReq);
+            }
+          });
+          this.save('custom_requests', localRequests);
+          return localRequests;
+        }
+      }
+    } catch (err) {
+      console.warn('[Fetch Remote Requests] Lỗi tải yêu cầu:', err.message);
+    }
+    return this.getCustomRequests();
   }
 
   getUserPurchases(userId) {

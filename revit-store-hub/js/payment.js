@@ -96,17 +96,34 @@ class PaymentGateway {
   startPaymentPolling(orderCode, onStatusChange) {
     this.stopPaymentPolling();
 
-    this.activePollingInterval = setInterval(() => {
-      const orders = window.dataStore.getOrders();
+    this.activePollingInterval = setInterval(async () => {
+      let orders = [];
+      try {
+        if (window.dataStore && typeof window.dataStore.fetchRemoteOrders === 'function') {
+          orders = await window.dataStore.fetchRemoteOrders();
+        } else {
+          orders = window.dataStore.getOrders();
+        }
+      } catch (e) {
+        orders = window.dataStore ? window.dataStore.getOrders() : [];
+      }
+
       const updatedOrder = orders.find(o => o.order_code === orderCode);
 
       if (updatedOrder) {
-        onStatusChange(updatedOrder.status, updatedOrder);
-        if (updatedOrder.status === 'paid' || updatedOrder.status === 'cancelled') {
+        if (updatedOrder.status === 'paid') {
           this.stopPaymentPolling();
+          // Tự động cấp quyền tải và bản quyền trên máy khách nếu chưa có
+          this.fulfillOrder(updatedOrder);
+          onStatusChange('paid', updatedOrder);
+        } else if (updatedOrder.status === 'cancelled') {
+          this.stopPaymentPolling();
+          onStatusChange('cancelled', updatedOrder);
+        } else {
+          onStatusChange(updatedOrder.status, updatedOrder);
         }
       }
-    }, 2000);
+    }, 2500);
   }
 
   stopPaymentPolling() {
@@ -185,8 +202,13 @@ class PaymentGateway {
    * TUYỆT ĐỐI KHÔNG TỰ ĐỘNG CẤP LICENSE KHI CHƯA ĐƯỢC ADMIN DUYỆT HOẶC CHƯA CÓ WEBHOOK NGÂN HÀNG
    */
   async notifyCustomerTransferred(orderCode) {
-    const orders = window.dataStore.getOrders();
-    const order = orders.find(o => o.order_code === Number(orderCode));
+    let orders = window.dataStore.getOrders();
+    let order = orders.find(o => o.order_code === Number(orderCode));
+
+    if (!order && window.dataStore && typeof window.dataStore.fetchRemoteOrders === 'function') {
+      orders = await window.dataStore.fetchRemoteOrders();
+      order = orders.find(o => o.order_code === Number(orderCode));
+    }
 
     if (!order) {
       throw new Error(`Không tìm thấy đơn hàng mã #${orderCode}`);
@@ -198,7 +220,7 @@ class PaymentGateway {
 
     order.status = 'pending_approval';
     order.notified_at = new Date().toISOString();
-    window.dataStore.saveOrder(order);
+    await window.dataStore.saveOrder(order);
 
     return {
       success: true,
@@ -212,8 +234,13 @@ class PaymentGateway {
    * ADMIN XÁC NHẬN ĐÃ NHẬN TIỀN & DUYỆT ĐƠN HÀNG (CẤP LICENSE / FILE CHO KHÁCH)
    */
   async approveOrderByAdmin(orderCode) {
-    const orders = window.dataStore.getOrders();
-    const order = orders.find(o => o.order_code === Number(orderCode));
+    let orders = window.dataStore.getOrders();
+    let order = orders.find(o => o.order_code === Number(orderCode));
+
+    if (!order && window.dataStore && typeof window.dataStore.fetchRemoteOrders === 'function') {
+      orders = await window.dataStore.fetchRemoteOrders();
+      order = orders.find(o => o.order_code === Number(orderCode));
+    }
 
     if (!order) {
       throw new Error(`Không tìm thấy đơn hàng mã #${orderCode}`);
@@ -226,6 +253,7 @@ class PaymentGateway {
     order.approved_by = 'Admin';
     order.approved_at = new Date().toISOString();
     const result = this.fulfillOrder(order);
+    await window.dataStore.saveOrder(order);
 
     return {
       success: true,
@@ -239,8 +267,13 @@ class PaymentGateway {
    * ADMIN TỪ CHỐI / HỦY ĐƠN HÀNG CHƯA NHẬN ĐƯỢC TIỀN
    */
   async rejectOrderByAdmin(orderCode, reason = 'Chưa nhận được tiền chuyển khoản') {
-    const orders = window.dataStore.getOrders();
-    const order = orders.find(o => o.order_code === Number(orderCode));
+    let orders = window.dataStore.getOrders();
+    let order = orders.find(o => o.order_code === Number(orderCode));
+
+    if (!order && window.dataStore && typeof window.dataStore.fetchRemoteOrders === 'function') {
+      orders = await window.dataStore.fetchRemoteOrders();
+      order = orders.find(o => o.order_code === Number(orderCode));
+    }
 
     if (!order) {
       throw new Error(`Không tìm thấy đơn hàng mã #${orderCode}`);
@@ -249,7 +282,7 @@ class PaymentGateway {
     order.status = 'cancelled';
     order.cancelled_at = new Date().toISOString();
     order.cancel_reason = reason;
-    window.dataStore.saveOrder(order);
+    await window.dataStore.saveOrder(order);
 
     return { success: true, message: 'Đã từ chối đơn hàng thành công!', order };
   }

@@ -370,6 +370,11 @@ class StoreApp {
       this.renderUserLicenses();
     } else if (viewId === 'adminView') {
       window.adminPanel.render();
+      if (window.dataStore && typeof window.dataStore.fetchRemoteOrders === 'function') {
+        window.dataStore.fetchRemoteOrders().then(() => {
+          if (window.adminPanel) window.adminPanel.render();
+        }).catch(() => {});
+      }
     }
   }
 

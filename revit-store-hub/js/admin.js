@@ -10,6 +10,7 @@ class AdminPanel {
     this.currentTab = 'accounts'; // Mặc định mở Tab Quản lý tài khoản
     this.licenseSearchQuery = '';
     this.licenseStatusFilter = 'all';
+    this._hasFetchedInitialOrders = false;
   }
 
   render() {
@@ -31,6 +32,16 @@ class AdminPanel {
         </div>
       `;
       return;
+    }
+
+    if (!this._hasFetchedInitialOrders && window.dataStore && typeof window.dataStore.fetchRemoteOrders === 'function') {
+      this._hasFetchedInitialOrders = true;
+      Promise.all([
+        window.dataStore.fetchRemoteOrders(),
+        window.dataStore.fetchRemoteCustomRequests ? window.dataStore.fetchRemoteCustomRequests() : Promise.resolve()
+      ]).then(() => {
+        this.render();
+      }).catch(() => {});
     }
 
     const accounts = window.dataStore.getAccounts();
@@ -120,9 +131,13 @@ class AdminPanel {
     `;
   }
 
-  switchTab(tab) {
+  async switchTab(tab) {
     this.currentTab = tab;
     this.render();
+    if (tab === 'orders' && window.dataStore && typeof window.dataStore.fetchRemoteOrders === 'function') {
+      await window.dataStore.fetchRemoteOrders();
+      this.render();
+    }
   }
 
   getTabContent(tab, data) {
@@ -271,15 +286,57 @@ class AdminPanel {
   }
 
   renderOrdersTable(orders) {
+    const pendingApprovalOrders = orders.filter(o => o.status === 'pending_approval');
+
     if (orders.length === 0) {
-      return `<p style="padding: 24px; color: var(--text-muted);">Chưa có đơn hàng nào.</p>`;
+      return `
+        <div style="background: #FFFFFF; border: var(--border-light); border-radius: var(--radius-xl); padding: 48px 24px; text-align: center; box-shadow: var(--shadow-sm); margin-bottom: 24px;">
+          <div style="font-size: 3rem; margin-bottom: 12px;">📦</div>
+          <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-pure); margin-bottom: 6px;">
+            Chưa có đơn hàng nào được lưu trong bộ nhớ máy này
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 500px; margin: 0 auto 20px; line-height: 1.6;">
+            Nếu khách hàng đã mua sản phẩm và chuyển khoản trên máy tính khác, bấm nút bên dưới để hệ thống lập tức kết nối và tải toàn bộ đơn hàng từ máy chủ trung tâm về:
+          </p>
+          <button class="btn btn-primary" onclick="window.adminPanel.refreshOrdersFromCloud(this)">
+            🔄 Tải Đơn Hàng Mới Nhất Từ Máy Chủ Trung Tâm
+          </button>
+        </div>
+      `;
     }
 
     return `
-      <div style="margin-bottom: 14px;">
-        <p style="color: var(--text-muted); font-size: 0.92rem; margin: 0;">
-          Danh sách toàn bộ đơn hàng. Bạn cần kiểm tra tài khoản ngân hàng và bấm <strong>"Duyệt Đã Nhận Tiền"</strong> để hệ thống cấp bản quyền cho khách.
-        </p>
+      <!-- THÔNG BÁO NỔI BẬT NẾU CÓ ĐƠN KHÁCH BÁO ĐÃ CHUYỂN KHOẢN -->
+      ${pendingApprovalOrders.length > 0 ? `
+        <div style="background: #FFFBEB; border: 2px solid #F59E0B; border-radius: var(--radius-lg); padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="font-size: 1.8rem;">🔔</div>
+            <div>
+              <strong style="font-size: 1.05rem; color: #92400E; display: block; margin-bottom: 2px;">
+                CÓ ${pendingApprovalOrders.length} ĐƠN HÀNG KHÁCH BÁO ĐÃ CHUYỂN KHOẢN - ĐANG CHỜ DUYỆT!
+              </strong>
+              <span style="font-size: 0.86rem; color: #78350F;">
+                Vui lòng mở ứng dụng ngân hàng đối soát đúng số tiền và nội dung CK, sau đó bấm <strong>"✅ Duyệt Đã Nhận Tiền"</strong> để hệ thống cấp bản quyền tức thì cho khách.
+              </span>
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.refreshOrdersFromCloud(this)" style="font-weight: 700; border-color: #F59E0B; color: #92400E;">
+            🔄 Làm Mới Danh Sách
+          </button>
+        </div>
+      ` : ''}
+
+      <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <p style="color: var(--text-muted); font-size: 0.92rem; margin: 0;">
+            Quản lý toàn bộ đơn hàng trên toàn hệ thống (Tổng cộng: <strong>${orders.length} đơn</strong>).
+          </p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.refreshOrdersFromCloud(this)" title="Đồng bộ và tải ngay các đơn hàng mới nhất từ toàn bộ khách hàng trên máy chủ trung tâm">
+            🔄 Đồng Bộ & Tải Đơn Hàng Mới Nhất
+          </button>
+        </div>
       </div>
 
       <div class="admin-table-container">
@@ -298,8 +355,10 @@ class AdminPanel {
           </thead>
           <tbody>
             ${orders.map(o => `
-              <tr>
-                <td style="font-family: var(--font-mono); font-weight: 700; color: var(--primary);">#${o.order_code}</td>
+              <tr style="${o.status === 'pending_approval' ? 'background: #FFFDF5;' : ''}">
+                <td style="font-family: var(--font-mono); font-weight: 700; color: var(--primary);">
+                  #${o.order_code}
+                </td>
                 <td>
                   <strong>${o.user_name || 'Khách'}</strong><br>
                   <small style="color: var(--text-dim);">${o.user_email}</small>
@@ -309,14 +368,22 @@ class AdminPanel {
                     ${(o.items || []).map(i => `<li>• ${i.name}</li>`).join('')}
                   </ul>
                 </td>
-                <td style="font-weight: 800; color: #fff;">${window.storeApp.formatCurrency(o.total_amount)}</td>
-                <td><span class="badge badge-version">VietQR Napas 24/7</span></td>
-                <td>${new Date(o.created_at).toLocaleString('vi-VN')}</td>
+                <td style="font-weight: 800; color: var(--text-pure); font-size: 1rem;">
+                  ${window.storeApp.formatCurrency(o.total_amount)}
+                </td>
+                <td>
+                  <span class="badge badge-version">VietQR Napas 24/7</span><br>
+                  <small style="font-family: var(--font-mono); color: var(--text-dim); font-size: 0.74rem;">${o.transfer_content || 'DOANSON ' + o.order_code}</small>
+                </td>
+                <td>
+                  <span style="font-size: 0.85rem;">${new Date(o.created_at).toLocaleString('vi-VN')}</span>
+                  ${o.notified_at ? `<br><small style="color: #B45309; font-weight: 600;">Khách báo CK: ${new Date(o.notified_at).toLocaleTimeString('vi-VN')}</small>` : ''}
+                </td>
                 <td>
                   ${o.status === 'paid' 
-                    ? '<span class="badge badge-family">🟢 Đã Thanh Toán</span>'
+                    ? '<span class="badge badge-family" style="font-weight: 700;">🟢 Đã Thanh Toán</span>'
                     : (o.status === 'pending_approval'
-                        ? '<span class="badge" style="background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; font-weight: 700;">🔔 Khách Báo Đã CK (Chờ Duyệt)</span>'
+                        ? '<span class="badge" style="background: #FEF3C7; color: #B45309; border: 1.5px solid #F59E0B; font-weight: 800;">🔔 Chờ Duyệt (Khách Đã CK)</span>'
                         : (o.status === 'cancelled'
                             ? '<span class="badge badge-admin">❌ Đã Hủy</span>'
                             : '<span class="badge badge-version">⏳ Chờ Chuyển Khoản</span>'))
@@ -325,7 +392,7 @@ class AdminPanel {
                 <td>
                   <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                     ${o.status !== 'paid' ? `
-                      <button class="btn btn-primary btn-sm" onclick="window.adminPanel.approveOrderPrompt(${o.order_code}, ${o.total_amount})" title="Kiểm tra tiền đã vào tài khoản và bấm duyệt để cấp license">
+                      <button class="btn btn-primary btn-sm" style="${o.status === 'pending_approval' ? 'font-weight: 800; box-shadow: 0 2px 8px rgba(224, 90, 43, 0.4);' : ''}" onclick="window.adminPanel.approveOrderPrompt(${o.order_code}, ${o.total_amount})" title="Kiểm tra tiền đã vào tài khoản và bấm duyệt để cấp license">
                         ✅ Duyệt Đã Nhận Tiền
                       </button>
                       <button class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="window.adminPanel.rejectOrderPrompt(${o.order_code})" title="Từ chối đơn hàng">
@@ -1125,11 +1192,51 @@ class AdminPanel {
     }
   }
 
-  deleteOrderPrompt(orderId) {
+  async refreshOrdersFromCloud(btnEl) {
+    const origText = btnEl ? btnEl.innerHTML : '';
+    if (btnEl) {
+      btnEl.disabled = true;
+      btnEl.innerHTML = '⏳ Đang tải từ máy chủ...';
+    }
+
+    let orders = [];
+    try {
+      orders = await window.dataStore.fetchRemoteOrders();
+      if (window.dataStore.fetchRemoteCustomRequests) {
+        await window.dataStore.fetchRemoteCustomRequests();
+      }
+    } catch (e) {
+      console.warn('[Admin] Lỗi refresh:', e);
+      orders = window.dataStore.getOrders();
+    }
+
+    if (btnEl) {
+      btnEl.disabled = false;
+      btnEl.innerHTML = origText;
+    }
+
+    const pendingCount = orders.filter(o => o.status === 'pending_approval').length;
+    let msg = `🎉 ĐÃ ĐỒNG BỘ THÀNH CÔNG VỚI MÁY CHỦ TRUNG TÂM!\n\n• Tổng số đơn hàng: ${orders.length} đơn\n`;
+    if (pendingCount > 0) {
+      msg += `• 🔔 CÓ ${pendingCount} ĐƠN HÀNG KHÁCH BÁO ĐÃ CHUYỂN KHOẢN ĐANG CHỜ BẠN DUYỆT!`;
+    } else {
+      msg += `• Trạng thái: Không có đơn hàng nào chờ duyệt.`;
+    }
+    alert(msg);
+    this.render();
+  }
+
+  async deleteOrderPrompt(orderId) {
     if (confirm('⚠️ Bạn có chắc muốn xóa lịch sử đơn hàng này?\nHành động này không thể hoàn tác.')) {
       let orders = window.dataStore.getOrders();
+      const target = orders.find(o => o.id === orderId);
       orders = orders.filter(o => o.id !== orderId);
       window.dataStore.save('orders', orders);
+
+      if (target && target.github_issue_number && window.dataStore.deleteOrderIssue) {
+        await window.dataStore.deleteOrderIssue(target.github_issue_number);
+      }
+
       alert('Đã xóa đơn hàng thành công!');
       this.render();
     }
