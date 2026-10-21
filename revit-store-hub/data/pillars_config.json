@@ -1,0 +1,35 @@
+{
+  "tools": {
+    "id": "tools",
+    "badge": "Revit Add-in",
+    "badge_class": "badge-tool",
+    "icon": "⚙️",
+    "title": "Revit Tools",
+    "description": "Bộ công cụ tiện ích tự động hóa thiết kế, tối ưu 90% thời gian xử lý MEP né dầm né cột, xuất hồ sơ ISO 19650 và rải thép tự động. Quản lý bản quyền linh hoạt theo máy tính.",
+    "media": "assets/card_tools.jpg",
+    "cta": "Khám Phá Công Cụ",
+    "target_pillar": "tools"
+  },
+  "family_template": {
+    "id": "family_template",
+    "badge": "Family & Template",
+    "badge_class": "badge-family",
+    "icon": "📦",
+    "title": "Family & Template",
+    "description": "Thư viện Family RFA chuẩn LOD 350 đầy đủ tham số catalog TCVN/quốc tế và bộ File Template (.RTE) mẫu dự án thiết lập sẵn View Template, Pipe/Duct System, Filter màu đồng bộ.",
+    "media": "assets/card_family.jpg",
+    "cta": "Xem Thư Viện & File Mẫu",
+    "target_pillar": "family_template"
+  },
+  "custom_service": {
+    "id": "custom_service",
+    "badge": "Dịch Vụ Theo Yêu Cầu",
+    "badge_class": "badge-custom",
+    "icon": "✍️",
+    "title": "Thuê Viết Tools & Tạo Template",
+    "description": "Nhận lập trình Add-in Revit C# .NET chuyên sâu theo quy trình riêng của từng văn phòng. Xây dựng bộ Template BIM đồng bộ 100% tiêu chuẩn doanh nghiệp và đào tạo chuyển giao.",
+    "media": "assets/card_custom.jpg",
+    "cta": "Gửi Yêu Cầu Đặt Hàng",
+    "target_pillar": "custom_service"
+  }
+}

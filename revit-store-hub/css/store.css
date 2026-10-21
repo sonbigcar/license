@@ -760,3 +760,75 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ==========================================================================
+   HOMEPAGE PILLAR CARDS ADMIN EDITING & CUSTOMIZATION STYLES
+   ========================================================================== */
+.pillar-quick-edit-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1.5px solid var(--primary);
+  color: var(--primary);
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.pillar-quick-edit-btn:hover {
+  background: var(--primary);
+  color: #FFFFFF;
+  transform: scale(1.05);
+}
+
+.pillar-tab-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid #EAE0D7;
+  background: #FAF3EE;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all var(--transition-smooth);
+}
+
+.pillar-tab-btn:hover {
+  border-color: var(--primary);
+  color: var(--text-pure);
+}
+
+.pillar-tab-btn.active {
+  background: #FFFFFF;
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 4px 12px rgba(224, 90, 43, 0.15);
+}
+
+.emoji-chip {
+  background: #FAF3EE;
+  border: 1px solid #EAE0D7;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.emoji-chip:hover {
+  background: #FFFFFF;
+  border-color: var(--primary);
+  transform: scale(1.2);
+}
+

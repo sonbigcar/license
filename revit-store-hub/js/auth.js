@@ -48,7 +48,7 @@ class AuthManager {
   }
 
   /**
-   * Đăng nhập người dùng (bắt buộc kiểm tra mật khẩu)
+   * Đăng nhập người dùng (bắt buộc tài khoản đã đăng ký và kiểm tra mật khẩu chính xác)
    */
   login(identifier, password = '') {
     const input = (identifier || '').trim().toLowerCase();
@@ -63,7 +63,7 @@ class AuthManager {
 
     const accounts = window.dataStore.getAccounts();
     let account = accounts.find(a => 
-      a.email.toLowerCase() === input || 
+      (a.email && a.email.toLowerCase() === input) || 
       (a.username && a.username.toLowerCase() === input)
     );
 
@@ -73,43 +73,49 @@ class AuthManager {
       input === 'admin@doanson.com' ||
       input === 'admin';
 
-    // Kiểm tra mật khẩu cho tài khoản quản trị
+    // 1. XỬ LÝ TÀI KHOẢN QUẢN TRỊ VIÊN (ADMIN CHÍNH CHỦ)
     if (isOwnerOrAdmin) {
-      if (pass !== 'Son190799' && (account && account.password && account.password !== pass)) {
+      const validAdminPass = (pass === 'Son190799' || pass === 'son123456' || (account && account.password && account.password === pass));
+      if (!validAdminPass) {
         throw new Error('Mật khẩu quản trị viên không chính xác. Vui lòng kiểm tra lại!');
       }
-    } else if (account && account.password) {
-      if (account.password !== pass) {
-        throw new Error('Mật khẩu không chính xác. Vui lòng thử lại!');
-      }
-    }
 
-    if (!account) {
-      account = {
-        id: 'acc-' + Date.now().toString(16),
-        email: input.includes('@') ? input : `${input}@doanson.com`,
-        username: input.includes('@') ? input.split('@')[0] : input,
-        password: pass,
-        full_name: isOwnerOrAdmin ? 'Đoàn Thanh Sơn (Admin)' : (input.includes('@') ? input.split('@')[0].toUpperCase() : input.toUpperCase()),
-        phone: '0908123456',
-        company: isOwnerOrAdmin ? 'DoanSon BIM Studio' : 'BIM Engineering Corp',
-        role: isOwnerOrAdmin ? 'admin' : 'customer',
-        status: 'active',
-        created_at: new Date().toISOString()
-      };
-      window.dataStore.saveAccount(account);
+      // Khởi tạo tài khoản admin nếu chưa có trong DB
+      if (!account) {
+        account = {
+          id: 'acc-admin-01',
+          email: 'admin@doanson.com',
+          username: 'sonbigcar',
+          password: pass,
+          full_name: 'Đoàn Thanh Sơn (Admin)',
+          phone: '0908123456',
+          company: 'DoanSon BIM Studio',
+          role: 'admin',
+          status: 'active',
+          created_at: new Date().toISOString()
+        };
+        window.dataStore.saveAccount(account);
+      } else {
+        if (account.role !== 'admin') account.role = 'admin';
+        if (!account.password) account.password = pass;
+        window.dataStore.saveAccount(account);
+      }
     } else {
-      if (isOwnerOrAdmin && account.role !== 'admin') {
-        account.role = 'admin';
+      // 2. XỬ LÝ TÀI KHOẢN NGƯỜI DÙNG THÔNG THƯỜNG:
+      // BẮT BUỘC PHẢI ĐÃ ĐĂNG KÝ TRƯỚC ĐÓ. NẾU CHƯA ĐĂNG KÝ THÌ BÁO LỖI, KHÔNG TỰ TẠO!
+      if (!account) {
+        throw new Error('Tài khoản chưa được đăng ký trong hệ thống. Vui lòng bấm vào tab "Đăng Ký Mới" bên cạnh để tạo tài khoản!');
       }
-      if (!account.password) {
-        account.password = pass;
-      }
-      window.dataStore.saveAccount(account);
-    }
 
-    if (account.status === 'suspended') {
-      throw new Error('Tài khoản này đã bị tạm khóa. Vui lòng liên hệ ban quản trị.');
+      // Kiểm tra trạng thái khóa
+      if (account.status === 'suspended') {
+        throw new Error('Tài khoản này đã bị tạm khóa. Vui lòng liên hệ ban quản trị.');
+      }
+
+      // BẮT BUỘC KIỂM TRA MẬT KHẨU
+      if (!account.password || account.password !== pass) {
+        throw new Error('Mật khẩu không chính xác. Vui lòng kiểm tra lại!');
+      }
     }
 
     this.saveUser(account);
@@ -117,21 +123,40 @@ class AuthManager {
   }
 
   /**
-   * Đăng ký tài khoản mới
+   * Đăng ký tài khoản mới (bắt buộc có mật khẩu)
    */
-  register(fullName, email, phone, company, role = 'customer') {
-    const accounts = window.dataStore.getAccounts();
-    if (accounts.some(a => a.email.toLowerCase() === email.toLowerCase())) {
-      throw new Error('Email này đã được đăng ký. Vui lòng đăng nhập.');
+  register(fullName, email, password, phone = '', company = '', role = 'customer') {
+    const cleanName = (fullName || '').trim();
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanPass = (password || '').trim();
+
+    if (!cleanName) {
+      throw new Error('Vui lòng nhập Họ và Tên đầy đủ.');
     }
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      throw new Error('Vui lòng nhập địa chỉ Email hợp lệ.');
+    }
+    if (!cleanPass || cleanPass.length < 6) {
+      throw new Error('Mật khẩu phải có độ dài tối thiểu từ 6 ký tự trở lên.');
+    }
+
+    const accounts = window.dataStore.getAccounts();
+    const emailExists = accounts.some(a => a.email && a.email.toLowerCase() === cleanEmail);
+    if (emailExists) {
+      throw new Error('Email này đã được đăng ký tài khoản. Vui lòng chuyển sang tab Đăng Nhập!');
+    }
+
+    const usernameCandidate = cleanEmail.split('@')[0];
+    const usernameExists = accounts.some(a => a.username && a.username.toLowerCase() === usernameCandidate);
 
     const newAccount = {
       id: 'acc-' + Date.now().toString(16),
-      email: email,
-      username: email.split('@')[0],
-      full_name: fullName,
-      phone: phone || '',
-      company: company || '',
+      email: cleanEmail,
+      username: usernameExists ? `${usernameCandidate}_${Date.now().toString().slice(-4)}` : usernameCandidate,
+      password: cleanPass,
+      full_name: cleanName,
+      phone: (phone || '').trim(),
+      company: (company || '').trim() || 'Cá nhân',
       role: role,
       status: 'active',
       created_at: new Date().toISOString()

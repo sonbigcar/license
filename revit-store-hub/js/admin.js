@@ -63,7 +63,10 @@ class AdminPanel {
               <span class="badge badge-admin">Master Administrator Portal</span>
               <h2 class="portal-title">Bảng Điều Khiển & Quản Lý Tài Khoản</h2>
             </div>
-            <div style="display: flex; gap: 10px;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <button class="btn btn-secondary btn-sm" onclick="window.storeApp.openPillarEditorModal()" style="font-weight: 700; border-color: var(--primary); color: var(--primary); display: inline-flex; align-items: center; gap: 6px;">
+                <span>✏️</span> Sửa 3 Thẻ Trụ Cột Trang Chủ
+              </button>
               <button class="btn btn-secondary btn-sm" onclick="window.storeApp.switchMainView('storefrontView')">
                 ← Về Cửa Hàng
               </button>

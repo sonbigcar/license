@@ -21,6 +21,7 @@ class DataStore {
     this.initDefaultData();
     this.fetchRemoteProducts();
     this.fetchRemoteBankConfig();
+    this.fetchRemotePillarsConfig();
     this.fetchRemoteOrders();
   }
 
@@ -414,6 +415,7 @@ class DataStore {
         id: 'acc-admin-01',
         email: 'admin@doanson.com',
         username: 'sonbigcar',
+        password: 'Son190799',
         full_name: 'Đoàn Thanh Sơn (Admin)',
         phone: '0908123456',
         company: 'DoanSon BIM Studio',
@@ -939,6 +941,138 @@ class DataStore {
   }
 
   /**
+   * CẤU HÌNH 3 THẺ TRỤ CỘT TRANG CHỦ (REVIT TOOLS, FAMILY & TEMPLATE, THUÊ VIẾT TOOLS)
+   * Cho phép Admin đổi Icon, Tiêu đề, Badge, Mô tả, Hình ảnh và Nút CTA
+   */
+  getDefaultPillarsConfig() {
+    return {
+      tools: {
+        id: 'tools',
+        badge: 'Revit Add-in',
+        badge_class: 'badge-tool',
+        icon: '⚙️',
+        title: 'Revit Tools',
+        description: 'Bộ công cụ tiện ích tự động hóa thiết kế, tối ưu 90% thời gian xử lý MEP né dầm né cột, xuất hồ sơ ISO 19650 và rải thép tự động. Quản lý bản quyền linh hoạt theo máy tính.',
+        media: 'assets/card_tools.jpg',
+        cta: 'Khám Phá Công Cụ',
+        target_pillar: 'tools'
+      },
+      family_template: {
+        id: 'family_template',
+        badge: 'Family & Template',
+        badge_class: 'badge-family',
+        icon: '📦',
+        title: 'Family & Template',
+        description: 'Thư viện Family RFA chuẩn LOD 350 đầy đủ tham số catalog TCVN/quốc tế và bộ File Template (.RTE) mẫu dự án thiết lập sẵn View Template, Pipe/Duct System, Filter màu đồng bộ.',
+        media: 'assets/card_family.jpg',
+        cta: 'Xem Thư Viện & File Mẫu',
+        target_pillar: 'family_template'
+      },
+      custom_service: {
+        id: 'custom_service',
+        badge: 'Dịch Vụ Theo Yêu Cầu',
+        badge_class: 'badge-custom',
+        icon: '✍️',
+        title: 'Thuê Viết Tools & Tạo Template',
+        description: 'Nhận lập trình Add-in Revit C# .NET chuyên sâu theo quy trình riêng của từng văn phòng. Xây dựng bộ Template BIM đồng bộ 100% tiêu chuẩn doanh nghiệp và đào tạo chuyển giao.',
+        media: 'assets/card_custom.jpg',
+        cta: 'Gửi Yêu Cầu Đặt Hàng',
+        target_pillar: 'custom_service'
+      }
+    };
+  }
+
+  getPillarsConfig() {
+    const saved = this.get('pillars_config');
+    if (saved && saved.tools && saved.family_template && saved.custom_service) {
+      return saved;
+    }
+    return this.getDefaultPillarsConfig();
+  }
+
+  async savePillarsConfig(config) {
+    this.save('pillars_config', config);
+    // Tự động đẩy file cấu hình lên máy chủ trung tâm
+    return await this.syncPillarsConfigToGitHub(config);
+  }
+
+  async fetchRemotePillarsConfig() {
+    const candidateUrls = [
+      'data/pillars_config.json?t=' + Date.now(),
+      'https://raw.githubusercontent.com/sonbigcar/license/main/revit-store-hub/data/pillars_config.json?t=' + Date.now()
+    ];
+
+    for (const url of candidateUrls) {
+      try {
+        const res = await fetch(url, { cache: 'no-store' });
+        if (res.ok) {
+          const remotePillars = await res.json();
+          if (remotePillars && remotePillars.tools) {
+            this.save('pillars_config', remotePillars);
+            if (window.storeApp && typeof window.storeApp.renderPillars === 'function') {
+              window.storeApp.renderPillars();
+            }
+            return remotePillars;
+          }
+        }
+      } catch (err) {}
+    }
+    return this.getPillarsConfig();
+  }
+
+  async syncPillarsConfigToGitHub(config) {
+    const { owner, repo, token } = this.GITHUB_CONFIG;
+    const path = 'revit-store-hub/data/pillars_config.json';
+    if (!token) return { success: false, message: 'Chưa cấu hình GitHub Token' };
+
+    try {
+      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+      let sha = null;
+      try {
+        const getRes = await fetch(apiUrl, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        if (getRes.ok) {
+          const fileData = await getRes.json();
+          sha = fileData.sha;
+        }
+      } catch (e) {}
+
+      const jsonStr = JSON.stringify(config, null, 2);
+      const utf8Bytes = new TextEncoder().encode(jsonStr);
+      let binary = '';
+      for (let i = 0; i < utf8Bytes.length; i++) {
+        binary += String.fromCharCode(utf8Bytes[i]);
+      }
+      const base64Content = btoa(binary);
+
+      const putBody = {
+        message: `Admin update homepage 3 pillars config (icons, titles, descriptions) [skip ci]`,
+        content: base64Content,
+        branch: 'main'
+      };
+      if (sha) putBody.sha = sha;
+
+      const putRes = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(putBody)
+      });
+
+      return { success: putRes.ok };
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  }
+
+  /**
    * DỌN DẸP TOÀN BỘ TÀI KHOẢN ẢO MẶC ĐỊNH
    * Giữ lại duy nhất 1 tài khoản chính chủ của Admin (sonbigcar) và các tài khoản người dùng đăng ký thật
    */
@@ -948,12 +1082,14 @@ class DataStore {
     let accounts = this.getAccounts();
     accounts = accounts.filter(a => !dummyIds.includes(a.id) && !dummyEmails.includes(a.email));
 
-    // Đảm bảo tài khoản sonbigcar luôn tồn tại
-    if (!accounts.some(a => a.username === 'sonbigcar' || a.email === 'admin@doanson.com')) {
+    // Đảm bảo tài khoản sonbigcar luôn tồn tại và có mật khẩu
+    const adminAcc = accounts.find(a => a.username === 'sonbigcar' || a.email === 'admin@doanson.com');
+    if (!adminAcc) {
       accounts.unshift({
         id: 'acc-admin-01',
         email: 'admin@doanson.com',
         username: 'sonbigcar',
+        password: 'Son190799',
         full_name: 'Đoàn Thanh Sơn (Admin)',
         phone: '0908123456',
         company: 'DoanSon BIM Studio',
@@ -962,6 +1098,9 @@ class DataStore {
         created_at: '2026-01-01T00:00:00Z',
         orders_count: 0
       });
+    } else {
+      adminAcc.role = 'admin';
+      if (!adminAcc.password) adminAcc.password = 'Son190799';
     }
     this.save('accounts', accounts);
     return accounts;

@@ -17,6 +17,7 @@ class StoreApp {
 
   init() {
     this.setupEventListeners();
+    this.renderPillars();
     this.renderProducts();
     this.updateCartBadge();
     this.updateUserNav();
@@ -26,6 +27,7 @@ class StoreApp {
     window.authManager.subscribe((user) => {
       this.updateUserNav();
       this.updateNavTabsVisibility();
+      this.renderPillars();
       this.renderProducts(); // Re-render để hiển thị nút Admin thêm sản phẩm nếu vừa login admin
 
       if (document.getElementById('libraryView') && !document.getElementById('libraryView').classList.contains('hidden')) {
@@ -143,6 +145,14 @@ class StoreApp {
     if (prodEditorOverlay) {
       prodEditorOverlay.addEventListener('click', (e) => {
         if (e.target.id === 'productEditorModalOverlay') this.closeProductEditorModal();
+      });
+    }
+
+    // Pillar Editor Modal Close (Admin)
+    const pillarEditorOverlay = document.getElementById('pillarEditorModalOverlay');
+    if (pillarEditorOverlay) {
+      pillarEditorOverlay.addEventListener('click', (e) => {
+        if (e.target.id === 'pillarEditorModalOverlay') this.closePillarEditorModal();
       });
     }
 
@@ -294,34 +304,231 @@ class StoreApp {
     e.preventDefault();
     const fullName = document.getElementById('regName').value.trim();
     const email = document.getElementById('regEmail').value.trim();
-    const phone = document.getElementById('regPhone').value.trim();
-    const company = document.getElementById('regCompany').value.trim();
+    const password = document.getElementById('regPassword') ? document.getElementById('regPassword').value : '';
+    const confirmPassword = document.getElementById('regConfirmPassword') ? document.getElementById('regConfirmPassword').value : '';
+    const phone = document.getElementById('regPhone') ? document.getElementById('regPhone').value.trim() : '';
+    const company = document.getElementById('regCompany') ? document.getElementById('regCompany').value.trim() : '';
 
     if (!fullName || !email) {
       alert('Vui lòng nhập Họ tên và Email.');
       return;
     }
 
+    if (!password || password.length < 6) {
+      alert('Mật khẩu phải có độ dài tối thiểu từ 6 ký tự trở lên.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      alert('Mật khẩu xác nhận không khớp! Vui lòng nhập lại chính xác.');
+      return;
+    }
+
     try {
-      const user = window.authManager.register(fullName, email, phone, company, 'customer');
+      const user = window.authManager.register(fullName, email, password, phone, company, 'customer');
       this.closeAuthModal();
-      alert(`Chúc mừng ${user.full_name}! Tài khoản của bạn đã được tạo thành công.`);
+      alert(`🎉 Chúc mừng ${user.full_name}! Tài khoản của bạn đã được đăng ký thành công và đã tự động đăng nhập.`);
     } catch (err) {
       alert(err.message);
     }
   }
 
-  quickLoginAsAdmin() {
-    window.authManager.login('admin@revitstore.vn');
-    this.closeAuthModal();
-    alert('Đã đăng nhập thành công với quyền Quản Trị Viên (Admin)!');
-    this.switchMainView('adminView');
+  /**
+   * RENDER 3 THẺ TRỤ CỘT TRANG CHỦ & NÚT CHỈNH SỬA DÀNH CHO ADMIN
+   */
+  renderPillars() {
+    const container = document.getElementById('pillarsGrid');
+    const actionArea = document.getElementById('adminPillarsActionArea');
+    if (!container) return;
+
+    const isAdmin = window.authManager.isAdmin();
+    const config = window.dataStore.getPillarsConfig();
+    const pillarKeys = ['tools', 'family_template', 'custom_service'];
+
+    // Hiển thị nút sửa trên thanh tiêu đề nếu là Admin
+    if (actionArea) {
+      if (isAdmin) {
+        actionArea.innerHTML = `
+          <button class="btn btn-secondary btn-sm" onclick="window.storeApp.openPillarEditorModal()" style="font-weight: 700; border-color: var(--primary); color: var(--primary); display: inline-flex; align-items: center; gap: 6px;">
+            <span>✏️</span> Sửa Icon & Mô Tả 3 Thẻ Trụ Cột
+          </button>
+        `;
+      } else {
+        actionArea.innerHTML = '';
+      }
+    }
+
+    container.innerHTML = pillarKeys.map(key => {
+      const p = config[key] || window.dataStore.getDefaultPillarsConfig()[key];
+      return `
+        <div class="pillar-card" onclick="window.storeApp.navigateToPillar('${p.target_pillar || key}')">
+          ${isAdmin ? `
+            <button class="pillar-quick-edit-btn" onclick="event.stopPropagation(); window.storeApp.openPillarEditorModal('${key}')" title="Chỉnh sửa Icon, Tiêu đề và Mô tả thẻ này">
+              ✏️ Sửa Thẻ
+            </button>
+          ` : ''}
+          <div class="pillar-media">
+            <img src="${p.media}" alt="${p.title}" loading="lazy" onerror="this.src='assets/card_tools.jpg'">
+            <div class="pillar-overlay"></div>
+            <span class="badge ${p.badge_class || (key === 'tools' ? 'badge-tool' : (key === 'family_template' ? 'badge-family' : 'badge-custom'))} pillar-badge-float">${p.badge}</span>
+            <div class="pillar-icon-box">${p.icon}</div>
+          </div>
+          <div class="pillar-content">
+            <h3 class="pillar-title">${p.title}</h3>
+            <p class="pillar-desc">${p.description}</p>
+            <div class="pillar-cta">
+              <span>${p.cta || 'Khám Phá Công Cụ'}</span>
+              <span style="font-size: 1.2rem;">→</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
   }
 
-  quickLoginAsEngineer() {
-    window.authManager.login('engineer.bim@gmail.com');
-    this.closeAuthModal();
-    alert('Đã đăng nhập thành công với quyền Kỹ Sư BIM!');
+  /**
+   * MODAL CHỈNH SỬA 3 THẺ TRỤ CỘT TRANG CHỦ
+   */
+  openPillarEditorModal(pillarKey = 'tools') {
+    const modal = document.getElementById('pillarEditorModalOverlay');
+    if (!modal) return;
+    this.currentEditingPillarKey = pillarKey;
+    this.switchPillarEditorTab(pillarKey);
+    modal.classList.add('active');
+  }
+
+  closePillarEditorModal() {
+    const modal = document.getElementById('pillarEditorModalOverlay');
+    if (modal) modal.classList.remove('active');
+  }
+
+  switchPillarEditorTab(pillarKey) {
+    this.currentEditingPillarKey = pillarKey;
+    ['tools', 'family_template', 'custom_service'].forEach(k => {
+      const tabBtn = document.getElementById(`tabEditPillar_${k}`);
+      if (tabBtn) tabBtn.classList.toggle('active', k === pillarKey);
+    });
+
+    const config = window.dataStore.getPillarsConfig();
+    const p = config[pillarKey] || window.dataStore.getDefaultPillarsConfig()[pillarKey];
+
+    const idEl = document.getElementById('editPillarId');
+    const iconEl = document.getElementById('editPillarIcon');
+    const titleEl = document.getElementById('editPillarTitle');
+    const badgeEl = document.getElementById('editPillarBadge');
+    const descEl = document.getElementById('editPillarDesc');
+    const mediaEl = document.getElementById('editPillarMedia');
+    const ctaEl = document.getElementById('editPillarCta');
+
+    if (idEl) idEl.value = pillarKey;
+    if (iconEl) iconEl.value = p.icon || '⚙️';
+    if (titleEl) titleEl.value = p.title || '';
+    if (badgeEl) badgeEl.value = p.badge || '';
+    if (descEl) descEl.value = p.description || '';
+    if (mediaEl) mediaEl.value = p.media || '';
+    if (ctaEl) ctaEl.value = p.cta || '';
+
+    this.updatePillarLivePreview();
+  }
+
+  setPillarEmoji(emoji) {
+    const iconEl = document.getElementById('editPillarIcon');
+    if (iconEl) {
+      iconEl.value = emoji;
+      this.updatePillarLivePreview();
+    }
+  }
+
+  updatePillarLivePreview() {
+    const previewContainer = document.getElementById('pillarLivePreviewCard');
+    if (!previewContainer) return;
+
+    const key = document.getElementById('editPillarId')?.value || 'tools';
+    const icon = document.getElementById('editPillarIcon')?.value || '⚙️';
+    const title = document.getElementById('editPillarTitle')?.value || 'Tiêu đề';
+    const badge = document.getElementById('editPillarBadge')?.value || 'Nhãn';
+    const desc = document.getElementById('editPillarDesc')?.value || 'Mô tả nội dung thẻ...';
+    const media = document.getElementById('editPillarMedia')?.value || 'assets/card_tools.jpg';
+    const cta = document.getElementById('editPillarCta')?.value || 'Khám Phá';
+
+    let badgeClass = 'badge-tool';
+    if (key === 'family_template') badgeClass = 'badge-family';
+    else if (key === 'custom_service') badgeClass = 'badge-custom';
+
+    previewContainer.innerHTML = `
+      <div class="pillar-media">
+        <img src="${media}" alt="${title}" onerror="this.src='assets/card_tools.jpg'">
+        <div class="pillar-overlay"></div>
+        <span class="badge ${badgeClass} pillar-badge-float">${badge}</span>
+        <div class="pillar-icon-box">${icon}</div>
+      </div>
+      <div class="pillar-content">
+        <h3 class="pillar-title">${title}</h3>
+        <p class="pillar-desc">${desc}</p>
+        <div class="pillar-cta">
+          <span>${cta}</span>
+          <span style="font-size: 1.2rem;">→</span>
+        </div>
+      </div>
+    `;
+  }
+
+  async handlePillarEditorSubmit(e) {
+    e.preventDefault();
+    const key = document.getElementById('editPillarId').value;
+    const icon = document.getElementById('editPillarIcon').value.trim();
+    const title = document.getElementById('editPillarTitle').value.trim();
+    const badge = document.getElementById('editPillarBadge').value.trim();
+    const desc = document.getElementById('editPillarDesc').value.trim();
+    const media = document.getElementById('editPillarMedia').value.trim();
+    const cta = document.getElementById('editPillarCta').value.trim();
+
+    if (!icon || !title || !desc) {
+      alert('Vui lòng điền đủ Biểu tượng (Icon), Tiêu đề và Mô tả.');
+      return;
+    }
+
+    const btn = document.getElementById('savePillarBtn');
+    const origText = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Đang lưu & đồng bộ...';
+    }
+
+    const currentConfig = window.dataStore.getPillarsConfig();
+    currentConfig[key] = {
+      ...currentConfig[key],
+      icon,
+      title,
+      badge: badge || currentConfig[key]?.badge,
+      description: desc,
+      media: media || currentConfig[key]?.media,
+      cta: cta || currentConfig[key]?.cta
+    };
+
+    await window.dataStore.savePillarsConfig(currentConfig);
+
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origText;
+    }
+
+    this.renderPillars();
+    this.closePillarEditorModal();
+    alert(`🎉 ĐÃ CẬP NHẬT THÀNH CÔNG THẺ "${title}"!\nIcon: ${icon}\nNội dung mới đã được cập nhật trực tiếp trên trang chủ.`);
+  }
+
+  resetPillarToDefault() {
+    const key = document.getElementById('editPillarId')?.value || this.currentEditingPillarKey || 'tools';
+    if (confirm(`Bạn có chắc muốn khôi phục thẻ này về nội dung mặc định ban đầu?`)) {
+      const defaults = window.dataStore.getDefaultPillarsConfig();
+      const currentConfig = window.dataStore.getPillarsConfig();
+      currentConfig[key] = defaults[key];
+      window.dataStore.savePillarsConfig(currentConfig);
+      this.switchPillarEditorTab(key);
+      this.renderPillars();
+      alert(`Đã khôi phục mặc định thẻ thành công!`);
+    }
   }
 
   /**

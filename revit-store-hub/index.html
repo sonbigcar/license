@@ -64,10 +64,13 @@
       <section class="pillars-section">
         <div class="pillars-header">
           <div class="pillars-tagline">⚡ Nền Tảng Công Nghệ & Tài Nguyên BIM Đương Đại</div>
-          <h2 class="pillars-title">Chọn Trải Nghiệm Của Bạn</h2>
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+            <h2 class="pillars-title" style="margin: 0;">Chọn Trải Nghiệm Của Bạn</h2>
+            <div id="adminPillarsActionArea"></div>
+          </div>
         </div>
 
-        <div class="pillars-grid">
+        <div id="pillarsGrid" class="pillars-grid">
           <!-- CARD 1: TOOLS (REVIT ADD-IN) -->
           <div class="pillar-card" onclick="window.storeApp.navigateToPillar('tools')">
             <div class="pillar-media">
@@ -378,19 +381,31 @@
             <input type="text" id="regName" class="form-control" placeholder="Nguyễn Văn A" required>
           </div>
           <div class="form-group">
-            <label>Email *</label>
+            <label>Email đăng ký *</label>
             <input type="email" id="regEmail" class="form-control" placeholder="name@company.com" required>
           </div>
-          <div class="form-group">
-            <label>Số điện thoại</label>
-            <input type="tel" id="regPhone" class="form-control" placeholder="0901234567">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label>Mật khẩu *</label>
+              <input type="password" id="regPassword" class="form-control" placeholder="Tối thiểu 6 ký tự" required minlength="6">
+            </div>
+            <div class="form-group">
+              <label>Nhập lại mật khẩu *</label>
+              <input type="password" id="regConfirmPassword" class="form-control" placeholder="Nhập lại mật khẩu" required minlength="6">
+            </div>
           </div>
-          <div class="form-group">
-            <label>Công ty / Tổ chức</label>
-            <input type="text" id="regCompany" class="form-control" placeholder="BIM Consulting JSC">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label>Số điện thoại</label>
+              <input type="tel" id="regPhone" class="form-control" placeholder="0901234567">
+            </div>
+            <div class="form-group">
+              <label>Công ty / Tổ chức</label>
+              <input type="text" id="regCompany" class="form-control" placeholder="BIM Consulting JSC">
+            </div>
           </div>
-          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
-            Tạo Tài Khoản Kỹ Sư
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+            Tạo Tài Khoản Kỹ Sư & Đăng Nhập
           </button>
         </form>
       </div>
@@ -472,6 +487,115 @@
             💾 Lưu & Niêm Yết Sản Phẩm Lên Cửa Hàng
           </button>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL ADMIN: CHỈNH SỬA ICON, TIÊU ĐỀ & MÔ TẢ 3 THẺ TRỤ CỘT TRANG CHỦ
+       ==================================================================== -->
+  <div id="pillarEditorModalOverlay" class="modal-overlay">
+    <div class="modal-content" style="max-width: 900px;">
+      <div class="modal-header">
+        <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-pure); display: flex; align-items: center; gap: 8px;">
+          <span>✏️</span> Chỉnh Sửa 3 Thẻ Trụ Cột Trang Chủ (Revit Tools, Family, Thuê Viết Tools)
+        </h3>
+        <button id="closePillarEditorModal" class="modal-close" onclick="window.storeApp.closePillarEditorModal()">✕</button>
+      </div>
+
+      <div style="padding: 24px;">
+        <!-- TAB CHỌN 1 TRONG 3 THẺ ĐỂ SỬA -->
+        <div class="pillar-edit-tabs" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+          <button type="button" class="pillar-tab-btn active" id="tabEditPillar_tools" onclick="window.storeApp.switchPillarEditorTab('tools')">
+            <span style="font-size: 1.2rem;">⚙️</span>
+            <span>Thẻ 1: Revit Tools</span>
+          </button>
+          <button type="button" class="pillar-tab-btn" id="tabEditPillar_family_template" onclick="window.storeApp.switchPillarEditorTab('family_template')">
+            <span style="font-size: 1.2rem;">📦</span>
+            <span>Thẻ 2: Family & Template</span>
+          </button>
+          <button type="button" class="pillar-tab-btn" id="tabEditPillar_custom_service" onclick="window.storeApp.switchPillarEditorTab('custom_service')">
+            <span style="font-size: 1.2rem;">✍️</span>
+            <span>Thẻ 3: Thuê Viết Tools</span>
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px; align-items: start;">
+          <!-- CỘT TRÁI: FORM NHẬP LIỆU -->
+          <form id="pillarEditorForm" onsubmit="window.storeApp.handlePillarEditorSubmit(event)">
+            <input type="hidden" id="editPillarId" value="tools">
+
+            <!-- ICON & CHỌN NHANH EMOJI -->
+            <div class="form-group">
+              <label>Biểu tượng (Icon / Emoji) *</label>
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="text" id="editPillarIcon" class="form-control" style="font-size: 1.5rem; text-align: center; width: 75px;" maxlength="4" required oninput="window.storeApp.updatePillarLivePreview()">
+                <div style="flex: 1; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                  <span style="font-size: 0.78rem; color: var(--text-dim); margin-right: 4px;">Chọn nhanh:</span>
+                  <button type="button" class="emoji-chip" onclick="window.storeApp.setPillarEmoji('⚙️')">⚙️</button>
+                  <button type="button" class="emoji-chip" onclick="window.storeApp.setPillarEmoji('📦')">📦</button>
+                  <button type="button" class="emoji-chip" onclick="window.storeApp.setPillarEmoji('✍️')">✍️</button>
+                  <button type="button" class="emoji-chip" onclick="window.storeApp.setPillarEmoji('⚡')">⚡</button>
+                  <button type="button" class="emoji-chip" onclick="window.storeApp.setPillarEmoji('🏗️')">🏗️</button>
+                  <button type="button" class="emoji-chip" onclick="window.storeApp.setPillarEmoji('📐')">📐</button>
+                  <button type="button" class="emoji-chip" onclick="window.storeApp.setPillarEmoji('🚀')">🚀</button>
+                  <button type="button" class="emoji-chip" onclick="window.storeApp.setPillarEmoji('💻')">💻</button>
+                  <button type="button" class="emoji-chip" onclick="window.storeApp.setPillarEmoji('🏢')">🏢</button>
+                  <button type="button" class="emoji-chip" onclick="window.storeApp.setPillarEmoji('🛠️')">🛠️</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- TIÊU ĐỀ & NHÃN NỔI BẬT -->
+            <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 14px;">
+              <div class="form-group">
+                <label>Tiêu đề thẻ *</label>
+                <input type="text" id="editPillarTitle" class="form-control" placeholder="Ví dụ: Revit Tools" required oninput="window.storeApp.updatePillarLivePreview()">
+              </div>
+              <div class="form-group">
+                <label>Nhãn nổi bật (Badge) *</label>
+                <input type="text" id="editPillarBadge" class="form-control" placeholder="Ví dụ: Revit Add-in" required oninput="window.storeApp.updatePillarLivePreview()">
+              </div>
+            </div>
+
+            <!-- MÔ TẢ CHI TIẾT -->
+            <div class="form-group">
+              <label>Mô tả chi tiết nội dung thẻ *</label>
+              <textarea id="editPillarDesc" class="form-control" rows="4" placeholder="Nhập mô tả giới thiệu tính năng, lợi ích..." required oninput="window.storeApp.updatePillarLivePreview()"></textarea>
+            </div>
+
+            <!-- LINK ẢNH NỀN & NÚT CTA -->
+            <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 14px;">
+              <div class="form-group">
+                <label>Đường dẫn hình ảnh nền (Media URL)</label>
+                <input type="text" id="editPillarMedia" class="form-control" placeholder="assets/card_tools.jpg" oninput="window.storeApp.updatePillarLivePreview()">
+              </div>
+              <div class="form-group">
+                <label>Chữ nút bấm (CTA)</label>
+                <input type="text" id="editPillarCta" class="form-control" placeholder="Khám Phá Công Cụ" oninput="window.storeApp.updatePillarLivePreview()">
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 14px;">
+              <button type="submit" id="savePillarBtn" class="btn btn-primary" style="flex: 2;">
+                💾 Lưu Thay Đổi & Cập Nhật Lên Web
+              </button>
+              <button type="button" class="btn btn-secondary" style="flex: 1; color: var(--danger);" onclick="window.storeApp.resetPillarToDefault()">
+                🔄 Về Mặc Định
+              </button>
+            </div>
+          </form>
+
+          <!-- CỘT PHẢI: XEM TRƯỚC TRỰC QUAN (LIVE PREVIEW) -->
+          <div>
+            <div style="font-size: 0.86rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px;">
+              👁️ Xem Trước Thẻ Trên Trang Chủ:
+            </div>
+            <div id="pillarLivePreviewCard" class="pillar-card" style="min-height: 440px; pointer-events: none; transform: none; box-shadow: var(--shadow-sm);">
+              <!-- Sẽ render động qua updatePillarLivePreview -->
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
