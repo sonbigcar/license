@@ -31,9 +31,36 @@ class DataStore {
    * Đảm bảo mọi máy tính / điện thoại của khách hàng đều nhận tiền vào đúng 1 STK của Admin
    */
   async fetchRemoteBankConfig() {
+    const { owner, repo, token } = this.GITHUB_CONFIG;
+    const path = 'revit-store-hub/data/bank_config.json';
+
+    // 1. Ưu tiên cao nhất: Lấy trực tiếp từ GitHub Contents API (0 giây cache, thời gian thực 100%)
+    if (token) {
+      try {
+        const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=main&t=${Date.now()}`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3.raw'
+          },
+          cache: 'no-store'
+        });
+        if (res.ok) {
+          const remoteBankCfg = await res.json();
+          if (remoteBankCfg && remoteBankCfg.accountNo) {
+            this.save('bank_config', remoteBankCfg);
+            if (window.adminPanel && window.adminPanel.currentTab === 'settings') {
+              window.adminPanel.render();
+            }
+            return remoteBankCfg;
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 2. Dự phòng: raw.githubusercontent.com và file tĩnh data/bank_config.json
     const candidateUrls = [
-      'data/bank_config.json?t=' + Date.now(),
-      'https://raw.githubusercontent.com/sonbigcar/license/main/revit-store-hub/data/bank_config.json?t=' + Date.now()
+      `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}?t=${Date.now()}`,
+      `data/bank_config.json?t=${Date.now()}`
     ];
 
     for (const url of candidateUrls) {
@@ -88,7 +115,7 @@ class DataStore {
       const base64Content = btoa(binary);
 
       const putBody = {
-        message: `Admin update receiving bank account (${config.accountNo} - ${config.bankName}) [skip ci]`,
+        message: `Admin update receiving bank account: ${config.accountNo} - ${config.bankName}`,
         content: base64Content,
         branch: 'main'
       };
@@ -121,9 +148,40 @@ class DataStore {
    * lấy file data/products.json mới nhất từ repo/server và hiển thị ngay lập tức.
    */
   async fetchRemoteProducts() {
+    const { owner, repo, path, token } = this.GITHUB_CONFIG;
+
+    // 1. Ưu tiên cao nhất: Lấy trực tiếp từ GitHub Contents API (0 giây delay, không dính cache CDN)
+    if (token) {
+      try {
+        const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=main&t=${Date.now()}`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3.raw'
+          },
+          cache: 'no-store'
+        });
+        if (res.ok) {
+          const remoteProducts = await res.json();
+          if (Array.isArray(remoteProducts) && remoteProducts.length > 0) {
+            this.save('products', remoteProducts);
+            if (window.storeApp && typeof window.storeApp.renderProducts === 'function') {
+              window.storeApp.renderProducts();
+            }
+            if (window.adminPanel && document.getElementById('adminView') && !document.getElementById('adminView').classList.contains('hidden')) {
+              window.adminPanel.render();
+            }
+            return remoteProducts;
+          }
+        }
+      } catch (e) {
+        console.warn('[Fetch Products] API fallback:', e.message);
+      }
+    }
+
+    // 2. Dự phòng: raw.githubusercontent.com và file tĩnh data/products.json
     const candidateUrls = [
-      'data/products.json?t=' + Date.now(),
-      'https://raw.githubusercontent.com/sonbigcar/license/main/revit-store-hub/data/products.json?t=' + Date.now()
+      `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}?t=${Date.now()}`,
+      `data/products.json?t=${Date.now()}`
     ];
 
     for (const url of candidateUrls) {
@@ -132,9 +190,7 @@ class DataStore {
         if (res.ok) {
           const remoteProducts = await res.json();
           if (Array.isArray(remoteProducts) && remoteProducts.length > 0) {
-            // Cập nhật vào local cache của máy khách
             this.save('products', remoteProducts);
-            // Kích hoạt re-render giao diện nếu ứng dụng đã tải xong
             if (window.storeApp && typeof window.storeApp.renderProducts === 'function') {
               window.storeApp.renderProducts();
             }
@@ -185,9 +241,9 @@ class DataStore {
       }
       const base64Content = btoa(binary);
 
-      // 3. Commit trực tiếp lên nhánh main
+      // 3. Commit trực tiếp lên nhánh main (không dùng [skip ci] để GitHub Pages tự động build)
       const putBody = {
-        message: `Admin update catalog: ${products.length} products [skip ci]`,
+        message: `Admin update catalog: ${products.length} products`,
         content: base64Content,
         branch: 'main'
       };
@@ -404,9 +460,9 @@ class DataStore {
       }
     ];
 
-    // Luôn đảm bảo có dữ liệu sản phẩm đầy đủ và cập nhật video_url
+    // Đảm bảo có dữ liệu ban đầu nếu localStorage hoàn toàn trống
     const existing = this.get('products');
-    if (!existing || existing.length === 0 || !existing[0].video_url) {
+    if (!existing || !Array.isArray(existing) || existing.length === 0) {
       this.save('products', defaultProducts);
     }
 
@@ -1150,9 +1206,36 @@ class DataStore {
   }
 
   async fetchRemotePillarsConfig() {
+    const { owner, repo, token } = this.GITHUB_CONFIG;
+    const path = 'revit-store-hub/data/pillars_config.json';
+
+    // 1. Ưu tiên cao nhất: Lấy trực tiếp từ GitHub Contents API (0 giây cache, thời gian thực 100%)
+    if (token) {
+      try {
+        const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=main&t=${Date.now()}`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3.raw'
+          },
+          cache: 'no-store'
+        });
+        if (res.ok) {
+          const remotePillars = await res.json();
+          if (remotePillars && remotePillars.tools) {
+            this.save('pillars_config', remotePillars);
+            if (window.storeApp && typeof window.storeApp.renderPillars === 'function') {
+              window.storeApp.renderPillars();
+            }
+            return remotePillars;
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 2. Dự phòng: raw.githubusercontent.com và file tĩnh data/pillars_config.json
     const candidateUrls = [
-      'data/pillars_config.json?t=' + Date.now(),
-      'https://raw.githubusercontent.com/sonbigcar/license/main/revit-store-hub/data/pillars_config.json?t=' + Date.now()
+      `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}?t=${Date.now()}`,
+      `data/pillars_config.json?t=${Date.now()}`
     ];
 
     for (const url of candidateUrls) {
@@ -1203,7 +1286,7 @@ class DataStore {
       const base64Content = btoa(binary);
 
       const putBody = {
-        message: `Admin update homepage 3 pillars config (icons, titles, descriptions) [skip ci]`,
+        message: `Admin update homepage 3 pillars config (icons, titles, descriptions)`,
         content: base64Content,
         branch: 'main'
       };
