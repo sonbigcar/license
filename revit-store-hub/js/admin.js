@@ -1029,22 +1029,22 @@ class AdminPanel {
     }
   }
 
-  toggleRole(accId) {
+  async toggleRole(accId) {
     const accounts = window.dataStore.getAccounts();
     const acc = accounts.find(a => a.id === accId);
     if (!acc) return;
     acc.role = acc.role === 'admin' ? 'customer' : 'admin';
-    window.dataStore.saveAccount(acc);
+    await window.dataStore.saveAccount(acc);
     alert(`Đã chuyển quyền của ${acc.full_name} thành: ${acc.role.toUpperCase()}`);
     this.render();
   }
 
-  toggleStatus(accId) {
+  async toggleStatus(accId) {
     const accounts = window.dataStore.getAccounts();
     const acc = accounts.find(a => a.id === accId);
     if (!acc) return;
     acc.status = acc.status === 'active' ? 'suspended' : 'active';
-    window.dataStore.saveAccount(acc);
+    await window.dataStore.saveAccount(acc);
     this.render();
   }
 
@@ -1059,14 +1059,14 @@ class AdminPanel {
     this.render();
   }
 
-  deleteAccountPrompt(accId, accName) {
+  async deleteAccountPrompt(accId, accName) {
     const currentUser = window.authManager.getCurrentUser();
     if (currentUser && currentUser.id === accId) {
       alert('Không thể xóa tài khoản bạn đang đăng nhập!');
       return;
     }
     if (confirm(`⚠️ Bạn có chắc chắn muốn xóa tài khoản "${accName}"?\nHành động này không thể hoàn tác.`)) {
-      window.dataStore.deleteAccount(accId);
+      await window.dataStore.deleteAccount(accId);
       alert(`Đã xóa tài khoản "${accName}" thành công!`);
       this.render();
     }

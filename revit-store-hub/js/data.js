@@ -23,6 +23,7 @@ class DataStore {
     this.fetchRemoteBankConfig();
     this.fetchRemotePillarsConfig();
     this.fetchRemoteOrders();
+    this.fetchRemoteAccounts();
   }
 
   /**
@@ -526,21 +527,173 @@ class DataStore {
     return this.get('accounts');
   }
 
-  saveAccount(account) {
+  /**
+   * TẢI TOÀN BỘ TÀI KHOẢN TỪ MÁY CHỦ GITHUB ISSUES VỀ
+   * Đảm bảo tài khoản người dùng đăng ký không bao giờ bị mất hoặc reset sau vài ngày
+   */
+  async fetchRemoteAccounts() {
+    const { owner, repo, token } = this.GITHUB_CONFIG;
+    if (!token) return this.getAccounts();
+
+    try {
+      const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues?state=all&per_page=100&t=${Date.now()}`, {
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+
+      if (res.ok) {
+        const issues = await res.json();
+        const localAccounts = this.getAccounts() || [];
+        let updated = false;
+
+        for (const issue of issues) {
+          if (issue.title && issue.title.startsWith('[ACCOUNT]') && issue.body) {
+            // Nếu issue đã bị đánh dấu xóa thì bỏ qua
+            if (issue.state === 'closed' && (issue.title.includes('[DELETED]') || issue.state_reason === 'not_planned')) {
+              continue;
+            }
+            const match = issue.body.match(/<!-- ACCOUNT_DATA_JSON_START -->(.*?)<!-- ACCOUNT_DATA_JSON_END -->/s);
+            if (match) {
+              try {
+                const accData = JSON.parse(match[1]);
+                accData.github_issue_number = issue.number;
+                const existingIdx = localAccounts.findIndex(a => a.id === accData.id || (a.email && a.email.toLowerCase() === (accData.email || '').toLowerCase()));
+                if (existingIdx >= 0) {
+                  localAccounts[existingIdx] = { ...localAccounts[existingIdx], ...accData };
+                } else {
+                  localAccounts.push(accData);
+                }
+                updated = true;
+              } catch (e) {}
+            }
+          }
+        }
+
+        if (updated) {
+          this.save('accounts', localAccounts);
+          if (window.adminPanel && window.adminPanel.currentTab === 'accounts') {
+            window.adminPanel.render();
+          }
+        }
+        return localAccounts;
+      }
+    } catch (err) {
+      console.warn('[Sync Accounts] Lỗi tải tài khoản từ GitHub:', err.message);
+    }
+    return this.getAccounts();
+  }
+
+  /**
+   * ĐỒNG BỘ TÀI KHOẢN LÊN GITHUB ISSUES ĐỂ LƯU TRỮ VĨNH VIỄN TRÊN ĐÁM MÂY
+   */
+  async syncAccountToGitHub(account) {
+    const { owner, repo, token } = this.GITHUB_CONFIG;
+    if (!token || !account || !account.email) return { success: false };
+
+    try {
+      const title = `[ACCOUNT] ${account.username || account.email} (${account.email}) [${account.role || 'customer'}]`;
+      const body = [
+        `### 👤 Hồ Sơ Tài Khoản: ${account.full_name || account.username}`,
+        `- **Tên đăng nhập:** \`${account.username}\``,
+        `- **Email:** ${account.email}`,
+        `- **Họ và tên:** ${account.full_name || 'Chưa cung cấp'}`,
+        `- **Số điện thoại:** ${account.phone || 'Chưa cung cấp'}`,
+        `- **Công ty / Đơn vị:** ${account.company || 'Cá nhân'}`,
+        `- **Phân quyền:** \`${account.role || 'customer'}\``,
+        `- **Trạng thái:** \`${account.status || 'active'}\``,
+        `- **Ngày tạo:** ${account.created_at || new Date().toISOString()}`,
+        `\n<!-- ACCOUNT_DATA_JSON_START -->${JSON.stringify(account)}<!-- ACCOUNT_DATA_JSON_END -->`
+      ].join('\n');
+
+      if (account.github_issue_number) {
+        const patchRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/${account.github_issue_number}`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            title,
+            body,
+            state: account.status === 'suspended' ? 'closed' : 'open'
+          })
+        });
+        if (patchRes.ok) return { success: true };
+      } else {
+        const postRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ title, body })
+        });
+        if (postRes.ok) {
+          const issueData = await postRes.json();
+          account.github_issue_number = issueData.number;
+          const accounts = this.getAccounts();
+          const idx = accounts.findIndex(a => a.id === account.id || a.email === account.email);
+          if (idx >= 0) {
+            accounts[idx].github_issue_number = issueData.number;
+            this.save('accounts', accounts);
+          }
+          return { success: true, issue_number: issueData.number };
+        }
+      }
+    } catch (e) {
+      console.warn('[Sync Account] Lỗi lưu tài khoản lên cloud:', e.message);
+    }
+    return { success: false };
+  }
+
+  async deleteAccountIssue(issueNumber) {
+    const { owner, repo, token } = this.GITHUB_CONFIG;
+    if (!token || !issueNumber) return false;
+    try {
+      const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: `[ACCOUNT DELETED] #${issueNumber}`,
+          state: 'closed',
+          state_reason: 'not_planned'
+        })
+      });
+      return res.ok;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async saveAccount(account) {
     const accounts = this.getAccounts();
     const idx = accounts.findIndex(a => a.id === account.id || a.email === account.email);
     if (idx >= 0) {
-      accounts[idx] = account;
+      accounts[idx] = { ...accounts[idx], ...account };
     } else {
       accounts.unshift(account);
     }
     this.save('accounts', accounts);
+    return await this.syncAccountToGitHub(account);
   }
 
-  deleteAccount(accountId) {
+  async deleteAccount(accountId) {
     let accounts = this.getAccounts();
+    const target = accounts.find(a => a.id === accountId);
     accounts = accounts.filter(a => a.id !== accountId);
     this.save('accounts', accounts);
+
+    if (target && target.github_issue_number) {
+      await this.deleteAccountIssue(target.github_issue_number);
+    }
   }
 
   getCustomRequests() {

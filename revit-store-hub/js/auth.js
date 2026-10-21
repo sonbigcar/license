@@ -125,7 +125,7 @@ class AuthManager {
   /**
    * Đăng ký tài khoản mới (bắt buộc có mật khẩu)
    */
-  register(fullName, email, password, phone = '', company = '', role = 'customer') {
+  async register(fullName, email, password, phone = '', company = '', role = 'customer') {
     const cleanName = (fullName || '').trim();
     const cleanEmail = (email || '').trim().toLowerCase();
     const cleanPass = (password || '').trim();
@@ -162,7 +162,7 @@ class AuthManager {
       created_at: new Date().toISOString()
     };
 
-    window.dataStore.saveAccount(newAccount);
+    await window.dataStore.saveAccount(newAccount);
     this.saveUser(newAccount);
     return newAccount;
   }

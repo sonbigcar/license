@@ -7,7 +7,12 @@
     <title>DoanSon Studio - Nền Tảng Revit Tools, Family & Project Templates</title>
     <link rel="icon" type="image/png" href="logo.png">
     <script>
-        window.location.replace("revit-store-hub/");
+        // Tự động chuyển hướng sang giao thức an toàn HTTPS cho tên miền doanson.com
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+            location.replace('https:' + window.location.href.substring(window.location.protocol.length));
+        } else {
+            window.location.replace("revit-store-hub/");
+        }
     </script>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; text-align: center; padding: 80px 20px; background: #FAF3EE; color: #1E2022;">

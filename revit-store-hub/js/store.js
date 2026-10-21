@@ -300,7 +300,7 @@ class StoreApp {
     }
   }
 
-  handleRegisterSubmit(e) {
+  async handleRegisterSubmit(e) {
     e.preventDefault();
     const fullName = document.getElementById('regName').value.trim();
     const email = document.getElementById('regEmail').value.trim();
@@ -325,7 +325,7 @@ class StoreApp {
     }
 
     try {
-      const user = window.authManager.register(fullName, email, password, phone, company, 'customer');
+      const user = await window.authManager.register(fullName, email, password, phone, company, 'customer');
       this.closeAuthModal();
       alert(`🎉 Chúc mừng ${user.full_name}! Tài khoản của bạn đã được đăng ký thành công và đã tự động đăng nhập.`);
     } catch (err) {
