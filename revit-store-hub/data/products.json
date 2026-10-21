@@ -38,8 +38,8 @@
     "billing_cycle": "yearly",
     "thumbnail_url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
     "video_url": "https://www.youtube.com/embed/dQw4w9WgXcQ",
-    "description": "Công cụ xuất hàng loạt bản vẽ PDF, DWG, NWC theo cú pháp chuẩn ISO 19650. Tự động đánh số và sắp xếp bản vẽ theo tiến độ dự án, tiết kiệm 90% thời gian.",
-    "short_description": "Công cụ xuất hàng loạt bản vẽ PDF, DWG, NWC theo cú pháp chuẩn ISO 19650. Tự động đánh số và sắp xếp...",
+    "description": "Công cụ xuất hàng loạt bản vẽ PDF, DWG, NWC theo cú pháp chuẩn ISO 19650.",
+    "short_description": "Công cụ xuất hàng loạt bản vẽ PDF, DWG, NWC theo cú pháp chuẩn ISO 19650....",
     "revit_versions": [
       "2022",
       "2023",
