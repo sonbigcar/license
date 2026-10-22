@@ -2,29 +2,32 @@
   {
     "id": "tool-001",
     "name": "MEP Auto Routing & Smart Elevation Pro",
-    "slug": "mep-auto-routing-smart-elevation-pro",
+    "slug": "mep-auto-routing---smart-elevation-pro",
     "product_type": "tool",
     "category": "Revit Add-in Tự Động Hóa",
+    "price": 1800000,
+    "sale_price": 1200000,
+    "billing_cycle": "yearly",
+    "thumbnail_url": "assets/card_tools.jpg",
+    "video_url": "https://www.youtube.com/embed/5qap5aO4i9A",
     "description": "Công cụ số 1 cho kỹ sư MEP: Tự động vẽ đường ống né dầm né cột chỉ với 1 cú click. Tự động kiểm tra xung đột thời gian thực và xuất báo cáo va chạm chi tiết sang Excel.",
-    "short_description": "Tự động né dầm/cột cho ống gió & ống nước, giải quyết va chạm tức thì.",
+    "short_description": "Công cụ số 1 cho kỹ sư MEP: Tự động vẽ đường ống né dầm né cột chỉ với 1 cú click. Tự động kiểm tra ...",
     "revit_versions": [
       "2022",
       "2023",
       "2024",
       "2025"
     ],
-    "thumbnail_url": "assets/card_tools.jpg",
-    "video_url": "https://www.youtube.com/embed/5qap5aO4i9A",
-    "price": 1800000,
-    "sale_price": 1200000,
-    "billing_cycle": "yearly",
     "is_active": true,
     "metadata": {
       "version": "v2.4.0",
-      "target_revit": "Revit 2022-2025",
-      "file_name": "MEP_Routing_Pro_v2.4.0_Setup.exe",
-      "file_size": "28.5 MB",
-      "author": "RevitHub Studio"
+      "target_revit": "Revit 2022-2023-2024-2025",
+      "file_name": "GeminiSetup.exe",
+      "file_size": "12.7 MB",
+      "author": "RevitHub Studio",
+      "security_mode": "cloudflare_r2",
+      "file_url": "https://raw.githubusercontent.com/sonbigcar/license/main/revit-store-hub/downloads/GeminiSetup.exe",
+      "install_guide": ""
     }
   },
   {
