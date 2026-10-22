@@ -90,9 +90,19 @@ class SecureDownloadManager {
     const expTime = Math.floor(Date.now() / 1000) + 300; // Hết hạn sau 5 phút (300 giây)
     const token = this.generateToken(product.id, user.id, expTime);
 
-    // Gắn thêm chữ ký xác thực thời gian thực nếu không phải link Google Drive
-    if (!downloadUrl.includes('drive.google.com')) {
-      downloadUrl = downloadUrl + (downloadUrl.includes('?') ? '&' : '?') + `token=${token}&exp=${expTime}&uid=${user.id}`;
+    // Không gắn query param '?token=' vào các dịch vụ lưu trữ đám mây (GitHub, Google Drive, Dropbox, OneDrive, R2)
+    // vì GitHub/R2 dùng query 'token' cho hệ thống xác thực riêng của họ và sẽ báo 404 Not Found nếu sai token của họ
+    const isThirdPartyCloud = downloadUrl.includes('githubusercontent.com') ||
+                              downloadUrl.includes('github.com') ||
+                              downloadUrl.includes('drive.google.com') ||
+                              downloadUrl.includes('dropbox.com') ||
+                              downloadUrl.includes('onedrive.live.com') ||
+                              downloadUrl.includes('1drv.ms') ||
+                              downloadUrl.includes('X-Amz-') ||
+                              downloadUrl.includes('r2.cloudflarestorage.com');
+
+    if (!isThirdPartyCloud) {
+      downloadUrl = downloadUrl + (downloadUrl.includes('?') ? '&' : '?') + `_sec_sign=${token}&exp=${expTime}&uid=${encodeURIComponent(user.id)}`;
     }
 
     // Ghi nhật ký tải an toàn vào download_logs
