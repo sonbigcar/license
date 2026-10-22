@@ -26,8 +26,8 @@
     "badge": "Dịch Vụ Theo Yêu Cầu",
     "badge_class": "badge-custom",
     "icon": "✍️",
-    "title": "Thuê Viết Tools & Tạo Template",
-    "description": "Nhận lập trình Add-in Revit C# .NET chuyên sâu theo quy trình riêng của từng văn phòng. Xây dựng bộ Template BIM đồng bộ 100% tiêu chuẩn doanh nghiệp và đào tạo chuyển giao.",
+    "title": "Thuê Viết Tools",
+    "description": "Nhận lập trình Add-in Revit C# .NET chuyên sâu theo quy trình riêng của từng văn phòng.",
     "media": "assets/card_custom.jpg",
     "cta": "Gửi Yêu Cầu Đặt Hàng",
     "target_pillar": "custom_service"
