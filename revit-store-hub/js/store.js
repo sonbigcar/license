@@ -825,6 +825,9 @@ class StoreApp {
       document.getElementById('prodEditDesc').value = prod.description;
 
       const meta = prod.metadata || {};
+      if (document.getElementById('prodEditSecurityMode')) {
+        document.getElementById('prodEditSecurityMode').value = meta.security_mode || 'cloudflare_r2';
+      }
       document.getElementById('prodEditFileUrl').value = meta.file_url || '';
       document.getElementById('prodEditFileName').value = meta.file_name || '';
       document.getElementById('prodEditFileSize').value = meta.file_size || '';
@@ -835,6 +838,9 @@ class StoreApp {
       titleEl.textContent = 'Thêm Sản Phẩm Mới & Niêm Yết Giá';
       form.reset();
       document.getElementById('prodEditId').value = '';
+      if (document.getElementById('prodEditSecurityMode')) {
+        document.getElementById('prodEditSecurityMode').value = 'cloudflare_r2';
+      }
       document.getElementById('prodEditFileUrl').value = '';
       document.getElementById('prodEditFileName').value = '';
       document.getElementById('prodEditFileSize').value = '';
@@ -865,6 +871,7 @@ class StoreApp {
     const desc = document.getElementById('prodEditDesc').value.trim();
 
     // Thông tin file phần mềm đính kèm
+    const securityMode = document.getElementById('prodEditSecurityMode') ? document.getElementById('prodEditSecurityMode').value : 'cloudflare_r2';
     const fileUrl = document.getElementById('prodEditFileUrl') ? document.getElementById('prodEditFileUrl').value.trim() : '';
     const fileName = document.getElementById('prodEditFileName') && document.getElementById('prodEditFileName').value.trim() 
       ? document.getElementById('prodEditFileName').value.trim() 
@@ -906,6 +913,7 @@ class StoreApp {
       is_active: true,
       metadata: {
         ...existingMeta,
+        security_mode: securityMode,
         file_url: fileUrl,
         file_name: fileName,
         file_size: fileSize,
@@ -1431,12 +1439,21 @@ class StoreApp {
     try {
       const result = window.downloadManager.requestDownloadUrl(productId, user);
       if (result && result.downloadUrl) {
-        window.open(result.downloadUrl, '_blank');
-        let msg = `🚀 Đang mở liên kết tải file: "${result.fileName}" (${result.fileSize})!`;
+        let msg = '';
+        if (result.securityMode === 'gdrive_restricted') {
+          msg = `🔒 BẢO MẬT THEO EMAIL ĐÃ MUA HÀNG:\nSản phẩm này được cấp quyền tải riêng cho Email: ${result.userEmail}.\n\nHệ thống sẽ mở Google Drive, vui lòng đảm bảo bạn đang đăng nhập tài khoản Google bằng đúng Email này để tải.\n(Người ngoài dù có link cũng bị Google chặn để chống tải lậu).`;
+        } else if (result.securityMode === 'cloudflare_r2') {
+          msg = `🛡️ BẢO MẬT BẢN QUYỀN (CLOUDFLARE R2):\nLiên kết tải xuống "${result.fileName}" (${result.fileSize}) đã được mã hóa bí mật riêng cho tài khoản của bạn và sẽ TỰ HỦY SAU ${result.expiresInMinutes} PHÚT.\n\n(Người ngoài dù copy link cũng không thể tải được!).`;
+        } else {
+          msg = `🚀 Bắt đầu tải file "${result.fileName}" (${result.fileSize})!`;
+        }
+
         if (result.installGuide) {
           msg += `\n\n📌 GHI CHÚ HƯỚNG DẪN CÀI ĐẶT:\n${result.installGuide}`;
         }
         alert(msg);
+
+        window.open(result.downloadUrl, '_blank');
       }
     } catch (err) {
       alert(err.message);

@@ -504,10 +504,19 @@
             </div>
 
             <div class="form-group" style="margin-bottom: 12px;">
+              <label style="font-weight: 700; font-size: 0.88rem; color: var(--text-pure);">Cơ Chế Bảo Vệ & Chống Chia Sẻ Link Lậu *</label>
+              <select id="prodEditSecurityMode" class="form-control" style="background: #FFFFFF; font-weight: 600;">
+                <option value="cloudflare_r2">🛡️ Cloudflare R2 Private Vault (Khuyên Dùng: Link tự hủy sau 5 phút - Chống chia sẻ link 100%)</option>
+                <option value="gdrive_restricted">🔒 Google Drive Chế Độ Hạn Chế (Chỉ đúng Email tài khoản đã mua mới tải được, người ngoài có link bị chặn)</option>
+                <option value="direct_protected">🔑 Kho Lưu Trữ Riêng Tư (Giấu link gốc, chỉ mở luồng tải khi tài khoản đã duyệt mua)</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
               <label style="font-weight: 700; font-size: 0.88rem; color: var(--text-pure);">Đường Dẫn Tải File (Download URL / Link Bộ Cài) *</label>
-              <input type="text" id="prodEditFileUrl" class="form-control" placeholder="Dán link Google Drive, Cloudflare R2, GitHub Release, OneDrive..." style="font-family: var(--font-mono); font-size: 0.84rem; background: #FFFFFF;">
+              <input type="text" id="prodEditFileUrl" class="form-control" placeholder="Dán link Cloudflare R2, Google Drive, OneDrive, GitHub Release..." style="font-family: var(--font-mono); font-size: 0.84rem; background: #FFFFFF;">
               <small style="color: var(--text-dim); font-size: 0.76rem; display: block; margin-top: 5px; line-height: 1.4;">
-                💡 <strong>Hỗ trợ đa nền tảng:</strong> Dán link <strong>Google Drive</strong> (hệ thống tự động chuyển đổi sang link tải trực tiếp), <strong>Cloudflare R2</strong>, <strong>GitHub Releases</strong>, hoặc link trực tiếp (.exe, .zip, .rfa, .rte).
+                💡 <strong>Chống tải lậu:</strong> Người chưa mua sẽ <strong>không bao giờ thấy link này</strong>. Nếu dùng Cloudflare R2, link sẽ tự hủy sau 5 phút. Nếu dùng Google Drive, hãy để file ở chế độ <em>"Hạn chế (Restricted)"</em> để chỉ cấp quyền cho email người mua.
               </small>
             </div>
 

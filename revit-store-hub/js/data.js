@@ -1049,7 +1049,27 @@ class DataStore {
   }
 
   hasPurchasedProduct(userId, productId) {
-    return this.get('user_purchases').some(p => p.user_id === userId && p.product_id === productId && p.is_active);
+    if (!userId || !productId) return false;
+
+    // 1. Kiểm tra trong danh sách user_purchases
+    const inPurchases = (this.get('user_purchases') || []).some(
+      p => p.user_id === userId && p.product_id === productId && p.is_active
+    );
+    if (inPurchases) return true;
+
+    // 2. Kiểm tra trong danh sách licenses hoạt động (cho Revit tools)
+    const inLicenses = (this.get('licenses') || []).some(
+      l => l.user_id === userId && l.product_id === productId && l.status === 'active'
+    );
+    if (inLicenses) return true;
+
+    // 3. Kiểm tra trong danh sách đơn hàng đã thanh toán thành công (status === 'paid')
+    const inOrders = (this.get('orders') || []).some(
+      o => o.user_id === userId && o.status === 'paid' && (o.items || []).some(item => item.product_id === productId)
+    );
+    if (inOrders) return true;
+
+    return false;
   }
 
   addPurchase(purchase) {

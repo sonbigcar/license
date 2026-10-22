@@ -77,12 +77,22 @@ class SecureDownloadManager {
     let downloadUrl = this.formatDownloadUrl(rawUrl, fileName);
 
     // Nếu chưa cấu hình link thực tế
+    // Nếu chưa cấu hình link thực tế
     if (!downloadUrl) {
       if (user.role === 'admin') {
-        throw new Error(`⚠️ Sản phẩm "${product.name}" chưa được cấu hình đường dẫn file tải về!\nHãy bấm "Sửa & Đổi Giá" trên sản phẩm để dán link tải (Google Drive, Cloudflare R2, hoặc GitHub Release).`);
+        throw new Error(`⚠️ Sản phẩm "${product.name}" chưa được cấu hình đường dẫn file tải về!\nHãy bấm "Sửa & Đổi Giá" trên sản phẩm để dán link tải (Cloudflare R2, Google Drive, hoặc GitHub Release).`);
       } else {
         throw new Error(`Bộ cài của "${product.name}" đang được Admin cập nhật bản mới nhất. Vui lòng liên hệ trực tiếp Admin qua Zalo/Email để nhận file trực tiếp!`);
       }
+    }
+
+    const securityMode = metadata.security_mode || 'cloudflare_r2';
+    const expTime = Math.floor(Date.now() / 1000) + 300; // Hết hạn sau 5 phút (300 giây)
+    const token = this.generateToken(product.id, user.id, expTime);
+
+    // Gắn thêm chữ ký xác thực thời gian thực nếu không phải link Google Drive
+    if (!downloadUrl.includes('drive.google.com')) {
+      downloadUrl = downloadUrl + (downloadUrl.includes('?') ? '&' : '?') + `token=${token}&exp=${expTime}&uid=${user.id}`;
     }
 
     // Ghi nhật ký tải an toàn vào download_logs
@@ -91,10 +101,12 @@ class SecureDownloadManager {
         id: 'log-' + Date.now().toString(16),
         user_id: user.id,
         user_name: user.full_name || user.username,
+        user_email: user.email,
         product_id: product.id,
         product_name: product.name,
         file_name: fileName,
         file_size: fileSize,
+        security_mode: securityMode,
         downloaded_at: new Date().toISOString()
       });
     } catch (e) {}
@@ -105,7 +117,10 @@ class SecureDownloadManager {
       downloadUrl: downloadUrl,
       rawUrl: rawUrl,
       version: version,
-      installGuide: installGuide
+      installGuide: installGuide,
+      securityMode: securityMode,
+      userEmail: user.email,
+      expiresInMinutes: 5
     };
   }
 
