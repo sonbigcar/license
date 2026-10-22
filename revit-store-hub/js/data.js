@@ -1444,30 +1444,37 @@ class DataStore {
     if (onProgress) onProgress(65, 'Đang đẩy tệp lên GitHub Cloud Repository...');
 
     const { owner, repo, token } = this.GITHUB_CONFIG;
-    const filePath = `revit-store-hub/downloads/${safeName}`;
+    let targetFileName = safeName;
+    let filePath = `revit-store-hub/downloads/${targetFileName}`;
 
-    // Kiểm tra SHA nếu file đã tồn tại
+    // 1. Kiểm tra SHA nếu file đã tồn tại trên nhánh main (với no-store và timestamp chống cache)
     let sha = null;
     try {
-      const getRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
+      const getRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=main&t=${Date.now()}`, {
         headers: {
           'Authorization': `token ${token}`,
           'Accept': 'application/vnd.github.v3+json'
-        }
+        },
+        cache: 'no-store'
       });
       if (getRes.ok) {
         const fileInfo = await getRes.json();
-        sha = fileInfo.sha;
+        if (fileInfo && fileInfo.sha) {
+          sha = fileInfo.sha;
+          console.log(`[Upload] Đã tìm thấy SHA của file ${targetFileName}:`, sha);
+        }
       }
-    } catch (e) {}
+    } catch (checkErr) {
+      console.warn('[Upload] Kiểm tra SHA trước lỗi:', checkErr);
+    }
 
     const putBody = {
-      message: `Upload software asset: ${safeName}`,
+      message: `Upload software asset: ${targetFileName}`,
       content: base64Content
     };
     if (sha) putBody.sha = sha;
 
-    const uploadRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
+    let uploadRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
       method: 'PUT',
       headers: {
         'Authorization': `token ${token}`,
@@ -1477,9 +1484,70 @@ class DataStore {
       body: JSON.stringify(putBody)
     });
 
+    // 2. TỰ ĐỘNG KHẮC PHỤC NẾU GẶP LỖI "sha wasn't supplied" HOẶC 422/409 (Auto-Recovery)
     if (!uploadRes.ok) {
-      const errData = await uploadRes.json().catch(() => ({}));
-      throw new Error(errData.message || `Lỗi đẩy file lên GitHub (${uploadRes.status})`);
+      const errText = await uploadRes.text();
+      let errData = {};
+      try { errData = JSON.parse(errText); } catch (e) {}
+      const errMsg = (errData && errData.message) ? errData.message : errText;
+
+      if (errMsg.includes('sha') || uploadRes.status === 422 || uploadRes.status === 409) {
+        console.warn('[Upload] Phát hiện lỗi SHA từ GitHub, đang tự động lấy SHA mới nhất để cập nhật lại...');
+        try {
+          const reGetRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=main&_bust=${Date.now()}`, {
+            headers: {
+              'Authorization': `token ${token}`,
+              'Accept': 'application/vnd.github.v3+json'
+            },
+            cache: 'no-store'
+          });
+          if (reGetRes.ok) {
+            const reInfo = await reGetRes.json();
+            if (reInfo && reInfo.sha) {
+              putBody.sha = reInfo.sha;
+              console.log('[Upload] Thử lại PUT với SHA vừa lấy:', reInfo.sha);
+              uploadRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
+                method: 'PUT',
+                headers: {
+                  'Authorization': `token ${token}`,
+                  'Accept': 'application/vnd.github.v3+json',
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(putBody)
+              });
+            }
+          }
+        } catch (reErr) {
+          console.error('[Upload] Lấy lại SHA thất bại:', reErr);
+        }
+
+        // Nếu vẫn không được (hoặc xung đột SHA), tạo tên phiên bản mới độc nhất
+        if (!uploadRes.ok) {
+          const dotIdx = safeName.lastIndexOf('.');
+          const ext = dotIdx !== -1 ? safeName.substring(dotIdx) : '';
+          const base = dotIdx !== -1 ? safeName.substring(0, dotIdx) : safeName;
+          targetFileName = `${base}_${Date.now().toString(36)}${ext}`;
+          filePath = `revit-store-hub/downloads/${targetFileName}`;
+          delete putBody.sha;
+          putBody.message = `Upload software asset (new version): ${targetFileName}`;
+
+          console.log(`[Upload] Tự động tạo bản phát hành mới: ${targetFileName}`);
+          uploadRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `token ${token}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(putBody)
+          });
+        }
+      }
+
+      if (!uploadRes.ok) {
+        const finalErr = await uploadRes.json().catch(() => ({}));
+        throw new Error(finalErr.message || errMsg || `Lỗi đẩy file lên GitHub (${uploadRes.status})`);
+      }
     }
 
     const uploadData = await uploadRes.json();
@@ -1492,7 +1560,7 @@ class DataStore {
     return {
       success: true,
       downloadUrl: downloadUrl,
-      fileName: safeName,
+      fileName: targetFileName,
       fileSize: formattedSize,
       sizeBytes: file.size
     };
