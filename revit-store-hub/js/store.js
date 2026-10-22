@@ -200,15 +200,10 @@ class StoreApp {
     }
 
     // Xử lý chọn file phần mềm từ máy tính (Admin Product Editor)
-    const browseLocalBtn = document.getElementById('btnBrowseLocalSoftware');
     const localFileInput = document.getElementById('prodEditLocalFileInput');
     const uploadDropzone = document.getElementById('prodUploadDropzone');
 
-    if (browseLocalBtn && localFileInput) {
-      browseLocalBtn.addEventListener('click', () => {
-        localFileInput.click();
-      });
-
+    if (localFileInput) {
       localFileInput.addEventListener('change', (e) => {
         if (e.target.files && e.target.files[0]) {
           this.handleLocalSoftwareSelect(e.target.files[0]);
@@ -902,6 +897,8 @@ class StoreApp {
     const browseBtn = document.getElementById('btnBrowseLocalSoftware');
     if (browseBtn) {
       browseBtn.disabled = false;
+      browseBtn.style.pointerEvents = 'auto';
+      browseBtn.style.opacity = '1';
       browseBtn.innerHTML = '<span>📂</span> Chọn File Dưới Máy...';
     }
 
@@ -962,6 +959,8 @@ class StoreApp {
     if (speedText) speedText.textContent = '';
     if (browseBtn) {
       browseBtn.disabled = true;
+      browseBtn.style.pointerEvents = 'none';
+      browseBtn.style.opacity = '0.65';
       browseBtn.innerHTML = '<span>⏳</span> Đang Upload...';
     }
 
@@ -998,6 +997,8 @@ class StoreApp {
     } finally {
       if (browseBtn) {
         browseBtn.disabled = false;
+        browseBtn.style.pointerEvents = 'auto';
+        browseBtn.style.opacity = '1';
         browseBtn.innerHTML = '<span>📂</span> Chọn File Khác...';
       }
     }
