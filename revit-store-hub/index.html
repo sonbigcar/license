@@ -512,11 +512,64 @@
               </select>
             </div>
 
+            <!-- ====================================================================
+                 KHU VỰC CHỌN FILE PHẦN MỀM TỪ DƯỚI MÁY ĐỂ UPLOAD LÊN CLOUD
+                 ==================================================================== -->
+            <div id="prodUploadDropzone" style="background: #FFFFFF; border: 2px dashed #CBD5E1; border-radius: 12px; padding: 16px 18px; margin-bottom: 14px; transition: all 0.25s ease;">
+              <input type="file" id="prodEditLocalFileInput" accept=".exe,.msi,.zip,.rar,.7z,.rfa,.rte,.dll,.dyn,.pdf,.txt" style="display: none;">
+              
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                  <div style="width: 48px; height: 48px; border-radius: 12px; background: #FFF0EB; color: #FF6B4A; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0; box-shadow: 0 2px 8px rgba(255, 107, 74, 0.15);">
+                    💻
+                  </div>
+                  <div>
+                    <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-pure);">Chọn Phần Mềm Dưới Máy Tính Để Upload Lên</div>
+                    <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 3px;">
+                      Hỗ trợ: <code>.exe</code>, <code>.msi</code>, <code>.zip</code>, <code>.rar</code>, <code>.rfa</code> (Family), <code>.dll</code>... Kéo thả hoặc bấm nút để tải lên.
+                    </div>
+                  </div>
+                </div>
+                
+                <button type="button" class="btn btn-primary" id="btnBrowseLocalSoftware" style="padding: 10px 20px; font-size: 0.88rem; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; border-radius: 8px; box-shadow: 0 2px 10px rgba(255, 107, 74, 0.28); cursor: pointer; white-space: nowrap;">
+                  <span>📂</span> Chọn File Dưới Máy...
+                </button>
+              </div>
+
+              <!-- Thanh tiến trình upload (Progress bar) -->
+              <div id="prodUploadStatusArea" style="display: none; margin-top: 14px; padding-top: 12px; border-top: 1px dashed #E2E8F0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; margin-bottom: 6px;">
+                  <span id="prodUploadFileNameDisplay" style="font-weight: 700; color: var(--text-pure); max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    filename.zip
+                  </span>
+                  <span id="prodUploadPercentDisplay" style="font-weight: 800; color: #FF6B4A; font-family: var(--font-mono);">
+                    0%
+                  </span>
+                </div>
+                <div style="height: 8px; width: 100%; background: #E2E8F0; border-radius: 999px; overflow: hidden; position: relative;">
+                  <div id="prodUploadProgressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #FF6B4A, #10B981); border-radius: 999px; transition: width 0.25s ease;"></div>
+                </div>
+                <div style="margin-top: 6px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                  <span id="prodUploadMessageText" style="font-size: 0.78rem; color: #4B5563;">⏳ Đang chuẩn bị tải lên...</span>
+                  <span id="prodUploadSpeedText" style="font-family: var(--font-mono); font-size: 0.75rem; color: #64748B;"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Phân cách HOẶC DÁN LINK THỦ CÔNG -->
+            <div style="display: flex; align-items: center; margin: 12px 0; text-align: center;">
+              <div style="flex: 1; border-bottom: 1px solid #E2E8F0;"></div>
+              <span style="padding: 0 12px; font-size: 0.74rem; color: #94A3B8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
+                HOẶC DÁN TRỰC TIẾP LINK FILE (GOOGLE DRIVE / CLOUDFLARE R2)
+              </span>
+              <div style="flex: 1; border-bottom: 1px solid #E2E8F0;"></div>
+            </div>
+
             <div class="form-group" style="margin-bottom: 12px;">
               <label style="font-weight: 700; font-size: 0.88rem; color: var(--text-pure);">Đường Dẫn Tải File (Download URL / Link Bộ Cài) *</label>
-              <input type="text" id="prodEditFileUrl" class="form-control" placeholder="Dán link Cloudflare R2, Google Drive, OneDrive, GitHub Release..." style="font-family: var(--font-mono); font-size: 0.84rem; background: #FFFFFF;">
+              <input type="text" id="prodEditFileUrl" class="form-control" placeholder="Tự động điền sau khi upload file từ máy, hoặc dán link R2, Drive, OneDrive..." style="font-family: var(--font-mono); font-size: 0.84rem; background: #FFFFFF;">
               <small style="color: var(--text-dim); font-size: 0.76rem; display: block; margin-top: 5px; line-height: 1.4;">
-                💡 <strong>Chống tải lậu:</strong> Người chưa mua sẽ <strong>không bao giờ thấy link này</strong>. Nếu dùng Cloudflare R2, link sẽ tự hủy sau 5 phút. Nếu dùng Google Drive, hãy để file ở chế độ <em>"Hạn chế (Restricted)"</em> để chỉ cấp quyền cho email người mua.
+                💡 <strong>Chống tải lậu:</strong> Người chưa mua sẽ <strong>không bao giờ thấy link này</strong>. Khi bấm <em>"Chọn File Dưới Máy"</em> ở trên, file sẽ được tải lên kho lưu trữ bảo mật và đường dẫn sẽ tự động điền vào đây.
               </small>
             </div>
 

@@ -198,6 +198,51 @@ class StoreApp {
         this.handleCustomRequestSubmit();
       });
     }
+
+    // Xử lý chọn file phần mềm từ máy tính (Admin Product Editor)
+    const browseLocalBtn = document.getElementById('btnBrowseLocalSoftware');
+    const localFileInput = document.getElementById('prodEditLocalFileInput');
+    const uploadDropzone = document.getElementById('prodUploadDropzone');
+
+    if (browseLocalBtn && localFileInput) {
+      browseLocalBtn.addEventListener('click', () => {
+        localFileInput.click();
+      });
+
+      localFileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          this.handleLocalSoftwareSelect(e.target.files[0]);
+        }
+      });
+    }
+
+    // Hỗ trợ kéo thả file từ máy tính vào Dropzone
+    if (uploadDropzone && localFileInput) {
+      ['dragenter', 'dragover'].forEach(eventName => {
+        uploadDropzone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          uploadDropzone.style.borderColor = 'var(--brand-primary, #FF6B4A)';
+          uploadDropzone.style.background = '#FFF7F4';
+        });
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        uploadDropzone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          uploadDropzone.style.borderColor = '#CBD5E1';
+          uploadDropzone.style.background = '#FFFFFF';
+        });
+      });
+
+      uploadDropzone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        if (dt && dt.files && dt.files[0]) {
+          this.handleLocalSoftwareSelect(dt.files[0]);
+        }
+      });
+    }
   }
 
   /**
@@ -849,12 +894,113 @@ class StoreApp {
       document.getElementById('prodEditInstallGuide').value = '';
     }
 
+    // Reset trạng thái khu vực Upload file phần mềm
+    const statusArea = document.getElementById('prodUploadStatusArea');
+    if (statusArea) statusArea.style.display = 'none';
+    const localFileInput = document.getElementById('prodEditLocalFileInput');
+    if (localFileInput) localFileInput.value = '';
+    const browseBtn = document.getElementById('btnBrowseLocalSoftware');
+    if (browseBtn) {
+      browseBtn.disabled = false;
+      browseBtn.innerHTML = '<span>📂</span> Chọn File Dưới Máy...';
+    }
+
     modal.classList.add('active');
   }
 
   closeProductEditorModal() {
     const modal = document.getElementById('productEditorModalOverlay');
     if (modal) modal.classList.remove('active');
+    const localFileInput = document.getElementById('prodEditLocalFileInput');
+    if (localFileInput) localFileInput.value = '';
+  }
+
+  /**
+   * XỬ LÝ CHỌN FILE PHẦN MỀM TỪ DƯỚI MÁY ĐỂ UPLOAD LÊN CLOUD
+   */
+  async handleLocalSoftwareSelect(file) {
+    if (!file) return;
+
+    const fileNameDisplay = document.getElementById('prodUploadFileNameDisplay');
+    const percentDisplay = document.getElementById('prodUploadPercentDisplay');
+    const progressBar = document.getElementById('prodUploadProgressBar');
+    const statusArea = document.getElementById('prodUploadStatusArea');
+    const messageText = document.getElementById('prodUploadMessageText');
+    const speedText = document.getElementById('prodUploadSpeedText');
+    const browseBtn = document.getElementById('btnBrowseLocalSoftware');
+
+    // Tự động điền tên file và dung lượng vào form
+    const fileNameInput = document.getElementById('prodEditFileName');
+    const fileSizeInput = document.getElementById('prodEditFileSize');
+    const fileUrlInput = document.getElementById('prodEditFileUrl');
+    const prodNameInput = document.getElementById('prodEditName');
+
+    const formattedSize = file.size >= 1024 * 1024 
+      ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' 
+      : (file.size / 1024).toFixed(1) + ' KB';
+
+    if (fileNameInput) fileNameInput.value = file.name;
+    if (fileSizeInput) fileSizeInput.value = formattedSize;
+    if (prodNameInput && !prodNameInput.value.trim()) {
+      // Gợi ý tên sản phẩm từ tên file nếu ô tên đang để trống
+      const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]+/g, ' ');
+      prodNameInput.value = cleanName;
+    }
+
+    // Hiển thị khung tiến trình
+    if (statusArea) statusArea.style.display = 'block';
+    if (fileNameDisplay) fileNameDisplay.textContent = `📁 ${file.name} (${formattedSize})`;
+    if (percentDisplay) {
+      percentDisplay.textContent = '0%';
+      percentDisplay.style.color = '#FF6B4A';
+    }
+    if (progressBar) {
+      progressBar.style.width = '0%';
+      progressBar.style.background = 'linear-gradient(90deg, #FF6B4A, #10B981)';
+    }
+    if (messageText) messageText.textContent = '⏳ Đang đọc file và kết nối Cloud Vault...';
+    if (speedText) speedText.textContent = '';
+    if (browseBtn) {
+      browseBtn.disabled = true;
+      browseBtn.innerHTML = '<span>⏳</span> Đang Upload...';
+    }
+
+    try {
+      const res = await window.dataStore.uploadSoftwareFile(file, (percent, msg) => {
+        if (percentDisplay) percentDisplay.textContent = `${percent}%`;
+        if (progressBar) progressBar.style.width = `${percent}%`;
+        if (messageText) messageText.textContent = msg;
+      });
+
+      if (res && res.success && res.downloadUrl) {
+        if (fileUrlInput) fileUrlInput.value = res.downloadUrl;
+        if (progressBar) {
+          progressBar.style.width = '100%';
+          progressBar.style.background = '#10B981';
+        }
+        if (percentDisplay) {
+          percentDisplay.textContent = '100%';
+          percentDisplay.style.color = '#10B981';
+        }
+        if (messageText) {
+          messageText.innerHTML = `✅ <strong style="color: #10B981;">Tải lên thành công!</strong> Link bộ cài đặt an toàn đã được tự động kết nối vào sản phẩm.`;
+        }
+      } else {
+        throw new Error((res && res.message) || 'Không nhận được đường dẫn tải về từ máy chủ.');
+      }
+    } catch (err) {
+      console.error('Lỗi upload file phần mềm:', err);
+      if (progressBar) progressBar.style.background = '#EF4444';
+      if (percentDisplay) percentDisplay.style.color = '#EF4444';
+      if (messageText) {
+        messageText.innerHTML = `<span style="color: #EF4444; font-weight: 600;">❌ Lỗi tải lên: ${err.message}</span>`;
+      }
+    } finally {
+      if (browseBtn) {
+        browseBtn.disabled = false;
+        browseBtn.innerHTML = '<span>📂</span> Chọn File Khác...';
+      }
+    }
   }
 
   async handleProductEditorSubmit(e) {

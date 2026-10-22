@@ -1356,10 +1356,146 @@ class DataStore {
       });
     } else {
       adminAcc.role = 'admin';
-      if (!adminAcc.password) adminAcc.password = 'Son190799';
     }
     this.save('accounts', accounts);
     return accounts;
+  }
+
+  /**
+   * TỰ ĐỘNG UPLOAD FILE PHẦN MỀM / BỘ CÀI ĐẶT TỪ MÁY TÍNH LÊN CLOUD VAULT
+   * Hỗ trợ 2 cơ chế:
+   * 1. Qua backend server local /api/upload-software (Hỗ trợ file tới 2GB vào GitHub Release Vault & lưu cục bộ)
+   * 2. Trực tiếp từ trình duyệt qua GitHub Contents API vào revit-store-hub/downloads/ (Hỗ trợ file <= 25MB trực tiếp trên web tĩnh)
+   */
+  async uploadSoftwareFile(file, onProgress) {
+    if (!file) throw new Error('Chưa chọn file để tải lên.');
+
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const formattedSize = file.size >= 1024 * 1024 
+      ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' 
+      : (file.size / 1024).toFixed(1) + ' KB';
+
+    if (onProgress) onProgress(10, 'Đang chuẩn bị file...');
+
+    // 1. Kiểm tra thử endpoint backend /api/upload-software (Local server / Node.js)
+    try {
+      const isLocalOrNode = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port === '3000';
+      if (isLocalOrNode) {
+        return await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', `/api/upload-software?name=${encodeURIComponent(safeName)}`);
+          xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+          xhr.setRequestHeader('x-file-name', encodeURIComponent(safeName));
+
+          if (xhr.upload && onProgress) {
+            xhr.upload.onprogress = (e) => {
+              if (e.lengthComputable) {
+                const percent = Math.min(95, Math.round((e.loaded / e.total) * 100));
+                onProgress(percent, `Đang tải lên Cloud Vault: ${percent}% (${(e.loaded / 1048576).toFixed(1)} / ${(e.total / 1048576).toFixed(1)} MB)`);
+              }
+            };
+          }
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const res = JSON.parse(xhr.responseText);
+                if (res && res.success) {
+                  if (onProgress) onProgress(100, '✅ Đã tải file lên GitHub Release Vault thành công!');
+                  resolve(res);
+                } else {
+                  reject(new Error(res.message || 'Lỗi xử lý file từ server.'));
+                }
+              } catch (parseErr) {
+                reject(new Error('Phản hồi server không đúng định dạng.'));
+              }
+            } else {
+              reject(new Error(`Server báo lỗi ${xhr.status}: ${xhr.statusText}`));
+            }
+          };
+
+          xhr.onerror = () => reject(new Error('Mất kết nối tới server upload local.'));
+          xhr.send(file);
+        });
+      }
+    } catch (localErr) {
+      console.warn('Backend upload không khả dụng, chuyển sang chế độ upload trực tiếp từ trình duyệt:', localErr);
+    }
+
+    // 2. Chế độ upload trực tiếp từ trình duyệt lên GitHub (Dành cho web tĩnh doanson.com)
+    // Giới hạn GitHub Contents API là 25MB
+    if (file.size > 25 * 1024 * 1024) {
+      throw new Error(`Tệp "${file.name}" có dung lượng ${formattedSize} (> 25MB). Khi mở trên web tĩnh, vui lòng khởi động server local (node server.js) để upload file dung lượng lớn tới 2GB vào GitHub Release, hoặc dán link Google Drive / Cloudflare R2.`);
+    }
+
+    if (onProgress) onProgress(30, 'Đang đọc và mã hóa dữ liệu nhị phân...');
+    const arrayBuffer = await file.arrayBuffer();
+    
+    // Chuyển ArrayBuffer sang Base64 an toàn cho chunk lớn
+    let binary = '';
+    const bytes = new Uint8Array(arrayBuffer);
+    const chunkLength = 8192;
+    for (let i = 0; i < bytes.length; i += chunkLength) {
+      const slice = bytes.subarray(i, Math.min(i + chunkLength, bytes.length));
+      binary += String.fromCharCode.apply(null, slice);
+    }
+    const base64Content = btoa(binary);
+
+    if (onProgress) onProgress(65, 'Đang đẩy tệp lên GitHub Cloud Repository...');
+
+    const { owner, repo, token } = this.GITHUB_CONFIG;
+    const filePath = `revit-store-hub/downloads/${safeName}`;
+
+    // Kiểm tra SHA nếu file đã tồn tại
+    let sha = null;
+    try {
+      const getRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      if (getRes.ok) {
+        const fileInfo = await getRes.json();
+        sha = fileInfo.sha;
+      }
+    } catch (e) {}
+
+    const putBody = {
+      message: `Upload software asset: ${safeName}`,
+      content: base64Content
+    };
+    if (sha) putBody.sha = sha;
+
+    const uploadRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(putBody)
+    });
+
+    if (!uploadRes.ok) {
+      const errData = await uploadRes.json().catch(() => ({}));
+      throw new Error(errData.message || `Lỗi đẩy file lên GitHub (${uploadRes.status})`);
+    }
+
+    const uploadData = await uploadRes.json();
+    const downloadUrl = (uploadData.content && uploadData.content.download_url)
+      ? uploadData.content.download_url
+      : `https://raw.githubusercontent.com/${owner}/${repo}/main/${filePath}`;
+
+    if (onProgress) onProgress(100, '✅ Đã tải file lên Cloud thành công!');
+
+    return {
+      success: true,
+      downloadUrl: downloadUrl,
+      fileName: safeName,
+      fileSize: formattedSize,
+      sizeBytes: file.size
+    };
   }
 }
 
