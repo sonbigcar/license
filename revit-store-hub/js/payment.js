@@ -148,17 +148,20 @@ class PaymentGateway {
 
     // Kích hoạt từng sản phẩm trong đơn hàng
     order.items.forEach(item => {
-      if (item.product_type === 'family' || item.product_type === 'template') {
-        // Cấp quyền tải Family & Template vào Thư Viện Của Tôi
-        window.dataStore.addPurchase({
-          id: 'pur-' + Date.now().toString(16) + Math.random().toString(16).substring(2, 6),
-          user_id: order.user_id,
-          product_id: item.product_id,
-          order_id: order.id,
-          purchase_date: new Date().toISOString(),
-          is_active: true
-        });
-      } else if (item.product_type === 'tool') {
+      const prod = window.dataStore.getProductById(item.product_id);
+      const fileUrl = (prod && prod.metadata && prod.metadata.file_url) || '';
+
+      // Cấp quyền tải vào Thư Viện Của Tôi cho mọi sản phẩm
+      window.dataStore.addPurchase({
+        id: 'pur-' + Date.now().toString(16) + Math.random().toString(16).substring(2, 6),
+        user_id: order.user_id,
+        product_id: item.product_id,
+        order_id: order.id,
+        purchase_date: new Date().toISOString(),
+        is_active: true
+      });
+
+      if (item.product_type === 'tool') {
         // Cấp giấy phép bản quyền Revit Add-in vào Bản Quyền Của Tôi
         const licenseKey = window.licenseManager.generateLicenseKey();
         const expiryDate = new Date();
@@ -179,6 +182,7 @@ class PaymentGateway {
           product_id: item.product_id,
           order_id: order.id,
           product_name: item.name,
+          download_url: fileUrl,
           subscription_type: item.billing_cycle || 'yearly',
           max_machines: 2, // Gói 2 máy trạm
           status: 'active',

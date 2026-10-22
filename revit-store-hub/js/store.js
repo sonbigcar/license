@@ -823,10 +823,24 @@ class StoreApp {
       document.getElementById('prodEditThumb').value = prod.thumbnail_url;
       document.getElementById('prodEditVideo').value = prod.video_url || '';
       document.getElementById('prodEditDesc').value = prod.description;
+
+      const meta = prod.metadata || {};
+      document.getElementById('prodEditFileUrl').value = meta.file_url || '';
+      document.getElementById('prodEditFileName').value = meta.file_name || '';
+      document.getElementById('prodEditFileSize').value = meta.file_size || '';
+      document.getElementById('prodEditVersion').value = meta.version || '';
+      document.getElementById('prodEditRevitVersions').value = (prod.revit_versions || []).join(', ');
+      document.getElementById('prodEditInstallGuide').value = meta.install_guide || '';
     } else {
       titleEl.textContent = 'Thêm Sản Phẩm Mới & Niêm Yết Giá';
       form.reset();
       document.getElementById('prodEditId').value = '';
+      document.getElementById('prodEditFileUrl').value = '';
+      document.getElementById('prodEditFileName').value = '';
+      document.getElementById('prodEditFileSize').value = '';
+      document.getElementById('prodEditVersion').value = 'v1.0.0';
+      document.getElementById('prodEditRevitVersions').value = '2022, 2023, 2024, 2025';
+      document.getElementById('prodEditInstallGuide').value = '';
     }
 
     modal.classList.add('active');
@@ -850,10 +864,30 @@ class StoreApp {
     const video = document.getElementById('prodEditVideo').value.trim();
     const desc = document.getElementById('prodEditDesc').value.trim();
 
+    // Thông tin file phần mềm đính kèm
+    const fileUrl = document.getElementById('prodEditFileUrl') ? document.getElementById('prodEditFileUrl').value.trim() : '';
+    const fileName = document.getElementById('prodEditFileName') && document.getElementById('prodEditFileName').value.trim() 
+      ? document.getElementById('prodEditFileName').value.trim() 
+      : (type === 'tool' ? `${name.replace(/\s+/g, '_')}_Setup.exe` : `${name.replace(/\s+/g, '_')}.rfa`);
+    const fileSize = document.getElementById('prodEditFileSize') && document.getElementById('prodEditFileSize').value.trim() 
+      ? document.getElementById('prodEditFileSize').value.trim() 
+      : '15.0 MB';
+    const version = document.getElementById('prodEditVersion') && document.getElementById('prodEditVersion').value.trim() 
+      ? document.getElementById('prodEditVersion').value.trim() 
+      : 'v1.0.0';
+    const revitVersionsInput = document.getElementById('prodEditRevitVersions') ? document.getElementById('prodEditRevitVersions').value.trim() : '';
+    const revitVersions = revitVersionsInput 
+      ? revitVersionsInput.split(/[,;\s]+/).map(v => v.replace(/^v/i, '').trim()).filter(Boolean) 
+      : ['2022', '2023', '2024', '2025'];
+    const installGuide = document.getElementById('prodEditInstallGuide') ? document.getElementById('prodEditInstallGuide').value.trim() : '';
+
     if (!name || price <= 0) {
       alert('Vui lòng nhập tên sản phẩm và giá niêm yết hợp lệ.');
       return;
     }
+
+    const existingProd = window.dataStore.getProductById(id);
+    const existingMeta = (existingProd && existingProd.metadata) || {};
 
     const updatedProduct = {
       id: id,
@@ -867,13 +901,17 @@ class StoreApp {
       thumbnail_url: thumb,
       video_url: video,
       description: desc,
-      short_description: desc.substring(0, 100) + '...',
-      revit_versions: ['2022', '2023', '2024', '2025'],
+      short_description: desc.length > 100 ? (desc.substring(0, 100) + '...') : desc,
+      revit_versions: revitVersions,
       is_active: true,
       metadata: {
-        file_name: type === 'tool' ? `${name.replace(/\s+/g, '_')}_Setup.exe` : `${name.replace(/\s+/g, '_')}.rfa`,
-        file_size: '15.0 MB',
-        lod: 'LOD 350'
+        ...existingMeta,
+        file_url: fileUrl,
+        file_name: fileName,
+        file_size: fileSize,
+        version: version,
+        target_revit: `Revit ${revitVersions.join('-')}`,
+        install_guide: installGuide
       }
     };
 
@@ -1363,11 +1401,16 @@ class StoreApp {
       if (actionBox) {
         actionBox.innerHTML = `
           <div style="display: flex; flex-direction: column; gap: 8px;">
-            <a href="${result.signedUrl}" class="btn btn-primary btn-sm" style="background: var(--success); width: 100%;" download="${result.fileName}" onclick="alert('Đang tải file an toàn!')">
+            <a href="${result.downloadUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="background: var(--success); width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;">
               ⬇️ Tải Ngay (${result.fileName})
             </a>
-            <div class="download-countdown">
-              ⏱️ Liên kết hết hạn sau: <strong>15 phút</strong> (Không lộ link R2)
+            ${result.installGuide ? `
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.storeApp.viewInstallGuide('${productId}')" style="font-size: 0.78rem;">
+                📖 Xem Hướng Dẫn Cài Đặt
+              </button>
+            ` : ''}
+            <div class="download-countdown" style="font-size: 0.76rem; color: var(--text-dim); text-align: center;">
+              🚀 Link tải an toàn tốc độ cao • Kèm hỗ trợ kỹ thuật
             </div>
           </div>
         `;
@@ -1375,6 +1418,38 @@ class StoreApp {
     } catch (e) {
       alert(e.message);
     }
+  }
+
+  downloadSoftware(productId, licenseId = null) {
+    const user = window.authManager.getCurrentUser();
+    if (!user) {
+      alert('Vui lòng đăng nhập tài khoản để tải phần mềm.');
+      this.openAuthModal('login');
+      return;
+    }
+
+    try {
+      const result = window.downloadManager.requestDownloadUrl(productId, user);
+      if (result && result.downloadUrl) {
+        window.open(result.downloadUrl, '_blank');
+        let msg = `🚀 Đang mở liên kết tải file: "${result.fileName}" (${result.fileSize})!`;
+        if (result.installGuide) {
+          msg += `\n\n📌 GHI CHÚ HƯỚNG DẪN CÀI ĐẶT:\n${result.installGuide}`;
+        }
+        alert(msg);
+      }
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  viewInstallGuide(productId) {
+    const product = window.dataStore.getProductById(productId);
+    if (!product) return;
+    const meta = product.metadata || {};
+    const guideText = meta.install_guide || '1. Chạy file cài đặt .exe với quyền Run as Administrator.\n2. Mở Revit, tìm thanh công cụ "DoanSon BIM Tools".\n3. Sao chép License Key trong trang "Bản Quyền Của Tôi" và dán vào hộp thoại kích hoạt.\n4. Sử dụng công cụ hoàn toàn tự động.';
+
+    alert(`📖 HƯỚNG DẪN CÀI ĐẶT & SỬ DỤNG:\nSản phẩm: ${product.name}\n\n${guideText}\n\nLiên hệ hỗ trợ UltraViewer / Zalo nếu cần trợ giúp kỹ thuật.`);
   }
 
   renderUserLicenses() {
@@ -1497,15 +1572,18 @@ class StoreApp {
 
             <!-- Quick Action Bar -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; flex-wrap: wrap; gap: 10px;">
-              <div style="display: flex; gap: 10px;">
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <button class="btn btn-primary btn-sm" onclick="window.storeApp.renewUserLicense('${lic.id}')">
                   ⚡ Gia Hạn Bản Quyền (+1 Năm)
                 </button>
-                <a href="${lic.download_url || '#'}" class="btn btn-secondary btn-sm" download onclick="alert('Đang tải bộ cài đặt mới nhất v2.4.0!')">
-                  ⬇️ Tải Bộ Cài (.EXE)
-                </a>
+                <button class="btn btn-primary btn-sm" style="background: #2563EB; display: inline-flex; align-items: center; gap: 6px;" onclick="window.storeApp.downloadSoftware('${lic.product_id}', '${lic.id}')">
+                  ⬇️ Tải Bộ Cài Đặt (.EXE)
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="window.storeApp.viewInstallGuide('${lic.product_id}')">
+                  📖 Hướng Dẫn Cài
+                </button>
                 <button class="btn btn-secondary btn-sm" onclick="window.licenseManager.exportOfflineLicenseFile('${lic.id}')" title="Dành cho máy không kết nối Internet">
-                  📄 Tải File License Offline (.LIC)
+                  📄 File License (.LIC)
                 </button>
               </div>
               <div style="font-size: 0.82rem; color: var(--text-dim);">
