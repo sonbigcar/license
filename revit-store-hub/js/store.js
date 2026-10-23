@@ -40,6 +40,13 @@ class StoreApp {
         window.adminPanel.render();
       }
     });
+
+    // Tự động kiểm tra và đồng bộ đơn hàng / bản quyền / thư viện từ máy chủ đám mây định kỳ mỗi 15 giây
+    setInterval(async () => {
+      if (window.dataStore && typeof window.dataStore.fetchRemoteOrders === 'function') {
+        await window.dataStore.fetchRemoteOrders();
+      }
+    }, 15000);
   }
 
   loadCart() {
@@ -315,7 +322,7 @@ class StoreApp {
     if (formReg) formReg.classList.toggle('hidden', tab !== 'register');
   }
 
-  handleLoginSubmit(e) {
+  async handleLoginSubmit(e) {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value.trim();
     const pass = (document.getElementById('loginPassword') ? document.getElementById('loginPassword').value : '').trim();
@@ -329,11 +336,21 @@ class StoreApp {
     }
 
     try {
-      const user = window.authManager.login(email, pass);
+      const user = await window.authManager.login(email, pass);
       this.closeAuthModal();
       alert(`Chào mừng ${user.full_name} đã đăng nhập!`);
+
+      // Lập tức kéo dữ liệu đơn hàng và thư viện mới nhất từ Đám mây
+      if (window.dataStore && typeof window.dataStore.fetchRemoteOrders === 'function') {
+        window.dataStore.fetchRemoteOrders().catch(() => {});
+      }
+
       if (user.role === 'admin') {
         this.switchMainView('adminView');
+      } else {
+        if (document.getElementById('libraryView') && !document.getElementById('libraryView').classList.contains('hidden')) {
+          this.renderUserLibrary();
+        }
       }
     } catch (err) {
       alert(err.message);
@@ -368,6 +385,11 @@ class StoreApp {
       const user = await window.authManager.register(fullName, email, password, phone, company, 'customer');
       this.closeAuthModal();
       alert(`🎉 Chúc mừng ${user.full_name}! Tài khoản của bạn đã được đăng ký thành công và đã tự động đăng nhập.`);
+
+      // Đồng bộ đơn hàng đám mây về cho tài khoản vừa đăng ký
+      if (window.dataStore && typeof window.dataStore.fetchRemoteOrders === 'function') {
+        window.dataStore.fetchRemoteOrders().catch(() => {});
+      }
     } catch (err) {
       alert(err.message);
     }
@@ -613,8 +635,14 @@ class StoreApp {
 
     if (viewId === 'libraryView') {
       this.renderUserLibrary();
+      if (window.dataStore && typeof window.dataStore.fetchRemoteOrders === 'function') {
+        window.dataStore.fetchRemoteOrders().then(() => this.renderUserLibrary()).catch(() => {});
+      }
     } else if (viewId === 'licenseView') {
       this.renderUserLicenses();
+      if (window.dataStore && typeof window.dataStore.fetchRemoteOrders === 'function') {
+        window.dataStore.fetchRemoteOrders().then(() => this.renderUserLicenses()).catch(() => {});
+      }
     } else if (viewId === 'adminView') {
       window.adminPanel.render();
       if (window.dataStore && typeof window.dataStore.fetchRemoteOrders === 'function') {
@@ -685,7 +713,10 @@ class StoreApp {
       return;
     }
 
+    const currentUser = window.authManager.getCurrentUser();
+
     container.innerHTML = products.map(product => {
+      const isPurchased = currentUser && window.dataStore.hasPurchasedProduct(currentUser.id, product.id);
       let badgeClass = 'badge-family';
       let badgeText = 'Revit Family';
       let billingText = 'Mua trọn đời';
@@ -706,6 +737,7 @@ class StoreApp {
             <img src="${product.thumbnail_url}" alt="${product.name}" loading="lazy">
             <div class="media-badges">
               <span class="badge ${badgeClass}">${badgeText}</span>
+              ${isPurchased ? `<span class="badge" style="background: #10B981; color: #fff;">✓ Đã Sở Hữu</span>` : ''}
               ${product.video_url ? `<span class="badge" style="background: rgba(0,0,0,0.6); color: #fff;">🎬 Có Video Review</span>` : ''}
             </div>
           </div>
@@ -728,9 +760,15 @@ class StoreApp {
                 <button class="btn btn-secondary btn-sm" onclick="window.storeApp.viewProductDetail('${product.id}')" title="Xem chi tiết & Video review">
                   Chi tiết
                 </button>
-                <button class="btn btn-primary btn-sm" onclick="window.storeApp.addToCart('${product.id}')">
-                  + Mua
-                </button>
+                ${isPurchased ? `
+                  <button class="btn btn-sm" style="background: #EBFDF5; color: #047857; border: 1px solid #A7F3D0; font-weight: 600;" onclick="window.storeApp.switchMainView('libraryView')" title="Bạn đã sở hữu sản phẩm này. Bấm để vào Thư Viện">
+                    ✓ Đã mua
+                  </button>
+                ` : `
+                  <button class="btn btn-primary btn-sm" onclick="window.storeApp.addToCart('${product.id}')">
+                    + Mua
+                  </button>
+                `}
               </div>
             </div>
 
@@ -765,6 +803,8 @@ class StoreApp {
     const modalBody = document.getElementById('detailModalBody');
     const isTool = product.product_type === 'tool';
     const isTemplate = product.product_type === 'template';
+    const currentUser = window.authManager.getCurrentUser();
+    const isPurchased = currentUser && window.dataStore.hasPurchasedProduct(currentUser.id, product.id);
 
     modalBody.innerHTML = `
       <div style="padding: 24px;">
@@ -792,6 +832,7 @@ class StoreApp {
             <span class="badge ${isTool ? 'badge-tool' : (isTemplate ? 'badge-template' : 'badge-family')}" style="margin-bottom: 8px;">
               ${isTool ? 'Revit Tools (Bản quyền theo máy)' : (isTemplate ? 'Project Template .RTE' : 'Revit Family .RFA')}
             </span>
+            ${isPurchased ? `<span class="badge" style="background: #10B981; color: #fff; margin-left: 6px;">✓ Đã Sở Hữu</span>` : ''}
             <h2 style="font-family: var(--font-heading); font-size: 1.6rem; color: var(--text-pure); margin-bottom: 12px; line-height: 1.3;">
               ${product.name}
             </h2>
@@ -807,9 +848,18 @@ class StoreApp {
               ${product.description}
             </p>
 
-            <button class="btn btn-primary btn-lg" style="width: 100%;" onclick="window.storeApp.addToCart('${product.id}'); window.storeApp.closeDetailModal(); window.storeApp.openCartDrawer();">
-              Thêm Vào Giỏ & Thanh Toán VietQR
-            </button>
+            ${isPurchased ? `
+              <div style="background: #EBFDF5; border: 1px solid #A7F3D0; border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; color: #065F46; font-size: 0.9rem;">
+                <span>✅</span> <strong>Bạn đã sở hữu sản phẩm này!</strong>
+              </div>
+              <button class="btn btn-primary btn-lg" style="width: 100%; background: var(--success);" onclick="window.storeApp.closeDetailModal(); window.storeApp.switchMainView('libraryView');">
+                📁 Vào Thư Viện Của Tôi Để Tải Ngay
+              </button>
+            ` : `
+              <button class="btn btn-primary btn-lg" style="width: 100%;" onclick="window.storeApp.addToCart('${product.id}'); window.storeApp.closeDetailModal(); window.storeApp.openCartDrawer();">
+                Thêm Vào Giỏ & Thanh Toán VietQR
+              </button>
+            `}
           </div>
 
           <div style="background: #FAF3EE; border: 1px solid #EAE0D7; border-radius: var(--radius-lg); padding: 20px;">
@@ -1496,7 +1546,7 @@ class StoreApp {
     if (!container) return;
 
     if (!user) {
-      container.innerHTML = `<div style="text-align: center; padding: 40px;">Vui lòng đăng nhập để xem thư viện.</div>`;
+      container.innerHTML = `<div style="text-align: center; padding: 40px; grid-column: 1/-1;">Vui lòng đăng nhập để xem thư viện sản phẩm đã mua.</div>`;
       return;
     }
 
@@ -1505,7 +1555,10 @@ class StoreApp {
       container.innerHTML = `
         <div style="text-align: center; padding: 60px 20px; color: var(--text-muted); grid-column: 1/-1;">
           <div style="font-size: 2.8rem; margin-bottom: 12px;">📁</div>
-          <h3>Bạn chưa sở hữu Family hoặc Template nào</h3>
+          <h3>Bạn chưa sở hữu sản phẩm nào trong Thư Viện</h3>
+          <p style="margin-top: 6px; font-size: 0.9rem; color: var(--text-dim);">
+            Toàn bộ Family (.RFA), Template (.RTE) và Bộ cài Revit Tools (.EXE) sau khi mua sẽ tự động xuất hiện tại đây trên tất cả các máy tính của bạn.
+          </p>
           <button class="btn btn-primary" style="margin-top: 16px;" onclick="window.storeApp.switchMainView('storefrontView')">
             Khám phá Cửa hàng
           </button>
@@ -1518,29 +1571,45 @@ class StoreApp {
       const product = window.dataStore.getProductById(pur.product_id);
       if (!product) return '';
 
+      const meta = product.metadata || {};
+      const fileName = meta.file_name || `${product.name}.${product.product_type === 'tool' ? 'exe' : 'rfa'}`;
+      const fileSize = meta.file_size || '';
+
+      let badgeHtml = '';
+      if (product.product_type === 'tool') {
+        badgeHtml = `<span class="badge badge-tool" style="margin-top: 4px;">⚙️ Revit Add-in Tool</span>`;
+      } else if (product.product_type === 'template') {
+        badgeHtml = `<span class="badge badge-template" style="margin-top: 4px;">📄 Project Template .RTE</span>`;
+      } else {
+        badgeHtml = `<span class="badge badge-family" style="margin-top: 4px;">📦 Revit Family .RFA</span>`;
+      }
+
       return `
         <div class="library-card">
           <div class="library-card-header">
-            <img class="library-thumb" src="${product.thumbnail_url}" alt="${product.name}">
+            <img class="library-thumb" src="${product.thumbnail_url || 'assets/card_family.jpg'}" alt="${product.name}">
             <div class="library-info">
               <h4>${product.name}</h4>
-              <span class="badge ${product.product_type === 'template' ? 'badge-template' : 'badge-family'}" style="margin-top: 4px;">
-                ${product.product_type === 'template' ? 'Project Template .RTE' : 'Revit Family .RFA'}
-              </span>
+              ${badgeHtml}
             </div>
           </div>
 
           <div class="library-download-box">
             <div style="display: flex; justify-content: space-between; font-size: 0.84rem;">
-              <span>File: <strong>${product.metadata.file_name}</strong></span>
-              <span style="color: var(--text-dim);">${product.metadata.file_size}</span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 65%;">File: <strong>${fileName}</strong></span>
+              <span style="color: var(--text-dim);">${fileSize}</span>
             </div>
 
             <div id="downloadAction_${product.id}">
-              <button class="btn btn-primary btn-sm" style="width: 100%;" onclick="window.storeApp.requestSecureDownload('${product.id}')">
-                🔒 Lấy liên kết tải xuống an toàn (15 Phút)
+              <button class="btn btn-primary btn-sm" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="window.storeApp.requestSecureDownload('${product.id}')">
+                <span>⬇️</span> Tải File Về Máy (15 Phút)
               </button>
             </div>
+            ${product.product_type === 'tool' ? `
+              <button class="btn btn-secondary btn-sm" style="width: 100%; margin-top: 8px; font-size: 0.78rem;" onclick="window.storeApp.switchMainView('licenseView')">
+                🔑 Quản Lý Bản Quyền & Key
+              </button>
+            ` : ''}
           </div>
         </div>
       `;
@@ -1549,6 +1618,12 @@ class StoreApp {
 
   requestSecureDownload(productId) {
     const user = window.authManager.getCurrentUser();
+    if (!user) {
+      alert('Vui lòng đăng nhập tài khoản để tải sản phẩm.');
+      this.openAuthModal('login');
+      return;
+    }
+
     try {
       const result = window.downloadManager.requestDownloadUrl(productId, user);
       const actionBox = document.getElementById(`downloadAction_${productId}`);
@@ -1570,6 +1645,15 @@ class StoreApp {
           </div>
         `;
       }
+
+      // Tự động kích hoạt tải xuống trực tiếp
+      const tempLink = document.createElement('a');
+      tempLink.href = result.downloadUrl;
+      tempLink.target = '_blank';
+      tempLink.rel = 'noopener noreferrer';
+      tempLink.download = result.fileName;
+      document.body.appendChild(tempLink);
+      tempLink.click();
     } catch (e) {
       alert(e.message);
     }

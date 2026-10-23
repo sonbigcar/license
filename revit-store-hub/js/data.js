@@ -980,6 +980,22 @@ class DataStore {
           // Sắp xếp đơn mới nhất lên đầu
           localOrders.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
           this.save('orders', localOrders);
+
+          // Tự động đồng bộ quyền sở hữu Thư viện và Bản quyền từ đơn hàng cho mọi máy tính
+          this.reconcilePurchasesAndLicensesFromOrders();
+
+          if (window.storeApp) {
+            if (document.getElementById('libraryView') && !document.getElementById('libraryView').classList.contains('hidden')) {
+              window.storeApp.renderUserLibrary();
+            }
+            if (document.getElementById('licenseView') && !document.getElementById('licenseView').classList.contains('hidden')) {
+              window.storeApp.renderUserLicenses();
+            }
+          }
+          if (window.adminPanel && window.adminPanel.currentTab === 'orders') {
+            window.adminPanel.render();
+          }
+
           return localOrders;
         }
       }
@@ -1044,28 +1060,164 @@ class DataStore {
     return this.getCustomRequests();
   }
 
+  /**
+   * TỰ ĐỘNG ĐỒNG BỘ THƯ VIỆN & BẢN QUYỀN TỪ CÁC ĐƠN HÀNG ĐÃ THANH TOÁN (STATUS = PAID)
+   * Đảm bảo bất kể mua trên máy tính nào, khi sang máy tính khác đăng nhập đều thấy đủ 100%
+   */
+  reconcilePurchasesAndLicensesFromOrders() {
+    const orders = this.get('orders') || [];
+    const paidOrders = orders.filter(o => o.status === 'paid');
+    if (paidOrders.length === 0) return;
+
+    let purchases = this.get('user_purchases') || [];
+    let licenses = this.get('licenses') || [];
+    let purchasesChanged = false;
+    let licensesChanged = false;
+
+    paidOrders.forEach(order => {
+      const userId = order.user_id || 'acc-guest';
+      const userEmail = (order.user_email || '').toLowerCase().trim();
+      const userName = order.user_name || 'Khách hàng';
+      const paidDate = order.paid_at || order.created_at || new Date().toISOString();
+
+      (order.items || []).forEach(item => {
+        // 1. Đồng bộ vào user_purchases (Thư Viện Của Tôi cho MỌI loại sản phẩm)
+        const purchaseId = `pur-${order.id}-${item.product_id}`;
+        const hasPur = purchases.some(p => 
+          (p.id === purchaseId) ||
+          ((p.user_id === userId || (userEmail && p.user_email && p.user_email.toLowerCase().trim() === userEmail)) && p.product_id === item.product_id)
+        );
+
+        if (!hasPur) {
+          purchases.unshift({
+            id: purchaseId,
+            user_id: userId,
+            user_email: userEmail,
+            user_name: userName,
+            product_id: item.product_id,
+            product_name: item.name,
+            product_type: item.product_type || 'tool',
+            order_id: order.id,
+            order_code: order.order_code,
+            purchase_date: paidDate,
+            is_active: true
+          });
+          purchasesChanged = true;
+        }
+
+        // 2. Đồng bộ vào licenses (Bản Quyền Của Tôi cho Revit Tools Add-in)
+        if (item.product_type === 'tool') {
+          const licId = `lic-${order.id}-${item.product_id}`;
+          const hasLic = licenses.some(l => 
+            (l.id === licId) ||
+            ((l.user_id === userId || (userEmail && l.user_email && l.user_email.toLowerCase().trim() === userEmail)) && l.product_id === item.product_id && (l.order_id === order.id || !l.order_id))
+          );
+
+          if (!hasLic) {
+            // Lấy key đã lưu từ đơn hàng hoặc tạo key chuẩn cố định
+            let licenseKey = null;
+            if (order.licenses && Array.isArray(order.licenses)) {
+              const matchedKey = order.licenses.find(k => k.name === item.name || k.product_id === item.product_id);
+              if (matchedKey) licenseKey = matchedKey.key;
+            }
+            if (!licenseKey) {
+              const safeCode = (order.order_code || '888888').toString().padStart(6, '0');
+              const hashPart = Math.abs(item.product_id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) * 31).toString(36).toUpperCase().padStart(4, 'X');
+              licenseKey = `DSMEP-${safeCode}-${hashPart}-PRO`;
+            }
+
+            const prod = this.getProductById(item.product_id);
+            const fileUrl = (prod && prod.metadata && prod.metadata.file_url) || (item.metadata && item.metadata.file_url) || '';
+
+            const expiryDate = new Date(paidDate);
+            if (item.billing_cycle === 'monthly') {
+              expiryDate.setMonth(expiryDate.getMonth() + 1);
+            } else if (item.billing_cycle === 'lifetime' || item.billing_cycle === 'one_time') {
+              expiryDate.setFullYear(expiryDate.getFullYear() + 50);
+            } else {
+              expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+            }
+
+            licenses.unshift({
+              id: licId,
+              license_key: licenseKey,
+              user_id: userId,
+              user_name: userName,
+              user_email: userEmail,
+              product_id: item.product_id,
+              order_id: order.id,
+              order_code: order.order_code,
+              product_name: item.name,
+              download_url: fileUrl,
+              subscription_type: item.billing_cycle || 'yearly',
+              max_machines: 2,
+              status: 'active',
+              start_date: paidDate,
+              expiry_date: expiryDate.toISOString(),
+              activations: []
+            });
+            licensesChanged = true;
+          }
+        }
+      });
+    });
+
+    if (purchasesChanged) {
+      this.save('user_purchases', purchases);
+      console.log(`[Reconcile] Đã đồng bộ ${purchases.length} quyền sở hữu Thư viện từ đơn hàng.`);
+    }
+    if (licensesChanged) {
+      this.save('licenses', licenses);
+      console.log(`[Reconcile] Đã đồng bộ ${licenses.length} bản quyền Revit Tools từ đơn hàng.`);
+    }
+  }
+
   getUserPurchases(userId) {
-    return this.get('user_purchases').filter(p => p.user_id === userId);
+    if (!userId) return [];
+    const user = (window.authManager && window.authManager.getCurrentUser()) || null;
+    const userEmail = (user && user.email) ? user.email.toLowerCase().trim() : null;
+
+    // Đảm bảo đồng bộ mới nhất từ đơn hàng trước khi trả về
+    this.reconcilePurchasesAndLicensesFromOrders();
+
+    const allPurchases = this.get('user_purchases') || [];
+    return allPurchases.filter(p => 
+      (p.user_id === userId) ||
+      (userEmail && p.user_email && p.user_email.toLowerCase().trim() === userEmail)
+    );
   }
 
   hasPurchasedProduct(userId, productId) {
     if (!userId || !productId) return false;
 
+    const user = (window.authManager && window.authManager.getCurrentUser()) || null;
+    const userEmail = (user && user.email) ? user.email.toLowerCase().trim() : null;
+
+    // Admin có quyền truy cập tất cả sản phẩm
+    if (user && user.role === 'admin') return true;
+
+    // Đảm bảo đồng bộ mới nhất từ đơn hàng trước khi kiểm tra
+    this.reconcilePurchasesAndLicensesFromOrders();
+
     // 1. Kiểm tra trong danh sách user_purchases
-    const inPurchases = (this.get('user_purchases') || []).some(
-      p => p.user_id === userId && p.product_id === productId && p.is_active
+    const inPurchases = (this.get('user_purchases') || []).some(p => 
+      (p.user_id === userId || (userEmail && p.user_email && p.user_email.toLowerCase().trim() === userEmail)) &&
+      p.product_id === productId && p.is_active
     );
     if (inPurchases) return true;
 
     // 2. Kiểm tra trong danh sách licenses hoạt động (cho Revit tools)
-    const inLicenses = (this.get('licenses') || []).some(
-      l => l.user_id === userId && l.product_id === productId && l.status === 'active'
+    const inLicenses = (this.get('licenses') || []).some(l => 
+      (l.user_id === userId || (userEmail && l.user_email && l.user_email.toLowerCase().trim() === userEmail)) &&
+      l.product_id === productId && l.status === 'active'
     );
     if (inLicenses) return true;
 
     // 3. Kiểm tra trong danh sách đơn hàng đã thanh toán thành công (status === 'paid')
-    const inOrders = (this.get('orders') || []).some(
-      o => o.user_id === userId && o.status === 'paid' && (o.items || []).some(item => item.product_id === productId)
+    const inOrders = (this.get('orders') || []).some(o => 
+      (o.user_id === userId || (userEmail && o.user_email && o.user_email.toLowerCase().trim() === userEmail)) &&
+      o.status === 'paid' &&
+      (o.items || []).some(item => item.product_id === productId)
     );
     if (inOrders) return true;
 
@@ -1081,8 +1233,19 @@ class DataStore {
   }
 
   getLicenses(userId) {
-    if (!userId) return this.get('licenses');
-    return this.get('licenses').filter(l => l.user_id === userId);
+    const user = (window.authManager && window.authManager.getCurrentUser()) || null;
+    const userEmail = (user && user.email) ? user.email.toLowerCase().trim() : null;
+
+    // Đảm bảo đồng bộ mới nhất từ đơn hàng
+    this.reconcilePurchasesAndLicensesFromOrders();
+
+    let allLicenses = this.get('licenses') || [];
+    if (!userId && !userEmail) return allLicenses;
+
+    return allLicenses.filter(l => 
+      (userId && l.user_id === userId) ||
+      (userEmail && l.user_email && l.user_email.toLowerCase().trim() === userEmail)
+    );
   }
 
   addLicense(license) {

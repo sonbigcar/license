@@ -50,7 +50,7 @@ class AuthManager {
   /**
    * Đăng nhập người dùng (bắt buộc tài khoản đã đăng ký và kiểm tra mật khẩu chính xác)
    */
-  login(identifier, password = '') {
+  async login(identifier, password = '') {
     const input = (identifier || '').trim().toLowerCase();
     const pass = (password || '').trim();
 
@@ -61,11 +61,22 @@ class AuthManager {
       throw new Error('Vui lòng nhập Mật khẩu.');
     }
 
-    const accounts = window.dataStore.getAccounts();
+    let accounts = window.dataStore.getAccounts();
     let account = accounts.find(a => 
       (a.email && a.email.toLowerCase() === input) || 
       (a.username && a.username.toLowerCase() === input)
     );
+
+    // Nếu trên máy tính mới chưa có tài khoản trong cache, lập tức tải từ GitHub Cloud
+    if (!account && window.dataStore && typeof window.dataStore.fetchRemoteAccounts === 'function') {
+      try {
+        accounts = await window.dataStore.fetchRemoteAccounts();
+        account = accounts.find(a => 
+          (a.email && a.email.toLowerCase() === input) || 
+          (a.username && a.username.toLowerCase() === input)
+        );
+      } catch (err) {}
+    }
 
     const isOwnerOrAdmin = 
       input === 'sonbigcar' || 

@@ -155,8 +155,12 @@ class PaymentGateway {
       window.dataStore.addPurchase({
         id: 'pur-' + Date.now().toString(16) + Math.random().toString(16).substring(2, 6),
         user_id: order.user_id,
+        user_email: order.user_email,
         product_id: item.product_id,
+        product_name: item.name,
+        product_type: item.product_type || 'tool',
         order_id: order.id,
+        order_code: order.order_code,
         purchase_date: new Date().toISOString(),
         is_active: true
       });
@@ -195,6 +199,9 @@ class PaymentGateway {
         generatedKeys.push({ name: item.name, key: licenseKey });
       }
     });
+
+    order.licenses = generatedKeys;
+    window.dataStore.saveOrder(order);
 
     console.log(`[PaymentGateway] Đã xác nhận đơn #${order.order_code} thành công và cấp quyền hoàn tất.`);
     return { order, generatedKeys };
