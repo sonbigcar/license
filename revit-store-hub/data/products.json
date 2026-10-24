@@ -1,5 +1,40 @@
 [
   {
+    "id": "prod-1a16eb2a79f",
+    "name": "Phần mềm quản lý công việc",
+    "slug": "ph-n-m-m-qu-n-l--c-ng-vi-c",
+    "product_type": "tool",
+    "package_id": "pkg_mvmlnst0",
+    "package_name": "Gói phần mềm công việc",
+    "allowed_modules": [
+      "MEP-TASK"
+    ],
+    "category": "wedsite task",
+    "price": 5000000,
+    "sale_price": 5000000,
+    "billing_cycle": "yearly",
+    "thumbnail_url": "assets/card_family.jpg",
+    "video_url": "",
+    "description": "",
+    "short_description": "",
+    "revit_versions": [
+      "2022",
+      "2023",
+      "2024",
+      "2025"
+    ],
+    "is_active": true,
+    "metadata": {
+      "security_mode": "cloudflare_r2",
+      "file_url": "",
+      "file_name": "Phần_mềm_quản_lý_công_việc_Setup.exe",
+      "file_size": "15.0 MB",
+      "version": "v1.0.0",
+      "target_revit": "Revit 2022-2023-2024-2025",
+      "install_guide": ""
+    }
+  },
+  {
     "id": "tool-001",
     "name": "MEP Auto Routing & Smart Elevation Pro",
     "slug": "mep-auto-routing---smart-elevation-pro",
