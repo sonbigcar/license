@@ -115,7 +115,7 @@ class LicenseManager {
   /**
    * Cập nhật danh sách các module được cấp phép cho License (Full VIP, Duct, Pipe, Sheet, Fire, Elec, AI)
    */
-  updateLicenseModules(licenseId, allowedModules) {
+  updateLicenseModules(licenseId, allowedModules, customPlanName = null) {
     const licenses = window.dataStore.getLicenses();
     const lic = licenses.find(l => l.id === licenseId);
     if (!lic) return false;
@@ -123,7 +123,9 @@ class LicenseManager {
     const isAll = allowedModules.includes('MEP-ALL') || allowedModules.length >= 6;
     lic.allowed_modules = isAll ? ['MEP-ALL'] : allowedModules;
 
-    if (isAll) {
+    if (customPlanName) {
+      lic.plan_name = customPlanName;
+    } else if (isAll) {
       lic.plan_name = `Gói Full VIP (Tất Cả Tools - ${lic.max_machines} Máy)`;
     } else {
       const names = lic.allowed_modules.map(m => m.replace('MEP-', ''));

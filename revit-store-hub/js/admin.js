@@ -188,42 +188,75 @@ class AdminPanel {
               <th>Số điện thoại</th>
               <th>Công ty / Đơn vị</th>
               <th>Phân quyền</th>
+              <th>Gói Bản Quyền Sở Hữu</th>
               <th>Trạng thái</th>
               <th>Hành động</th>
             </tr>
           </thead>
           <tbody>
-            ${accounts.map(acc => `
-              <tr>
-                <td><strong>${acc.full_name}</strong></td>
-                <td style="font-family: var(--font-mono); color: var(--primary);">${acc.email}</td>
-                <td>${acc.phone || '-'}</td>
-                <td>${acc.company || 'Cá nhân'}</td>
-                <td>
-                  <span class="badge ${acc.role === 'admin' ? 'badge-admin' : 'account-badge-customer'}">
-                    ${acc.role === 'admin' ? '👑 Admin' : '👤 Kỹ sư'}
-                  </span>
-                </td>
-                <td>
-                  <span class="badge ${acc.status === 'active' ? 'badge-family' : 'badge-admin'}">
-                    ${acc.status === 'active' ? 'Hoạt động' : 'Đã khóa'}
-                  </span>
-                </td>
-                <td>
-                  <div style="display: flex; gap: 6px;">
-                    <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.toggleRole('${acc.id}')" title="Đổi quyền Admin / Customer">
-                      ${acc.role === 'admin' ? 'Hạ quyền Kỹ sư' : 'Nâng quyền Admin'}
-                    </button>
-                    <button class="btn btn-secondary btn-sm" style="color: ${acc.status === 'active' ? 'var(--danger)' : 'var(--success)'};" onclick="window.adminPanel.toggleStatus('${acc.id}')">
-                      ${acc.status === 'active' ? 'Khóa' : 'Mở khóa'}
-                    </button>
-                    <button class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="window.adminPanel.deleteAccountPrompt('${acc.id}', '${acc.full_name}')" title="Xóa tài khoản này">
-                      🗑️ Xóa
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            `).join('')}
+            ${accounts.map(acc => {
+              const userLics = window.dataStore.getLicensesByAccount ? window.dataStore.getLicensesByAccount(acc) : [];
+              let licSummaryHtml = '';
+              if (!userLics || userLics.length === 0) {
+                licSummaryHtml = `<span style="font-size: 0.8rem; color: var(--text-dim);">Chưa có license</span>`;
+              } else {
+                licSummaryHtml = userLics.map(l => {
+                  const mods = l.allowed_modules || ['MEP-ALL'];
+                  const isAll = mods.includes('MEP-ALL') || mods.length >= 6;
+                  const badgeColor = isAll ? '#4F46E5' : '#0284C7';
+                  const badgeBg = isAll ? '#EEF2FF' : '#E0F2FE';
+                  const usedCount = (l.activations || []).length;
+                  return `
+                    <div style="margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                      <span class="badge" style="background: ${badgeBg}; color: ${badgeColor}; font-size: 0.72rem; font-weight: 700; white-space: nowrap;">
+                        ${l.plan_name || 'Bản quyền Tools'}
+                      </span>
+                      <span style="font-size: 0.72rem; color: var(--text-dim); font-family: var(--font-mono);">
+                        (${usedCount}/${l.max_machines} máy)
+                      </span>
+                    </div>
+                  `;
+                }).join('');
+              }
+
+              return `
+                <tr>
+                  <td><strong>${acc.full_name}</strong></td>
+                  <td style="font-family: var(--font-mono); color: var(--primary);">${acc.email}</td>
+                  <td>${acc.phone || '-'}</td>
+                  <td>${acc.company || 'Cá nhân'}</td>
+                  <td>
+                    <span class="badge ${acc.role === 'admin' ? 'badge-admin' : 'account-badge-customer'}">
+                      ${acc.role === 'admin' ? '👑 Admin' : '👤 Kỹ sư'}
+                    </span>
+                  </td>
+                  <td>
+                    ${licSummaryHtml}
+                  </td>
+                  <td>
+                    <span class="badge ${acc.status === 'active' ? 'badge-family' : 'badge-admin'}">
+                      ${acc.status === 'active' ? 'Hoạt động' : 'Đã khóa'}
+                    </span>
+                  </td>
+                  <td>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                      <button class="btn btn-secondary btn-sm" style="color: #4F46E5; font-weight: 700; border-color: rgba(79, 70, 229, 0.4); background: #EEF2FF;" onclick="window.adminPanel.openAccountLicenseModal('${acc.id}')" title="Xem, điều chỉnh hoặc cấp thêm gói module bản quyền cho tài khoản này">
+                        🧩 Gói Bản Quyền
+                      </button>
+                      <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.toggleRole('${acc.id}')" title="Đổi quyền Admin / Customer">
+                        ${acc.role === 'admin' ? 'Hạ Kỹ sư' : 'Lên Admin'}
+                      </button>
+                      <button class="btn btn-secondary btn-sm" style="color: ${acc.status === 'active' ? 'var(--danger)' : 'var(--success)'};" onclick="window.adminPanel.toggleStatus('${acc.id}')">
+                        ${acc.status === 'active' ? 'Khóa' : 'Mở'}
+                      </button>
+                      <button class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="window.adminPanel.deleteAccountPrompt('${acc.id}', '${acc.full_name}')" title="Xóa tài khoản này">
+                        🗑️
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
           </tbody>
         </table>
       </div>
@@ -539,9 +572,12 @@ class AdminPanel {
           </select>
         </div>
 
-        <div class="license-action-bar">
+        <div class="license-action-bar" style="display: flex; gap: 8px; flex-wrap: wrap;">
           <button class="btn btn-primary btn-sm" onclick="window.adminPanel.openManualLicenseModal()">
             ✨ + Cấp Giấy Phép Thủ Công Mới
+          </button>
+          <button class="btn btn-secondary btn-sm" style="color: #4F46E5; font-weight: 700; border-color: #818CF8; background: #EEF2FF;" onclick="window.adminPanel.openPackageManagerModal()">
+            ⚙️ Đăng Ký Thêm Gói Module
           </button>
           <button class="btn btn-secondary btn-sm" onclick="window.licenseManager.exportLicensesCsv()">
             📥 Xuất Báo Cáo CSV (Excel)
@@ -1375,6 +1411,452 @@ class AdminPanel {
       alert('Đã xóa đơn hàng thành công!');
       this.render();
     }
+  }
+
+  // =========================================================================
+  // QUẢN LÝ & ĐĂNG KÝ GÓI MODULE BẢN QUYỀN (YÊU CẦU 1)
+  // =========================================================================
+  openPackageManagerModal() {
+    const modal = document.getElementById('packageManagerModalOverlay');
+    if (!modal) return;
+    this.switchPkgModalTab('list');
+    modal.classList.add('active');
+  }
+
+  closePackageManagerModal() {
+    const modal = document.getElementById('packageManagerModalOverlay');
+    if (modal) modal.classList.remove('active');
+  }
+
+  switchPkgModalTab(tab) {
+    const tabs = ['list', 'create', 'modules'];
+    tabs.forEach(t => {
+      const btn = document.getElementById(`pkgTabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
+      const sec = document.getElementById(`pkgModalSection${t.charAt(0).toUpperCase() + t.slice(1)}`);
+      if (btn && sec) {
+        if (t === tab) {
+          btn.style.background = '#EEF2FF';
+          btn.style.color = '#4F46E5';
+          btn.style.borderColor = '#C7D2FE';
+          sec.style.display = 'block';
+        } else {
+          btn.style.background = '';
+          btn.style.color = '';
+          btn.style.borderColor = '';
+          sec.style.display = 'none';
+        }
+      }
+    });
+
+    if (tab === 'list') {
+      this.renderPkgModalList();
+    } else if (tab === 'create') {
+      this.renderPkgCreateFormModules();
+    } else if (tab === 'modules') {
+      this.renderPkgModalModuleCatalog();
+    }
+  }
+
+  renderPkgModalList() {
+    const container = document.getElementById('pkgModalListContainer');
+    if (!container) return;
+
+    const presets = window.dataStore.getPackagePresets();
+    const catalog = window.dataStore.getModuleCatalog();
+    const catalogMap = {};
+    catalog.forEach(m => { catalogMap[m.code] = `${m.icon || '🧩'} ${m.name}`; });
+
+    if (presets.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 30px; color: var(--text-muted); background: #F8FAFC; border-radius: var(--radius-md);">
+          Chưa có gói bản quyền nào được cấu hình. Hãy bấm <strong>+ Đăng Ký Gói Mới</strong> để tạo gói đầu tiên!
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = presets.map((pkg, idx) => {
+      const isAll = (pkg.modules || []).includes('MEP-ALL');
+      const moduleBadges = isAll
+        ? `<span class="badge" style="background:#EEF2FF; color:#4F46E5; font-weight:700;">⭐ Full VIP (Mở Toàn Bộ Tools)</span>`
+        : (pkg.modules || []).map(m => `
+            <span class="badge" style="background:#F1F5F9; color:#334155; font-size:0.75rem; margin-right:4px;">
+              ${catalogMap[m] || m}
+            </span>
+          `).join('');
+
+      return `
+        <div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: var(--radius-md); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: var(--shadow-sm);">
+          <div style="flex: 1; min-width: 260px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+              <strong style="font-size: 1.05rem; color: var(--text-pure);">${pkg.name}</strong>
+              ${pkg.badge ? `<span class="badge badge-family" style="font-size: 0.72rem;">${pkg.badge}</span>` : ''}
+            </div>
+            <p style="font-size: 0.84rem; color: var(--text-muted); margin: 0 0 8px 0;">${pkg.desc || 'Không có mô tả chi tiết.'}</p>
+            <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+              <span style="font-size: 0.78rem; color: var(--text-dim); margin-right: 4px;">Module bao gồm:</span>
+              ${moduleBadges}
+            </div>
+          </div>
+
+          <div style="text-align: right; min-width: 170px;">
+            <div style="font-size: 0.8rem; color: var(--text-dim); text-decoration: line-through;">
+              ${window.storeApp.formatCurrency(pkg.price)}
+            </div>
+            <div style="font-family: var(--font-heading); font-size: 1.3rem; font-weight: 800; color: var(--primary);">
+              ${window.storeApp.formatCurrency(pkg.sale_price || pkg.price)}
+            </div>
+            <div style="margin-top: 8px; display: flex; gap: 6px; justify-content: flex-end;">
+              <button class="btn btn-secondary btn-sm" style="color: var(--danger); font-size: 0.78rem; padding: 4px 8px;" onclick="window.adminPanel.handleDeletePackage('${pkg.id}')" title="Xóa gói này">
+                🗑️ Xóa Gói
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  renderPkgCreateFormModules() {
+    const container = document.getElementById('newPkgModulesCheckboxContainer');
+    if (!container) return;
+
+    const catalog = window.dataStore.getModuleCatalog();
+    container.innerHTML = catalog.map(m => `
+      <label style="display: flex; align-items: center; gap: 8px; font-size: 0.88rem; cursor: pointer; background: #FFFFFF; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid #E2E8F0;">
+        <input type="checkbox" name="newPkgModuleCheckbox" value="${m.code}" ${m.code === 'MEP-ALL' ? '' : 'checked'}>
+        <span>${m.icon || '🧩'} <strong>${m.name}</strong></span>
+      </label>
+    `).join('');
+  }
+
+  renderPkgModalModuleCatalog() {
+    const container = document.getElementById('pkgModalModuleCatalogList');
+    if (!container) return;
+
+    const catalog = window.dataStore.getModuleCatalog();
+    container.innerHTML = catalog.map(m => `
+      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 12px 14px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+          <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-pure);">${m.icon || '🧩'} ${m.name}</span>
+          <span class="badge" style="font-family: var(--font-mono); font-size: 0.72rem; background: #EEF2FF; color: #4F46E5;">${m.code}</span>
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">${m.desc || 'Module chức năng Revit Add-in'}</div>
+      </div>
+    `).join('');
+  }
+
+  handleSaveNewPackage(event) {
+    event.preventDefault();
+    const name = document.getElementById('newPkgName').value.trim();
+    const badge = document.getElementById('newPkgBadge').value.trim();
+    const price = Number(document.getElementById('newPkgPrice').value) || 0;
+    const sale_price = Number(document.getElementById('newPkgSalePrice').value) || price;
+    const desc = document.getElementById('newPkgDesc').value.trim();
+
+    const checkedBoxes = Array.from(document.querySelectorAll('input[name="newPkgModuleCheckbox"]:checked'));
+    const modules = checkedBoxes.map(cb => cb.value);
+
+    if (modules.length === 0) {
+      alert('Vui lòng chọn ít nhất 1 module cho gói bản quyền này!');
+      return;
+    }
+
+    const newPkg = window.dataStore.addPackagePreset({
+      name,
+      badge: badge || '✨ Gói Mới',
+      price,
+      sale_price,
+      modules,
+      desc
+    });
+
+    // Reset Form
+    document.getElementById('newPkgName').value = '';
+    document.getElementById('newPkgBadge').value = '';
+    document.getElementById('newPkgPrice').value = '';
+    document.getElementById('newPkgSalePrice').value = '';
+    document.getElementById('newPkgDesc').value = '';
+
+    alert(`🎉 ĐÃ ĐĂNG KÝ GÓI BẢN QUYỀN THÀNH CÔNG!\n\n• Tên Gói: ${newPkg.name}\n• Giá bán: ${window.storeApp.formatCurrency(newPkg.sale_price)}\n• Module: ${newPkg.modules.join(', ')}\n\nGói này hiện đã có sẵn trên trang mua hàng và khu vực cấp phép cho tài khoản!`);
+    this.switchPkgModalTab('list');
+    if (window.storeApp && typeof window.storeApp.render === 'function') {
+      window.storeApp.render();
+    }
+  }
+
+  handleDeletePackage(pkgId) {
+    if (confirm('Bạn có chắc muốn xóa gói bản quyền này khỏi danh sách bán và quản lý?')) {
+      window.dataStore.deletePackagePreset(pkgId);
+      this.renderPkgModalList();
+    }
+  }
+
+  handleSaveNewModule(event) {
+    event.preventDefault();
+    const code = document.getElementById('newModCode').value.trim().toUpperCase();
+    const name = document.getElementById('newModName').value.trim();
+    const icon = document.getElementById('newModIcon').value.trim() || '🧩';
+
+    try {
+      window.dataStore.addModuleToCatalog({ code, name, icon });
+      document.getElementById('newModCode').value = '';
+      document.getElementById('newModName').value = '';
+      document.getElementById('newModIcon').value = '🧩';
+      alert(`🎉 Đã thêm module ${code} vào hệ thống thành công!`);
+      this.renderPkgModalModuleCatalog();
+    } catch (e) {
+      alert(e.message || 'Lỗi thêm module!');
+    }
+  }
+
+  // =========================================================================
+  // QUẢN LÝ & ĐIỀU CHỈNH GÓI BẢN QUYỀN TÀI KHOẢN (YÊU CẦU 3)
+  // =========================================================================
+  openAccountLicenseModal(accountId) {
+    const modal = document.getElementById('accountLicenseModalOverlay');
+    if (!modal) return;
+
+    const accounts = window.dataStore.getAccounts();
+    const acc = accounts.find(a => a.id === accountId);
+    if (!acc) {
+      alert('Không tìm thấy thông tin tài khoản!');
+      return;
+    }
+
+    document.getElementById('accLicSelectedUserId').value = acc.id;
+    document.getElementById('accLicUserFullName').textContent = acc.full_name;
+    document.getElementById('accLicUserEmail').textContent = acc.email;
+    document.getElementById('accLicUserRoleBadge').innerHTML = `
+      <span class="badge ${acc.role === 'admin' ? 'badge-admin' : 'account-badge-customer'}">
+        ${acc.role === 'admin' ? '👑 Quản Trị Viên (Admin)' : '👤 Kỹ Sư BIM (Customer)'}
+      </span>
+    `;
+    document.getElementById('accLicUserCompany').textContent = `🏢 Đơn vị: ${acc.company || 'Cá nhân'}`;
+
+    // Nạp dropdown sản phẩm tools
+    const toolSelect = document.getElementById('accGrantToolSelect');
+    const tools = window.dataStore.getProducts().filter(p => p.product_type === 'tool');
+    if (toolSelect) {
+      toolSelect.innerHTML = tools.map(t => `
+        <option value="${t.id}">${t.name} (v${t.metadata?.version || '2.4.0'})</option>
+      `).join('');
+    }
+
+    // Nạp dropdown Gói Module Bản Quyền từ Presets
+    const pkgSelect = document.getElementById('accGrantPkgSelect');
+    const presets = window.dataStore.getPackagePresets();
+    if (pkgSelect) {
+      pkgSelect.innerHTML = presets.map(p => `
+        <option value="${p.id}">
+          ${p.name} - ${window.storeApp.formatCurrency(p.sale_price || p.price)} [${p.modules.join(', ')}]
+        </option>
+      `).join('');
+    }
+
+    // Render danh sách license hiện có của tài khoản
+    this.renderAccountLicensesList(acc);
+
+    modal.classList.add('active');
+  }
+
+  closeAccountLicenseModal() {
+    const modal = document.getElementById('accountLicenseModalOverlay');
+    if (modal) modal.classList.remove('active');
+  }
+
+  renderAccountLicensesList(account) {
+    const container = document.getElementById('accLicExistingList');
+    const badgeCount = document.getElementById('accLicCountBadge');
+    if (!container) return;
+
+    const userLics = window.dataStore.getLicensesByAccount(account);
+    if (badgeCount) {
+      badgeCount.textContent = `${userLics.length} Giấy phép`;
+    }
+
+    if (userLics.length === 0) {
+      container.innerHTML = `
+        <div style="background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: var(--radius-md); padding: 24px; text-align: center; color: var(--text-muted);">
+          <div style="font-size: 2rem; margin-bottom: 6px;">📭</div>
+          <div style="font-weight: 700; color: var(--text-pure); margin-bottom: 4px;">Tài khoản này chưa có Giấy Phép Bản Quyền nào!</div>
+          <p style="font-size: 0.85rem; margin: 0;">Sử dụng biểu mẫu màu cam phía dưới để cấp gói bản quyền đầu tiên cho kỹ sư này.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const now = new Date();
+    const presets = window.dataStore.getPackagePresets();
+
+    container.innerHTML = userLics.map(lic => {
+      const exp = new Date(lic.expiry_date);
+      const remainingDays = Math.round((exp - now) / (1000 * 60 * 60 * 24));
+      const isExpired = remainingDays <= 0 || lic.status === 'expired';
+      const usedMachines = (lic.activations || []).length;
+      const mods = lic.allowed_modules || ['MEP-ALL'];
+      const isAll = mods.includes('MEP-ALL') || mods.length >= 6;
+
+      const moduleBadges = isAll
+        ? `<span class="badge" style="background:#EEF2FF; color:#4F46E5; font-weight:700; font-size:0.75rem;">⭐ Full VIP (Tất Cả Tools)</span>`
+        : mods.map(m => `<span class="badge" style="background:#F1F5F9; color:#334155; font-size:0.72rem; margin-right:3px;">${m}</span>`).join('');
+
+      return `
+        <div style="background: #FFFFFF; border: 1.5px solid ${isExpired ? '#FECDD3' : '#E2E8F0'}; border-radius: var(--radius-md); padding: 16px; box-shadow: var(--shadow-sm);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-family: var(--font-mono); font-weight: 800; font-size: 1.05rem; color: var(--primary);">${lic.license_key}</span>
+                <button type="button" style="border:none; background:none; cursor:pointer;" onclick="navigator.clipboard.writeText('${lic.license_key}'); alert('Đã sao chép: ${lic.license_key}');" title="Sao chép Key">📋</button>
+              </div>
+              <div style="font-weight: 700; color: var(--text-pure); margin-top: 2px;">
+                ${lic.product_name} • <span style="color: #4F46E5;">${lic.plan_name || 'Bản quyền điện tử'}</span>
+              </div>
+            </div>
+
+            <div style="text-align: right;">
+              <span class="badge ${isExpired ? 'badge-danger' : (lic.status === 'suspended' ? 'badge-admin' : 'badge-family')}">
+                ${isExpired ? '⛔ Đã Hết Hạn' : (lic.status === 'suspended' ? '⏸️ Tạm Khóa' : '🟢 Đang Kích Hoạt')}
+              </span>
+              <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 3px;">
+                Hạn: <strong>${exp.toLocaleDateString('vi-VN')}</strong> (${isExpired ? `Quá hạn ${Math.abs(remainingDays)} ngày` : `Còn ${remainingDays} ngày`})
+              </div>
+            </div>
+          </div>
+
+          <!-- Thông tin Module và Máy Trạm -->
+          <div style="background: #F8FAFC; border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+              <span style="font-size: 0.8rem; color: var(--text-muted);">Quyền truy cập:</span>
+              ${moduleBadges}
+            </div>
+            <div style="font-size: 0.82rem; color: var(--text-pure); font-weight: 700;">
+              🖥️ Máy trạm: ${usedMachines} / ${lic.max_machines} máy
+            </div>
+          </div>
+
+          <!-- Khu vực đổi gói nhanh hoặc sửa module -->
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 0.8rem; color: var(--text-muted);">Đổi nhanh gói:</span>
+              <select style="font-size: 0.78rem; padding: 4px 8px; border-radius: 4px; border: 1px solid #CBD5E1;" onchange="window.adminPanel.handleQuickApplyPackageToLicense('${lic.id}', this.value)">
+                <option value="">-- Chọn gói muốn đổi --</option>
+                ${presets.map(p => `
+                  <option value="${p.id}">${p.name} [${p.modules.join('+')}]</option>
+                `).join('')}
+              </select>
+            </div>
+
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-secondary btn-sm" style="color: #4F46E5; font-weight: 700; border-color: rgba(79, 70, 229, 0.4); background: #EEF2FF;" onclick="window.adminPanel.openEditModulesModal('${lic.id}')" title="Chọn chi tiết từng module checkbox cho key này">
+                🧩 Sửa Module
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.adminPanel.renewLicensePrompt('${lic.id}')" title="Gia hạn thời gian sử dụng">
+                ⚡ Gia Hạn
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.adminPanel.adjustMaxMachinesPrompt('${lic.id}', ${lic.max_machines})" title="Thay đổi số máy trạm">
+                💻 Đổi Slot
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.adminPanel.resetLicenseDevicesPrompt('${lic.id}')" title="Xóa các máy cũ để khách cài lại">
+                🔄 Reset Máy
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.adminPanel.openLicenseDevicesModal('${lic.id}')" title="Xem danh sách HWID máy trạm">
+                🖥️ Xem Máy
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async handleQuickApplyPackageToLicense(licenseId, packageId) {
+    if (!packageId) return;
+    const presets = window.dataStore.getPackagePresets();
+    const pkg = presets.find(p => p.id === packageId);
+    if (!pkg) return;
+
+    if (confirm(`Bạn có chắc muốn chuyển giấy phép này sang: "${pkg.name}"?\nCác module sẽ được cập nhật thành: ${pkg.modules.join(', ')}`)) {
+      const updated = window.licenseManager.updateLicenseModules(licenseId, pkg.modules, pkg.name);
+      
+      // Đồng bộ Server API
+      try {
+        await fetch('/api/v1/license/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            license_key: updated.license_key,
+            allowed_modules: updated.allowed_modules,
+            plan_name: updated.plan_name,
+            expiry_date: updated.expiry_date
+          })
+        });
+      } catch (e) {}
+
+      const userId = document.getElementById('accLicSelectedUserId').value;
+      const acc = window.dataStore.getAccounts().find(a => a.id === userId);
+      if (acc) this.renderAccountLicensesList(acc);
+      this.render();
+      alert(`🎉 ĐÃ ĐỔI GÓI THÀNH CÔNG!\n\n• Key: ${updated.license_key}\n• Gói mới: ${updated.plan_name}\n• Module: ${updated.allowed_modules.join(', ')}`);
+    }
+  }
+
+  async handleGrantPackageToAccount(event) {
+    event.preventDefault();
+    const userId = document.getElementById('accLicSelectedUserId').value;
+    const acc = window.dataStore.getAccounts().find(a => a.id === userId);
+    if (!acc) {
+      alert('Không tìm thấy tài khoản người dùng!');
+      return;
+    }
+
+    const toolId = document.getElementById('accGrantToolSelect').value;
+    const tool = window.dataStore.getProductById(toolId);
+    const pkgId = document.getElementById('accGrantPkgSelect').value;
+    const presets = window.dataStore.getPackagePresets();
+    const pkg = presets.find(p => p.id === pkgId);
+    const durationDays = Number(document.getElementById('accGrantDurationSelect').value) || 365;
+    const maxMachines = Number(document.getElementById('accGrantMachinesSelect').value) || 2;
+
+    if (!tool || !pkg) {
+      alert('Vui lòng chọn Tool và Gói Bản Quyền!');
+      return;
+    }
+
+    const newLic = window.licenseManager.createManualLicense({
+      product_id: tool.id,
+      product_name: tool.name,
+      user_id: acc.id,
+      user_email: acc.email,
+      user_name: acc.full_name,
+      company: acc.company || 'Cá nhân',
+      duration_days: durationDays,
+      max_machines: maxMachines,
+      allowed_modules: pkg.modules,
+      plan_name: `${pkg.name} (${maxMachines} Máy)`,
+      subscription_type: durationDays <= 30 ? 'monthly' : (durationDays >= 3650 ? 'lifetime' : 'yearly'),
+      note: `Cấp trực tiếp từ Quản Lý Tài Khoản (Admin Portal)`
+    });
+
+    // Đồng bộ lên Server API
+    try {
+      await fetch('/api/v1/license/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          license_key: newLic.license_key,
+          allowed_modules: newLic.allowed_modules,
+          plan_name: newLic.plan_name,
+          expiry_date: newLic.expiry_date
+        })
+      });
+    } catch (e) {}
+
+    // Cập nhật lại giao diện modal & admin table
+    this.renderAccountLicensesList(acc);
+    this.render();
+
+    alert(`🎉 ĐÃ CẤP GÓI BẢN QUYỀN MỚI THÀNH CÔNG CHO TÀI KHOẢN!\n\n• Tài khoản: ${acc.full_name} (${acc.email})\n• Gói: ${newLic.plan_name}\n• Key: ${newLic.license_key}\n• Module: ${newLic.allowed_modules.join(', ')}\n• Số máy: ${newLic.max_machines} máy\n• Hạn dùng: ${new Date(newLic.expiry_date).toLocaleDateString('vi-VN')}`);
   }
 }
 

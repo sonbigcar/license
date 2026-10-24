@@ -59,8 +59,11 @@ class PaymentGateway {
       user_email: user.email,
       user_name: user.full_name,
       items: cartItems.map(item => ({
-        product_id: item.id,
+        product_id: item.product_id || item.id,
         name: item.name,
+        package_id: item.package_id || null,
+        package_name: item.package_name || null,
+        allowed_modules: item.allowed_modules || null,
         product_type: item.product_type,
         price: item.sale_price || item.price,
         billing_cycle: item.billing_cycle || 'one_time',
@@ -191,6 +194,11 @@ class PaymentGateway {
           }
         }
 
+        const isAll = allowedModules.includes('MEP-ALL') || allowedModules.length >= 6;
+        const planName = item.package_name || (isAll 
+          ? 'Gói Full VIP (Tất Cả Tools)' 
+          : `Gói Combo (${allowedModules.map(m => m.replace('MEP-', '')).join(' + ')})`);
+
         const newLicense = {
           id: 'lic-' + Date.now().toString(16) + Math.random().toString(16).substring(2, 5),
           license_key: licenseKey,
@@ -200,10 +208,12 @@ class PaymentGateway {
           product_id: item.product_id,
           order_id: order.id,
           product_name: item.name,
+          package_id: item.package_id || null,
+          plan_name: planName,
           allowed_modules: allowedModules,
           download_url: fileUrl,
           subscription_type: item.billing_cycle || 'yearly',
-          max_machines: 2, // Gói 2 máy trạm
+          max_machines: item.max_machines || 2,
           status: 'active',
           start_date: new Date().toISOString(),
           expiry_date: expiryDate.toISOString(),
@@ -211,7 +221,19 @@ class PaymentGateway {
         };
 
         window.dataStore.addLicense(newLicense);
-        generatedKeys.push({ name: item.name, key: licenseKey });
+        generatedKeys.push({ name: item.name, key: licenseKey, plan_name: planName, allowed_modules: allowedModules });
+
+        // Đồng bộ tức thời lên Server API
+        fetch('/api/v1/license/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            license_key: licenseKey,
+            allowed_modules: allowedModules,
+            plan_name: planName,
+            expiry_date: expiryDate.toISOString()
+          })
+        }).catch(() => {});
       }
     });
 

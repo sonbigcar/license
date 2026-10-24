@@ -1398,6 +1398,127 @@ class DataStore {
     }
   }
 
+  /**
+   * Lấy danh sách tất cả các License thuộc về một tài khoản cụ thể
+   */
+  getLicensesByAccount(account) {
+    if (!account) return [];
+    const allLicenses = this.get('licenses') || [];
+    const accEmail = (account.email || '').toLowerCase().trim();
+    return allLicenses.filter(l => {
+      const matchId = l.user_id && l.user_id === account.id;
+      const matchEmail = l.user_email && l.user_email.toLowerCase().trim() === accEmail;
+      return matchId || matchEmail;
+    });
+  }
+
+  /**
+   * Danh mục tất cả các module có thể cấp phép trong hệ thống
+   */
+  getModuleCatalog() {
+    const defaultModules = [
+      { code: 'MEP-DUCT', name: 'Ds Duct Tools (Ống Gió)', short_name: 'Duct', icon: '❄️', desc: 'Thiết kế, chia miệng gió, trở lực HVAC, tính tải lạnh' },
+      { code: 'MEP-PIPE', name: 'Ds Pipe Tools (Ống Nước)', short_name: 'Pipe', icon: '🚰', desc: 'Đường ống cấp thoát nước, Smart Valve, Geberit' },
+      { code: 'MEP-SHEET', name: 'Ds Sheet Manager (Bản Vẽ)', short_name: 'Sheet', icon: '📑', desc: 'Quản lý, xuất hàng loạt PDF/DWG/NWC chuẩn ISO' },
+      { code: 'MEP-FIRE', name: 'Ds Fire Protection (PCCC)', short_name: 'Fire', icon: '🧯', desc: 'Đầu phun sprinkler tự động, van cứu hỏa, tính thủy lực' },
+      { code: 'MEP-ELEC', name: 'Ds Electrical Tools (Điện)', short_name: 'Elec', icon: '⚡', desc: 'Máng cáp, ống luồn dây điện, thiết bị chiếu sáng' },
+      { code: 'MEP-AI', name: 'Ds AI Family & MCP (AI)', short_name: 'AI', icon: '🤖', desc: 'Trợ lý AI, tạo family tự động từ ảnh & prompt' }
+    ];
+    const saved = this.get('module_catalog');
+    if (!saved || !saved.length) {
+      this.save('module_catalog', defaultModules);
+      return defaultModules;
+    }
+    return saved;
+  }
+
+  saveModuleCatalog(modules) {
+    this.save('module_catalog', modules);
+  }
+
+  addModuleToCatalog(mod) {
+    const list = this.getModuleCatalog();
+    if (list.some(m => m.code.toUpperCase() === mod.code.toUpperCase())) {
+      throw new Error(`Mã module ${mod.code} đã tồn tại trong danh mục!`);
+    }
+    list.push(mod);
+    this.saveModuleCatalog(list);
+    return list;
+  }
+
+  /**
+   * Danh mục các Gói Bản Quyền niêm yết bán trên cửa hàng và cấp phép
+   */
+  getPackagePresets() {
+    const defaultPresets = [
+      {
+        id: 'pkg-full-vip',
+        name: 'Gói Full VIP (Tất Cả Tools)',
+        code_tag: 'VIP-ALL',
+        modules: ['MEP-ALL'],
+        price: 2400000,
+        sale_price: 1800000,
+        badge: 'Khuyên Dùng ⭐',
+        desc: 'Mở khóa trọn bộ tất cả các công cụ hiện tại và tính năng mới cập nhật'
+      },
+      {
+        id: 'pkg-combo-duct-pipe',
+        name: 'Combo Cơ Bản (Duct + Pipe)',
+        code_tag: 'DUCT-PIPE',
+        modules: ['MEP-DUCT', 'MEP-PIPE'],
+        price: 1600000,
+        sale_price: 1200000,
+        badge: 'Phổ Biến 🔥',
+        desc: 'Chuyên sâu hệ Ống Gió HVAC và Cấp Thoát Nước'
+      },
+      {
+        id: 'pkg-combo-duct-elec',
+        name: 'Combo Cơ Điện (Duct + Elec)',
+        code_tag: 'DUCT-ELEC',
+        modules: ['MEP-DUCT', 'MEP-ELEC'],
+        price: 1600000,
+        sale_price: 1200000,
+        badge: 'Ưa Chuộng ⚡',
+        desc: 'Chuyên sâu hệ Ống Gió và Hệ Thống Điện / Máng Cáp'
+      },
+      {
+        id: 'pkg-single-tool',
+        name: 'Gói Lẻ 1 Module Tùy Chọn',
+        code_tag: 'SINGLE-TOOL',
+        modules: ['MEP-DUCT'],
+        price: 950000,
+        sale_price: 750000,
+        badge: 'Tiết Kiệm 💡',
+        desc: 'Chọn 1 module duy nhất bạn cần sử dụng nhất (Duct, Pipe, Sheet, Fire, Elec...)'
+      }
+    ];
+    const saved = this.get('package_presets');
+    if (!saved || !saved.length) {
+      this.save('package_presets', defaultPresets);
+      return defaultPresets;
+    }
+    return saved;
+  }
+
+  savePackagePresets(presets) {
+    this.save('package_presets', presets);
+  }
+
+  addPackagePreset(pkg) {
+    const list = this.getPackagePresets();
+    pkg.id = pkg.id || ('pkg-' + Date.now().toString(16));
+    list.push(pkg);
+    this.savePackagePresets(list);
+    return list;
+  }
+
+  deletePackagePreset(pkgId) {
+    let list = this.getPackagePresets();
+    list = list.filter(p => p.id !== pkgId);
+    this.savePackagePresets(list);
+    return list;
+  }
+
   logDownload(log) {
     const logs = this.get('download_logs');
     logs.unshift(log);
@@ -1862,6 +1983,170 @@ class DataStore {
       fileSize: formattedSize,
       sizeBytes: file.size
     };
+  }
+
+  // =========================================================================
+  // QUẢN LÝ DANH MỤC MODULE BẢN QUYỀN (MEP-DUCT, MEP-PIPE, MEP-ELEC...)
+  // =========================================================================
+  getModuleCatalog() {
+    const raw = localStorage.getItem('revit_module_catalog');
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {}
+    }
+
+    const defaultCatalog = [
+      { code: 'MEP-ALL', name: 'Toàn Bộ Tools (Full VIP)', icon: '⭐', desc: 'Mở khóa tất cả mọi module add-in hiện có & tương lai' },
+      { code: 'MEP-DUCT', name: 'Ds Duct Tools (Ống Gió HVAC)', icon: '❄️', desc: 'Vẽ ống gió, căn chỉnh, phụ kiện HVAC, phân tích lưu lượng' },
+      { code: 'MEP-PIPE', name: 'Ds Pipe Tools (Ống Nước Cấp Thoát)', icon: '🚰', desc: 'Vẽ ống nước, dốc tự động, bẫy nước, kết nối thiết bị MEP' },
+      { code: 'MEP-SHEET', name: 'Ds Sheet Manager (Bản Vẽ BIM)', icon: '📑', desc: 'Tạo sheet tự động, đánh số view, xuất PDF/DWG hàng loạt' },
+      { code: 'MEP-FIRE', name: 'Ds Fire Protection (PCCC Sprinkler)', icon: '🧯', desc: 'Bố trí đầu phun Sprinkler, tính thủy lực chữa cháy' },
+      { code: 'MEP-ELEC', name: 'Ds Electrical (Hệ Thống Điện & Cáp)', icon: '⚡', desc: 'Vẽ thang máng cáp, bảng tủ điện, tính toán phụ tải' },
+      { code: 'MEP-AI', name: 'Ds AI & MCP Automation (Trợ Lý AI)', icon: '🤖', desc: 'Tự động tạo Family, kiểm tra va chạm bằng mô hình AI' }
+    ];
+    localStorage.setItem('revit_module_catalog', JSON.stringify(defaultCatalog));
+    return defaultCatalog;
+  }
+
+  saveModuleCatalog(catalog) {
+    localStorage.setItem('revit_module_catalog', JSON.stringify(catalog));
+    return catalog;
+  }
+
+  addModuleToCatalog(newMod) {
+    const catalog = this.getModuleCatalog();
+    const cleanCode = (newMod.code || '').trim().toUpperCase();
+    if (!cleanCode) throw new Error('Mã module không được để trống!');
+    
+    const exists = catalog.find(m => m.code === cleanCode);
+    if (exists) throw new Error(`Mã module ${cleanCode} đã tồn tại!`);
+
+    catalog.push({
+      code: cleanCode,
+      name: newMod.name || cleanCode,
+      icon: newMod.icon || '🧩',
+      desc: newMod.desc || ''
+    });
+    this.saveModuleCatalog(catalog);
+    return catalog;
+  }
+
+  // =========================================================================
+  // QUẢN LÝ CÁC GÓI MODULE BẢN QUYỀN (PACKAGE PRESETS)
+  // Khách hàng có thể chọn mua trên Web & Admin có thể đăng ký thêm gói mới
+  // =========================================================================
+  getPackagePresets() {
+    const raw = localStorage.getItem('revit_package_presets');
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {}
+    }
+
+    const defaultPackages = [
+      {
+        id: 'pkg_vip',
+        name: 'Gói Full VIP (Tất Cả Tools)',
+        code_tag: 'VIP-ALL',
+        modules: ['MEP-ALL'],
+        price: 2990000,
+        sale_price: 1490000,
+        badge: '⭐ VIP Toàn Năng (Tiết Kiệm 50%)',
+        desc: 'Mở khóa không giới hạn toàn bộ công cụ Duct, Pipe, Sheet, Fire, Elec & Trợ Lý AI.'
+      },
+      {
+        id: 'pkg_duct_pipe',
+        name: 'Combo Cơ Điện Lạnh (Duct + Pipe)',
+        code_tag: 'COMBO-DUCT-PIPE',
+        modules: ['MEP-DUCT', 'MEP-PIPE'],
+        price: 1790000,
+        sale_price: 990000,
+        badge: '❄️+🚰 Combo Khuyên Dùng',
+        desc: 'Tối ưu cho kỹ sư HVAC và Cấp Thoát Nước (Chuyên trị Ống Gió & Ống Nước BIM).'
+      },
+      {
+        id: 'pkg_duct_elec',
+        name: 'Combo HVAC & Điện (Duct + Elec)',
+        code_tag: 'COMBO-DUCT-ELEC',
+        modules: ['MEP-DUCT', 'MEP-ELEC'],
+        price: 1790000,
+        sale_price: 990000,
+        badge: '❄️+⚡ Combo Cơ Điện',
+        desc: 'Kết hợp vẽ ống gió thông gió lạnh và thang máng cáp, chiếu sáng điện nặng.'
+      },
+      {
+        id: 'pkg_duct_only',
+        name: 'Gói Lẻ - Ds Duct Tool',
+        code_tag: 'SINGLE-DUCT',
+        modules: ['MEP-DUCT'],
+        price: 990000,
+        sale_price: 590000,
+        badge: '❄️ Tiết Kiệm',
+        desc: 'Dành riêng cho kỹ sư chuyên mô hình hóa & ra bản vẽ hệ thống ống gió thông gió.'
+      },
+      {
+        id: 'pkg_pipe_only',
+        name: 'Gói Lẻ - Ds Pipe Tool',
+        code_tag: 'SINGLE-PIPE',
+        modules: ['MEP-PIPE'],
+        price: 990000,
+        sale_price: 590000,
+        badge: '🚰 Tiết Kiệm',
+        desc: 'Dành riêng cho kỹ sư chuyên thiết kế & thi công đường ống cấp thoát nước, cứu hỏa.'
+      }
+    ];
+
+    localStorage.setItem('revit_package_presets', JSON.stringify(defaultPackages));
+    return defaultPackages;
+  }
+
+  savePackagePresets(presets) {
+    localStorage.setItem('revit_package_presets', JSON.stringify(presets));
+    return presets;
+  }
+
+  addPackagePreset(pkg) {
+    const list = this.getPackagePresets();
+    const id = pkg.id || ('pkg_' + Date.now().toString(36));
+    const newPkg = {
+      id: id,
+      name: pkg.name || 'Gói Bản Quyền Tùy Chỉnh',
+      code_tag: pkg.code_tag || ('PKG-' + Date.now().toString(36).toUpperCase()),
+      modules: Array.isArray(pkg.modules) && pkg.modules.length > 0 ? pkg.modules : ['MEP-ALL'],
+      price: Number(pkg.price) || 1000000,
+      sale_price: Number(pkg.sale_price) || Number(pkg.price) || 1000000,
+      badge: pkg.badge || '✨ Gói Mới',
+      desc: pkg.desc || ''
+    };
+    list.push(newPkg);
+    this.savePackagePresets(list);
+    return newPkg;
+  }
+
+  deletePackagePreset(presetId) {
+    let list = this.getPackagePresets();
+    list = list.filter(p => p.id !== presetId);
+    this.savePackagePresets(list);
+    return list;
+  }
+
+  // =========================================================================
+  // TRA CỨU GIẤY PHÉP BẢN QUYỀN THEO TÀI KHOẢN (ID HOẶC EMAIL)
+  // =========================================================================
+  getLicensesByAccount(account) {
+    if (!account) return [];
+    const licenses = this.getLicenses() || [];
+    const accEmail = (account.email || '').toLowerCase().trim();
+    const accId = account.id;
+
+    return licenses.filter(l => {
+      const licEmail = (l.user_email || '').toLowerCase().trim();
+      const licUid = l.user_id;
+      return (accEmail && licEmail === accEmail) || (accId && licUid === accId);
+    });
   }
 }
 

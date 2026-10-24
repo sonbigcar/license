@@ -905,6 +905,222 @@
   </div>
 
   <!-- ====================================================================
+       MODAL ADMIN: ĐĂNG KÝ VÀ QUẢN LÝ GÓI MODULE BẢN QUYỀN (YÊU CẦU 1)
+       ==================================================================== -->
+  <div id="packageManagerModalOverlay" class="modal-overlay">
+    <div class="modal-content" style="max-width: 820px; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-pure); display: flex; align-items: center; gap: 8px;">
+          <span>⚙️</span> Quản Lý & Đăng Ký Gói Module Bản Quyền
+        </h3>
+        <button class="modal-close" onclick="window.adminPanel.closePackageManagerModal()">✕</button>
+      </div>
+
+      <div style="padding: 20px 24px;">
+        <!-- Tabs bên trong modal -->
+        <div style="display: flex; gap: 8px; border-bottom: 1px solid #E2E8F0; padding-bottom: 12px; margin-bottom: 20px;">
+          <button type="button" id="pkgTabBtnList" class="btn btn-secondary btn-sm" style="font-weight: 700; background: #EEF2FF; color: #4F46E5; border-color: #C7D2FE;" onclick="window.adminPanel.switchPkgModalTab('list')">
+            📦 Danh Sách Gói Đang Bán
+          </button>
+          <button type="button" id="pkgTabBtnCreate" class="btn btn-secondary btn-sm" style="font-weight: 700;" onclick="window.adminPanel.switchPkgModalTab('create')">
+            ✨ + Đăng Ký Gói Mới
+          </button>
+          <button type="button" id="pkgTabBtnModules" class="btn btn-secondary btn-sm" style="font-weight: 700;" onclick="window.adminPanel.switchPkgModalTab('modules')">
+            🧩 Danh Mục Module Tools
+          </button>
+        </div>
+
+        <!-- TAB 1: DANH SÁCH GÓI HIỆN CÓ -->
+        <div id="pkgModalSectionList">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <span style="font-size: 0.9rem; color: var(--text-muted);">Các gói bản quyền hiển thị cho khách hàng chọn mua trên Store:</span>
+            <button class="btn btn-primary btn-sm" onclick="window.adminPanel.switchPkgModalTab('create')">+ Tạo Gói Mới</button>
+          </div>
+          <div id="pkgModalListContainer" style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- JS render dynamically -->
+          </div>
+        </div>
+
+        <!-- TAB 2: FORM ĐĂNG KÝ GÓI MỚI -->
+        <div id="pkgModalSectionCreate" style="display: none;">
+          <form onsubmit="window.adminPanel.handleSaveNewPackage(event)">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div class="form-group">
+                <label>Tên Gói Bản Quyền *</label>
+                <input type="text" id="newPkgName" class="form-control" placeholder="Ví dụ: Combo Cơ Điện Lạnh (Duct + Pipe + Elec)" required>
+              </div>
+              <div class="form-group">
+                <label>Huy Hiệu (Badge Nổi Bật)</label>
+                <input type="text" id="newPkgBadge" class="form-control" placeholder="Ví dụ: ❄️+⚡ Combo Siêu Tiết Kiệm (Hot)">
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div class="form-group">
+                <label>Giá Gốc Niêm Yết (VND) *</label>
+                <input type="number" id="newPkgPrice" class="form-control" placeholder="Ví dụ: 1990000" required>
+              </div>
+              <div class="form-group">
+                <label>Giá Bán Khuyến Mãi (VND) *</label>
+                <input type="number" id="newPkgSalePrice" class="form-control" placeholder="Ví dụ: 1290000" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label style="font-weight: 700; margin-bottom: 8px; display: block;">Chọn Các Module Bao Gồm Trong Gói Này *</label>
+              <div id="newPkgModulesCheckboxContainer" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #F8FAFC; padding: 14px; border-radius: var(--radius-md); border: 1px solid #E2E8F0;">
+                <!-- JS render checkboxes from catalog -->
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Mô Tả Ngắn Gọn Về Gói</label>
+              <textarea id="newPkgDesc" class="form-control" rows="2" placeholder="Ví dụ: Tối ưu cho nhóm kỹ sư MEP phụ trách cả phần ống gió, ống nước và máng cáp..."></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
+              <button type="button" class="btn btn-secondary" onclick="window.adminPanel.switchPkgModalTab('list')">Quay Lại</button>
+              <button type="submit" class="btn btn-primary">💾 Lưu & Thêm Vào Bán Hàng</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- TAB 3: QUẢN LÝ DANH MỤC MODULE (THÊM MODULE MỚI) -->
+        <div id="pkgModalSectionModules" style="display: none;">
+          <div style="margin-bottom: 16px; background: #FAF3EE; border: 1px solid #EAE0D7; padding: 14px; border-radius: var(--radius-md);">
+            <div style="font-weight: 700; color: var(--primary); margin-bottom: 4px;">🧩 Đăng ký thêm Module Công Cụ Mới</div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">
+              Khi bạn phát triển thêm công cụ add-in mới (ví dụ mô-đun Kết Cấu, Tính Toán, PCCC nâng cao...), hãy đăng ký mã module ở đây để đưa vào các gói bán và cấp bản quyền.
+            </p>
+          </div>
+
+          <form onsubmit="window.adminPanel.handleSaveNewModule(event)" style="display: grid; grid-template-columns: 1.2fr 2fr 0.8fr auto; gap: 10px; align-items: end; margin-bottom: 20px;">
+            <div class="form-group" style="margin: 0;">
+              <label style="font-size: 0.82rem;">Mã Module (Code) *</label>
+              <input type="text" id="newModCode" class="form-control" placeholder="MEP-STRUCT" required style="font-family: var(--font-mono); text-transform: uppercase;">
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label style="font-size: 0.82rem;">Tên Hiển Thị *</label>
+              <input type="text" id="newModName" class="form-control" placeholder="Ds Structural Tools" required>
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label style="font-size: 0.82rem;">Icon (Emoji)</label>
+              <input type="text" id="newModIcon" class="form-control" placeholder="🏗️" value="🧩" style="text-align: center;">
+            </div>
+            <button type="submit" class="btn btn-primary" style="height: 42px;">+ Thêm Module</button>
+          </form>
+
+          <div style="font-weight: 700; margin-bottom: 10px;">Các Module Hiện Có Trong Hệ Thống:</div>
+          <div id="pkgModalModuleCatalogList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <!-- JS render dynamically -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL ADMIN: QUẢN LÝ & ĐIỀU CHỈNH GÓI BẢN QUYỀN TÀI KHOẢN (YÊU CẦU 3)
+       ==================================================================== -->
+  <div id="accountLicenseModalOverlay" class="modal-overlay">
+    <div class="modal-content" style="max-width: 760px; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-pure); display: flex; align-items: center; gap: 8px;">
+          <span>👤</span> Quản Lý & Điều Chỉnh Gói Bản Quyền Tài Khoản
+        </h3>
+        <button class="modal-close" onclick="window.adminPanel.closeAccountLicenseModal()">✕</button>
+      </div>
+
+      <div style="padding: 24px;">
+        <input type="hidden" id="accLicSelectedUserId">
+        
+        <!-- THÔNG TIN TÀI KHOẢN -->
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <div style="font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Tài Khoản Kỹ Sư / Khách Hàng:</div>
+            <div id="accLicUserFullName" style="font-size: 1.15rem; font-weight: 800; color: var(--text-pure);"></div>
+            <div id="accLicUserEmail" style="font-family: var(--font-mono); font-size: 0.88rem; color: var(--primary);"></div>
+          </div>
+          <div style="text-align: right;">
+            <div id="accLicUserRoleBadge"></div>
+            <div id="accLicUserCompany" style="font-size: 0.82rem; color: var(--text-dim); margin-top: 4px;"></div>
+          </div>
+        </div>
+
+        <!-- KHỐI 1: DANH SÁCH GIẤY PHÉP ĐANG CÓ -->
+        <div style="margin-bottom: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--text-pure); margin: 0; display: flex; align-items: center; gap: 6px;">
+              <span>🔑</span> Các Gói / Key Bản Quyền Đang Sở Hữu
+            </h4>
+            <span id="accLicCountBadge" class="badge badge-family"></span>
+          </div>
+
+          <div id="accLicExistingList" style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- JS render dynamically -->
+          </div>
+        </div>
+
+        <!-- KHỐI 2: CẤP THÊM GÓI BẢN QUYỀN MỚI CHO TÀI KHOẢN NÀY -->
+        <div style="background: #FFFBF7; border: 1.5px dashed var(--primary); border-radius: var(--radius-lg); padding: 20px;">
+          <h4 style="font-size: 1rem; font-weight: 800; color: var(--primary); margin: 0 0 12px 0; display: flex; align-items: center; gap: 6px;">
+            <span>✨</span> Cấp Thêm Gói Bản Quyền Mới Trực Tiếp Cho Tài Khoản Này
+          </h4>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 16px 0;">
+            Key mới sẽ tự động được gán vào tài khoản này, kỹ sư đăng nhập vào Revit là sử dụng được ngay.
+          </p>
+
+          <form onsubmit="window.adminPanel.handleGrantPackageToAccount(event)">
+            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; margin-bottom: 14px;">
+              <div class="form-group" style="margin: 0;">
+                <label style="font-size: 0.85rem;">Chọn Sản Phẩm Tool *</label>
+                <select id="accGrantToolSelect" class="form-control" required>
+                  <!-- JS populate -->
+                </select>
+              </div>
+              <div class="form-group" style="margin: 0;">
+                <label style="font-size: 0.85rem;">Chọn Gói Module Bản Quyền *</label>
+                <select id="accGrantPkgSelect" class="form-control" required>
+                  <!-- JS populate from Package Presets -->
+                </select>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+              <div class="form-group" style="margin: 0;">
+                <label style="font-size: 0.85rem;">Thời Hạn Giấy Phép *</label>
+                <select id="accGrantDurationSelect" class="form-control">
+                  <option value="365" selected>1 Năm (365 Ngày) - Khuyên Dùng</option>
+                  <option value="30">1 Tháng (30 Ngày)</option>
+                  <option value="730">2 Năm (730 Ngày)</option>
+                  <option value="18250">Vĩnh Viễn (Trọn Đời)</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin: 0;">
+                <label style="font-size: 0.85rem;">Số Lượng Máy Trạm (HWID) *</label>
+                <select id="accGrantMachinesSelect" class="form-control">
+                  <option value="1">1 Máy tính cá nhân</option>
+                  <option value="2" selected>2 Máy tính (Công ty + Laptop cá nhân)</option>
+                  <option value="3">3 Máy tính</option>
+                  <option value="5">5 Máy tính (Đội nhóm nhỏ)</option>
+                  <option value="10">10 Máy tính (Doanh nghiệp)</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+              <button type="button" class="btn btn-secondary" onclick="window.adminPanel.closeAccountLicenseModal()">Đóng</button>
+              <button type="submit" class="btn btn-primary">🎁 Cấp Gói Này Cho Tài Khoản</button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
        MODAL USER: HƯỚNG DẪN KÍCH HOẠT ADD-IN TRONG AUTODESK REVIT
        ==================================================================== -->
   <div id="licenseGuideModalOverlay" class="modal-overlay">

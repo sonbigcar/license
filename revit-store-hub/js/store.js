@@ -191,6 +191,20 @@ class StoreApp {
       });
     }
 
+    const pkgMgrOverlay = document.getElementById('packageManagerModalOverlay');
+    if (pkgMgrOverlay) {
+      pkgMgrOverlay.addEventListener('click', (e) => {
+        if (e.target.id === 'packageManagerModalOverlay') window.adminPanel.closePackageManagerModal();
+      });
+    }
+
+    const accLicOverlay = document.getElementById('accountLicenseModalOverlay');
+    if (accLicOverlay) {
+      accLicOverlay.addEventListener('click', (e) => {
+        if (e.target.id === 'accountLicenseModalOverlay') window.adminPanel.closeAccountLicenseModal();
+      });
+    }
+
     const licGuideOverlay = document.getElementById('licenseGuideModalOverlay');
     if (licGuideOverlay) {
       licGuideOverlay.addEventListener('click', (e) => {
@@ -792,11 +806,15 @@ class StoreApp {
                   <button class="btn btn-sm" style="background: #EBFDF5; color: #047857; border: 1px solid #A7F3D0; font-weight: 600;" onclick="window.storeApp.switchMainView('libraryView')" title="Bạn đã sở hữu sản phẩm này. Bấm để vào Thư Viện">
                     ✓ Đã mua
                   </button>
+                ` : (product.product_type === 'tool' ? `
+                  <button class="btn btn-primary btn-sm" onclick="window.storeApp.viewProductDetail('${product.id}')" title="Xem và chọn gói module bản quyền theo nhu cầu">
+                    🛒 Chọn Gói
+                  </button>
                 ` : `
                   <button class="btn btn-primary btn-sm" onclick="window.storeApp.addToCart('${product.id}')">
                     + Mua
                   </button>
-                `}
+                `)}
               </div>
             </div>
 
@@ -855,7 +873,7 @@ class StoreApp {
           </div>
         `}
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
           <div>
             <span class="badge ${isTool ? 'badge-tool' : (isTemplate ? 'badge-template' : 'badge-family')}" style="margin-bottom: 8px;">
               ${isTool ? 'Revit Tools (Bản quyền theo máy)' : (isTemplate ? 'Project Template .RTE' : 'Revit Family .RFA')}
@@ -865,12 +883,75 @@ class StoreApp {
               ${product.name}
             </h2>
 
+            <!-- HIỂN THỊ GIÁ NIÊM YẾT VÀ GIÁ GÓI CHỌN -->
             <div style="margin-bottom: 16px;">
-              <span style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">
-                ${this.formatCurrency(product.sale_price || product.price)}
+              <span id="detailProductPriceDisplay" style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">
+                ${(() => {
+                  if (isTool) {
+                    const presets = window.dataStore.getPackagePresets();
+                    return this.formatCurrency(presets[0]?.sale_price || presets[0]?.price || product.sale_price || product.price);
+                  }
+                  return this.formatCurrency(product.sale_price || product.price);
+                })()}
               </span>
-              <span style="color: var(--text-dim); font-size: 0.9rem;"> / ${isTool ? (product.billing_cycle === 'monthly' ? 'Tháng' : 'Năm') : 'Gói mua trọn đời'}</span>
+              <span id="detailProductCycleDisplay" style="color: var(--text-dim); font-size: 0.9rem;"> / ${isTool ? (product.billing_cycle === 'monthly' ? 'Tháng' : 'Năm') : 'Gói mua trọn đời'}</span>
             </div>
+
+            <!-- NẾU LÀ SẢN PHẨM TOOL: KHỐI CHỌN GÓI MODULE BẢN QUYỀN (YÊU CẦU 2) -->
+            ${isTool ? `
+              <div style="background: #FFFBF7; border: 1.5px solid var(--primary); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                  <label style="font-weight: 800; color: var(--text-pure); font-size: 0.95rem; margin: 0; display: flex; align-items: center; gap: 6px;">
+                    <span>🧩</span> Chọn Gói Module Bản Quyền:
+                  </label>
+                  <span class="badge badge-family" style="font-size: 0.72rem;">Đa Dạng Tùy Chọn</span>
+                </div>
+
+                <div id="toolPackageOptionsList" style="display: flex; flex-direction: column; gap: 10px;">
+                  ${(() => {
+                    const presets = window.dataStore.getPackagePresets();
+                    const catalog = window.dataStore.getModuleCatalog();
+                    const catalogMap = {};
+                    catalog.forEach(m => { catalogMap[m.code] = `${m.icon || '🧩'} ${m.name}`; });
+
+                    this.currentSelectedPackageId = presets[0] ? presets[0].id : null;
+
+                    return presets.map((pkg, idx) => {
+                      const isSelected = idx === 0;
+                      const isAll = (pkg.modules || []).includes('MEP-ALL');
+                      const moduleBadges = isAll
+                        ? `<span class="badge" style="background:#EEF2FF; color:#4F46E5; font-size:0.7rem; font-weight:700;">⭐ Full VIP (Tất Cả Tools)</span>`
+                        : (pkg.modules || []).map(m => `
+                            <span class="badge" style="background:#F1F5F9; color:#334155; font-size:0.68rem; margin-right:3px;">
+                              ${catalogMap[m] || m}
+                            </span>
+                          `).join('');
+
+                      return `
+                        <div class="tool-pkg-option-card ${isSelected ? 'active' : ''}" id="toolPkgCard_${pkg.id}" onclick="window.storeApp.selectToolPackage('${pkg.id}')" style="cursor: pointer; border: 1.5px solid ${isSelected ? 'var(--primary)' : '#E2E8F0'}; background: ${isSelected ? '#FFF8F5' : '#FFFFFF'}; border-radius: var(--radius-md); padding: 12px 14px; transition: all 0.2s ease;">
+                          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                              <input type="radio" name="toolSelectedPackageRadio" id="radio_${pkg.id}" value="${pkg.id}" ${isSelected ? 'checked' : ''} style="accent-color: var(--primary); cursor: pointer;">
+                              <strong style="font-size: 0.95rem; color: var(--text-pure);">${pkg.name}</strong>
+                              ${pkg.badge ? `<span class="badge badge-family" style="font-size: 0.68rem; padding: 2px 6px;">${pkg.badge}</span>` : ''}
+                            </div>
+                            <div style="text-align: right;">
+                              ${pkg.price > (pkg.sale_price || pkg.price) ? `<span style="font-size: 0.75rem; color: var(--text-dim); text-decoration: line-through; margin-right: 4px;">${this.formatCurrency(pkg.price)}</span>` : ''}
+                              <strong style="font-size: 1.05rem; color: var(--primary);">${this.formatCurrency(pkg.sale_price || pkg.price)}</strong>
+                            </div>
+                          </div>
+                          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 6px 24px;">${pkg.desc || ''}</p>
+                          <div style="margin-left: 24px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                            <span style="font-size: 0.72rem; color: var(--text-dim);">Module:</span>
+                            ${moduleBadges}
+                          </div>
+                        </div>
+                      `;
+                    }).join('');
+                  })()}
+                </div>
+              </div>
+            ` : ''}
 
             <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;">
               ${product.description}
@@ -884,8 +965,8 @@ class StoreApp {
                 📁 Vào Thư Viện Của Tôi Để Tải Ngay
               </button>
             ` : `
-              <button class="btn btn-primary btn-lg" style="width: 100%;" onclick="window.storeApp.addToCart('${product.id}'); window.storeApp.closeDetailModal(); window.storeApp.openCartDrawer();">
-                Thêm Vào Giỏ & Thanh Toán VietQR
+              <button class="btn btn-primary btn-lg" style="width: 100%;" onclick="${isTool ? `window.storeApp.addToolPackageToCart('${product.id}')` : `window.storeApp.addToCart('${product.id}'); window.storeApp.closeDetailModal(); window.storeApp.openCartDrawer();`}">
+                🛒 ${isTool ? 'Thêm Gói Đã Chọn Vào Giỏ & Thanh Toán' : 'Thêm Vào Giỏ & Thanh Toán VietQR'}
               </button>
             `}
           </div>
@@ -907,6 +988,73 @@ class StoreApp {
     `;
 
     document.getElementById('detailModalOverlay').classList.add('active');
+  }
+
+  selectToolPackage(pkgId) {
+    this.currentSelectedPackageId = pkgId;
+    const presets = window.dataStore.getPackagePresets();
+    const pkg = presets.find(p => p.id === pkgId);
+    if (!pkg) return;
+
+    // Cập nhật giao diện radio cards
+    presets.forEach(p => {
+      const card = document.getElementById(`toolPkgCard_${p.id}`);
+      const radio = document.getElementById(`radio_${p.id}`);
+      if (card) {
+        if (p.id === pkgId) {
+          card.style.border = '1.5px solid var(--primary)';
+          card.style.background = '#FFF8F5';
+          if (radio) radio.checked = true;
+        } else {
+          card.style.border = '1.5px solid #E2E8F0';
+          card.style.background = '#FFFFFF';
+          if (radio) radio.checked = false;
+        }
+      }
+    });
+
+    // Cập nhật giá lớn hiển thị
+    const priceDisplay = document.getElementById('detailProductPriceDisplay');
+    if (priceDisplay) {
+      priceDisplay.textContent = this.formatCurrency(pkg.sale_price || pkg.price);
+    }
+  }
+
+  addToolPackageToCart(productId) {
+    const product = window.dataStore.getProductById(productId);
+    if (!product) return;
+
+    const presets = window.dataStore.getPackagePresets();
+    const pkgId = this.currentSelectedPackageId || (presets[0] && presets[0].id);
+    const pkg = presets.find(p => p.id === pkgId) || presets[0];
+
+    const cartItemId = `${product.id}_${pkg ? pkg.id : 'default'}`;
+    if (this.cart.some(item => item.id === cartItemId)) {
+      alert(`Gói "${pkg ? pkg.name : product.name}" đã có trong giỏ hàng của bạn.`);
+      this.closeDetailModal();
+      this.openCartDrawer();
+      return;
+    }
+
+    const cartItem = {
+      id: cartItemId,
+      product_id: product.id,
+      name: pkg ? `${product.name} - ${pkg.name}` : product.name,
+      package_id: pkg ? pkg.id : null,
+      package_name: pkg ? pkg.name : 'Gói Tiêu Chuẩn',
+      allowed_modules: pkg ? pkg.modules : ['MEP-ALL'],
+      product_type: 'tool',
+      price: pkg ? pkg.price : product.price,
+      sale_price: pkg ? (pkg.sale_price || pkg.price) : (product.sale_price || product.price),
+      billing_cycle: product.billing_cycle || 'yearly',
+      thumbnail_url: product.thumbnail_url,
+      metadata: product.metadata
+    };
+
+    this.cart.push(cartItem);
+    this.saveCart();
+    this.closeDetailModal();
+    this.openCartDrawer();
   }
 
   closeDetailModal() {
@@ -1254,6 +1402,13 @@ class StoreApp {
         <img class="cart-item-thumb" src="${item.thumbnail_url}" alt="${item.name}">
         <div class="cart-item-info">
           <div class="cart-item-name">${item.name}</div>
+          ${item.package_name ? `
+            <div style="margin: 2px 0;">
+              <span class="badge" style="background: #EEF2FF; color: #4F46E5; font-size: 0.7rem; font-weight: 700; padding: 2px 6px;">
+                ${item.package_name}
+              </span>
+            </div>
+          ` : ''}
           <div class="cart-item-price">${this.formatCurrency(item.sale_price || item.price)}</div>
         </div>
         <button class="cart-item-remove" onclick="window.storeApp.removeFromCart('${item.id}')" title="Xóa">

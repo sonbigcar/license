@@ -5,5 +5,22 @@
     ],
     "plan_name": "Gói Full VIP (Tất Cả Tools)",
     "updated_at": "2026-10-24T14:27:01.308Z"
+  },
+  "REVIT-TEST-PKG-MVMIKNZS": {
+    "allowed_modules": [
+      "MEP-DUCT",
+      "MEP-PIPE"
+    ],
+    "plan_name": "Combo Cơ Điện Lạnh (Duct + Pipe)",
+    "expiry_date": "2027-10-24T14:48:35.704Z",
+    "updated_at": "2026-10-24T14:48:35.710Z"
+  },
+  "REVIT-TEST-PKG-MVMIKVSV": {
+    "allowed_modules": [
+      "MEP-ALL"
+    ],
+    "plan_name": "Gói Full VIP (Tất Cả Tools - 5 Máy)",
+    "expiry_date": "2027-10-24T14:48:45.834Z",
+    "updated_at": "2026-10-24T14:48:45.836Z"
   }
 }
