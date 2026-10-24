@@ -177,6 +177,20 @@ class PaymentGateway {
           expiryDate.setFullYear(expiryDate.getFullYear() + 1); // 1 Năm
         }
 
+        let allowedModules = item.allowed_modules;
+        if (!allowedModules || !allowedModules.length) {
+          const prodObj = window.dataStore.getProductById(item.product_id);
+          if (prodObj && prodObj.allowed_modules) {
+            allowedModules = prodObj.allowed_modules;
+          } else if (item.product_id === 'tool-001') {
+            allowedModules = ['MEP-DUCT', 'MEP-PIPE'];
+          } else if (item.product_id === 'tool-002') {
+            allowedModules = ['MEP-SHEET'];
+          } else {
+            allowedModules = ['MEP-ALL'];
+          }
+        }
+
         const newLicense = {
           id: 'lic-' + Date.now().toString(16) + Math.random().toString(16).substring(2, 5),
           license_key: licenseKey,
@@ -186,6 +200,7 @@ class PaymentGateway {
           product_id: item.product_id,
           order_id: order.id,
           product_name: item.name,
+          allowed_modules: allowedModules,
           download_url: fileUrl,
           subscription_type: item.billing_cycle || 'yearly',
           max_machines: 2, // Gói 2 máy trạm

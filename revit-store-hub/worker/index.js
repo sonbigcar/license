@@ -247,15 +247,88 @@ export default {
       }
 
       // ------------------------------------------------------------------------
-      // 4. ENDPOINT: XÁC MINH & KÍCH HOẠT BẢN QUYỀN REVIT ADD-IN (.NET C#)
+      // 4. ENDPOINT: DÙNG THỬ 7 NGÀY (CHỐNG DÙNG THỬ NHIỀU LẦN THEO HWID)
+      // ------------------------------------------------------------------------
+      if (path === '/api/v1/license/trial' && request.method === 'POST') {
+        const body = await request.json().catch(() => ({}));
+        const machine_id = (body.machine_id || body.MachineId || '').trim();
+
+        if (!machine_id) {
+          return new Response(JSON.stringify({
+            valid: false,
+            Success: false,
+            message: 'Thiếu mã phần cứng máy tính (Machine ID / HWID).'
+          }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        // Kiểm tra danh sách HWID đã dùng thử (sử dụng KV nếu cấu hình hoặc bộ đệm Worker)
+        let trialUsed = false;
+        try {
+          if (env && env.TRIALS_KV) {
+            const existing = await env.TRIALS_KV.get('trial:' + machine_id);
+            if (existing) trialUsed = true;
+          }
+        } catch (e) {}
+
+        if (trialUsed) {
+          return new Response(JSON.stringify({
+            valid: false,
+            Success: false,
+            code: 'TRIAL_ALREADY_USED',
+            message: `Máy tính này (Mã máy: ${machine_id}) đã từng kích hoạt dùng thử 7 ngày trên hệ thống.\n\nMỗi máy tính chỉ được dùng thử 1 lần duy nhất.\nVui lòng mua bản quyền trên website hoặc liên hệ Zalo: 0765321779 để tiếp tục sử dụng!`
+          }), {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        try {
+          if (env && env.TRIALS_KV) {
+            await env.TRIALS_KV.put('trial:' + machine_id, new Date().toISOString());
+          }
+        } catch (e) {}
+
+        const now = new Date();
+        const expiryDate = new Date(now.getTime() + 7 * 86400000);
+        const trialKey = 'TRIAL-7D-' + machine_id.replace(/[^a-zA-Z0-9]/g, '').slice(-8).toUpperCase();
+
+        return new Response(JSON.stringify({
+          valid: true,
+          Success: true,
+          code: 'TRIAL_ACTIVATED',
+          license_key: trialKey,
+          LicenseKey: trialKey,
+          Token: 'CF_TRIAL_' + btoa(trialKey + ':' + machine_id),
+          token: 'CF_TRIAL_' + btoa(trialKey + ':' + machine_id),
+          allowed_modules: ['MEP-ALL'],
+          AllowedModules: ['MEP-ALL'],
+          modules_display: 'Toàn Bộ Công Cụ (Dùng Thử 7 Ngày)',
+          ModulesDisplay: 'Toàn Bộ Công Cụ (Dùng Thử 7 Ngày)',
+          CustomerName: 'Khách Hàng Dùng Thử',
+          customer_name: 'Khách Hàng Dùng Thử',
+          ExpiryDate: expiryDate.toISOString(),
+          expires_at: expiryDate.toISOString(),
+          days_remaining: 7,
+          is_trial: true,
+          message: '🎉 Kích hoạt dùng thử 7 ngày thành công! Toàn bộ tính năng DS Tools đã được mở khóa trên máy tính này.'
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // ------------------------------------------------------------------------
+      // 5. ENDPOINT: XÁC MINH & KÍCH HOẠT BẢN QUYỀN (HỖ TRỢ COMBO TÙY CHỌN NHIỀU MODULES)
       // ------------------------------------------------------------------------
       const isVerifyOrActivate = (path === '/api/v1/license/verify' || path === '/api/v1/license/activate' || path === '/api/activate' || path === '/api/validate') && request.method === 'POST';
       if (isVerifyOrActivate) {
         const body = await request.json().catch(() => ({}));
         const license_key = (body.license_key || body.LicenseKey || '').trim().toUpperCase();
-        const machine_id = body.machine_id || body.MachineId || 'UNKNOWN_HWID';
+        const machine_id = (body.machine_id || body.MachineId || 'UNKNOWN_HWID').trim();
         const machine_name = body.machine_name || body.Username || 'PC-Workstation';
-        const product_code_req = (body.product_code || body.ProductCode || '').trim().toUpperCase();
 
         if (!license_key && !body.Token && !body.token) {
           return new Response(JSON.stringify({
@@ -269,33 +342,51 @@ export default {
           });
         }
 
-        const productMap = {
-          'MEP-DUCT': 'Ds Duct Tools Pro',
-          'MEP-PIPE': 'Ds Pipe Tools Pro',
-          'MEP-SHEET': 'Ds Sheet Manager Pro',
-          'MEP-FIRE': 'Ds Fire Protection Pro',
-          'MEP-ELEC': 'Ds Electrical Tools Pro',
-          'MEP-AI': 'Ds AI Family & Automation',
-          'MEP-ALL': 'VIP Combo All-in-One Suite'
+        const moduleNames = {
+          'MEP-DUCT': 'Ống Gió (Duct Tools)',
+          'MEP-PIPE': 'Ống Nước (Pipe Tools)',
+          'MEP-SHEET': 'Bản Vẽ (Sheet Manager)',
+          'MEP-FIRE': 'PCCC (Fire Protection)',
+          'MEP-ELEC': 'Điện (Electrical Tools)',
+          'MEP-AI': 'Trợ Lý AI & Family',
+          'MEP-ALL': 'Toàn Bộ Công Cụ (All-in-One)'
         };
 
-        let resolvedCode = product_code_req;
-        if (license_key.includes('VIP') || license_key.includes('ALL')) resolvedCode = 'MEP-ALL';
-        else if (license_key.includes('DUCT')) resolvedCode = 'MEP-DUCT';
-        else if (license_key.includes('PIPE')) resolvedCode = 'MEP-PIPE';
-        else if (license_key.includes('SHEET') || license_key.includes('SHT')) resolvedCode = 'MEP-SHEET';
-        else if (license_key.includes('FIRE')) resolvedCode = 'MEP-FIRE';
-        else if (license_key.includes('ELEC')) resolvedCode = 'MEP-ELEC';
-        else if (license_key.includes('AI')) resolvedCode = 'MEP-AI';
+        let allowedModules = [];
+        if (Array.isArray(body.allowed_modules) && body.allowed_modules.length > 0) {
+          allowedModules = body.allowed_modules;
+        } else if (body.ProductCode || body.product_code) {
+          allowedModules = [(body.ProductCode || body.product_code).toUpperCase()];
+        }
 
-        if (!resolvedCode || !productMap[resolvedCode]) {
-          resolvedCode = 'MEP-ALL';
+        // Nhận diện thông minh combo từ cú pháp key
+        if (license_key.includes('VIP') || license_key.includes('ALL') || license_key.startsWith('REVIT-VIP')) {
+          allowedModules = ['MEP-ALL'];
+        } else {
+          const detected = [];
+          if (license_key.includes('DUCT')) detected.push('MEP-DUCT');
+          if (license_key.includes('PIPE')) detected.push('MEP-PIPE');
+          if (license_key.includes('SHEET') || license_key.includes('SHT')) detected.push('MEP-SHEET');
+          if (license_key.includes('FIRE')) detected.push('MEP-FIRE');
+          if (license_key.includes('ELEC')) detected.push('MEP-ELEC');
+          if (license_key.includes('AI')) detected.push('MEP-AI');
+
+          if (detected.length > 0) {
+            allowedModules = detected;
+          }
+        }
+
+        if (allowedModules.length === 0) {
+          allowedModules = ['MEP-ALL'];
         }
 
         const isTrial = license_key.startsWith('TRIAL-');
-        const durationDays = isTrial ? 14 : 365;
+        const durationDays = isTrial ? 7 : 365;
         const expiryDate = new Date(Date.now() + durationDays * 86400000).toISOString();
-        const prodName = productMap[resolvedCode];
+
+        const modulesDisplay = allowedModules.includes('MEP-ALL')
+          ? 'Toàn Bộ Công Cụ (VIP All-in-One)'
+          : allowedModules.map(m => moduleNames[m] || m).join(', ');
 
         return new Response(JSON.stringify({
           valid: true,
@@ -303,10 +394,16 @@ export default {
           code: 'HEARTBEAT_OK',
           Token: 'CF_TOKEN_' + btoa(license_key + ':' + machine_id),
           token: 'CF_TOKEN_' + btoa(license_key + ':' + machine_id),
-          ProductCode: resolvedCode,
-          product_code: resolvedCode,
-          ProductName: prodName,
-          product_name: prodName,
+          license_key: license_key,
+          LicenseKey: license_key,
+          allowed_modules: allowedModules,
+          AllowedModules: allowedModules,
+          modules_display: modulesDisplay,
+          ModulesDisplay: modulesDisplay,
+          ProductCode: allowedModules[0] || 'MEP-ALL',
+          product_code: allowedModules[0] || 'MEP-ALL',
+          ProductName: modulesDisplay,
+          product_name: modulesDisplay,
           subscription_type: isTrial ? 'trial' : 'yearly',
           ExpiryDate: expiryDate,
           expires_at: expiryDate,
@@ -317,8 +414,8 @@ export default {
           machines_used: 1,
           max_machines: 3,
           is_trial: isTrial,
-          Message: `Bản quyền ${prodName} hợp lệ.`,
-          message: `Bản quyền ${prodName} hợp lệ.`
+          Message: `Bản quyền hợp lệ cho gói: ${modulesDisplay}.`,
+          message: `Bản quyền hợp lệ cho gói: ${modulesDisplay}.`
         }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },

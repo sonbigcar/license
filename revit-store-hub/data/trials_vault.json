@@ -1,0 +1,14 @@
+{
+  "TEST-HWID-DEMO-01": {
+    "machine_id": "TEST-HWID-DEMO-01",
+    "activated_at": "2026-10-24T13:51:31.260Z",
+    "expires_at": "2026-10-31T13:51:31.260Z",
+    "ip": "127.0.0.1"
+  },
+  "TEST-PC-MVMGRY1K": {
+    "machine_id": "TEST-PC-MVMGRY1K",
+    "activated_at": "2026-10-24T13:58:16.092Z",
+    "expires_at": "2026-10-31T13:58:16.092Z",
+    "ip": "127.0.0.1"
+  }
+}

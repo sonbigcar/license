@@ -58,6 +58,7 @@ class LicenseManager {
       company: params.company || 'Doanh Nghiệp Đối Tác',
       product_id: params.product_id,
       product_name: params.product_name,
+      allowed_modules: params.allowed_modules || ['MEP-ALL'],
       subscription_type: params.subscription_type || 'yearly',
       plan_name: params.plan_name || `Gói Tùy Chỉnh (${params.max_machines || 1} Máy)`,
       max_machines: Number(params.max_machines) || 1,
@@ -242,10 +243,12 @@ class LicenseManager {
       }
       window.dataStore.updateLicense(license);
 
+      const allowedModules = license.allowed_modules || ['MEP-ALL'];
       return {
         valid: true,
         code: 'HEARTBEAT_OK',
         product_name: license.product_name,
+        allowed_modules: allowedModules,
         subscription_type: license.subscription_type,
         expires_at: license.expiry_date,
         days_remaining: Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24)),
@@ -276,10 +279,12 @@ class LicenseManager {
     license.activations.push(newActivation);
     window.dataStore.updateLicense(license);
 
+    const allowedModules = license.allowed_modules || ['MEP-ALL'];
     return {
       valid: true,
       code: 'NEW_MACHINE_ACTIVATED',
       product_name: license.product_name,
+      allowed_modules: allowedModules,
       subscription_type: license.subscription_type,
       expires_at: license.expiry_date,
       days_remaining: Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24)),

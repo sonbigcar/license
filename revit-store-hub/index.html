@@ -737,6 +737,38 @@
             <select id="licAddinSelect" class="form-control" required></select>
           </div>
 
+          <div class="form-group">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label style="margin:0; font-weight:600;">🧩 Các Module Cấp Phép Cho Khách Hàng *</label>
+              <span style="font-size:0.82rem; color:var(--text-muted);">
+                Chọn nhanh: 
+                <a href="javascript:void(0)" style="color:var(--primary); font-weight:600;" onclick="window.adminPanel.selectModulePreset('all')">Tất Cả (VIP)</a> | 
+                <a href="javascript:void(0)" style="color:var(--primary); font-weight:600;" onclick="window.adminPanel.selectModulePreset('duct_pipe')">Duct + Pipe</a> | 
+                <a href="javascript:void(0)" style="color:var(--primary); font-weight:600;" onclick="window.adminPanel.selectModulePreset('duct_elec')">Duct + Elec</a>
+              </span>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; background:#FAF3EE; padding:14px; border-radius:var(--radius-md); border:1px solid #EAE0D7;">
+              <label style="display:flex; align-items:center; gap:8px; font-size:0.88rem; cursor:pointer;">
+                <input type="checkbox" name="licModuleCheck" value="MEP-DUCT" checked> ❄️ Ds Duct Tools (Ống Gió)
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:0.88rem; cursor:pointer;">
+                <input type="checkbox" name="licModuleCheck" value="MEP-PIPE" checked> 🚰 Ds Pipe Tools (Ống Nước)
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:0.88rem; cursor:pointer;">
+                <input type="checkbox" name="licModuleCheck" value="MEP-SHEET" checked> 📑 Ds Sheet Manager (Bản Vẽ)
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:0.88rem; cursor:pointer;">
+                <input type="checkbox" name="licModuleCheck" value="MEP-FIRE" checked> 🧯 Ds Fire Protection (PCCC)
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:0.88rem; cursor:pointer;">
+                <input type="checkbox" name="licModuleCheck" value="MEP-ELEC" checked> ⚡ Ds Electrical Tools (Điện)
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:0.88rem; cursor:pointer;">
+                <input type="checkbox" name="licModuleCheck" value="MEP-AI" checked> 🤖 Ds AI Family & MCP
+              </label>
+            </div>
+          </div>
+
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
             <div class="form-group">
               <label>Email Kỹ Sư / Khách Hàng *</label>

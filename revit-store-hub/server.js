@@ -39,7 +39,108 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // API BẢN QUYỀN REVIT ADD-IN (.NET C#) THEO TỪNG MODULE & VIP COMBO
+  // ------------------------------------------------------------------------
+  // API BẢN QUYỀN REVIT ADD-IN (.NET C#): QUẢN LÝ DÙNG THỬ 7 NGÀY THEO MÃ MÁY (HWID)
+  // ------------------------------------------------------------------------
+  const TRIALS_FILE = path.join(PUBLIC_DIR, 'data', 'trials_vault.json');
+  function getTrialsVault() {
+    try {
+      if (fs.existsSync(TRIALS_FILE)) {
+        return JSON.parse(fs.readFileSync(TRIALS_FILE, 'utf8') || '{}');
+      }
+    } catch (e) {}
+    return {};
+  }
+  function saveTrialsVault(vault) {
+    try {
+      const dataDir = path.dirname(TRIALS_FILE);
+      if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+      fs.writeFileSync(TRIALS_FILE, JSON.stringify(vault, null, 2), 'utf8');
+    } catch (e) {
+      console.error('[TrialsVault] Lỗi lưu file:', e);
+    }
+  }
+
+  // 1. ENDPOINT: DÙNG THỬ 7 NGÀY (KIỂM TRA CHẶN HWID DÙNG THỬ NHIỀU LẦN)
+  if (req.method === 'POST' && req.url.startsWith('/api/v1/license/trial')) {
+    const chunks = [];
+    req.on('data', chunk => chunks.push(chunk));
+    req.on('end', () => {
+      try {
+        const bodyStr = Buffer.concat(chunks).toString('utf8');
+        const data = bodyStr ? JSON.parse(bodyStr) : {};
+        const machineId = (data.machine_id || data.MachineId || '').trim();
+
+        if (!machineId) {
+          res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({
+            valid: false,
+            Success: false,
+            message: 'Thiếu mã phần cứng máy tính (Machine ID / HWID).'
+          }));
+          return;
+        }
+
+        const trials = getTrialsVault();
+
+        // Kiểm tra xem máy này đã từng dùng thử chưa
+        if (trials[machineId]) {
+          const prev = trials[machineId];
+          const activatedDate = prev.activated_at ? new Date(prev.activated_at).toLocaleDateString('vi-VN') : 'trước đó';
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({
+            valid: false,
+            Success: false,
+            code: 'TRIAL_ALREADY_USED',
+            message: `Máy tính này (Mã máy: ${machineId}) đã từng kích hoạt dùng thử 7 ngày vào ngày ${activatedDate}.\n\nMỗi máy tính chỉ được dùng thử 1 lần duy nhất.\nVui lòng mua bản quyền trên website (hoặc Zalo: 0765321779) để tiếp tục sử dụng!`
+          }));
+          return;
+        }
+
+        // Cấp dùng thử 7 ngày cho máy mới
+        const now = new Date();
+        const expiryDate = new Date(now.getTime() + 7 * 86400000);
+        const trialKey = 'TRIAL-7D-' + machineId.replace(/[^a-zA-Z0-9]/g, '').slice(-8).toUpperCase();
+
+        trials[machineId] = {
+          machine_id: machineId,
+          activated_at: now.toISOString(),
+          expires_at: expiryDate.toISOString(),
+          ip: req.socket.remoteAddress || ''
+        };
+        saveTrialsVault(trials);
+        console.log(`[Trial] Đã cấp dùng thử 7 ngày cho HWID: ${machineId} đến ${expiryDate.toISOString()}`);
+
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({
+          valid: true,
+          Success: true,
+          code: 'TRIAL_ACTIVATED',
+          license_key: trialKey,
+          LicenseKey: trialKey,
+          Token: 'TRIAL_TOKEN_' + Buffer.from(trialKey + ':' + machineId).toString('base64'),
+          token: 'TRIAL_TOKEN_' + Buffer.from(trialKey + ':' + machineId).toString('base64'),
+          allowed_modules: ['MEP-ALL'],
+          AllowedModules: ['MEP-ALL'],
+          modules_display: 'Toàn Bộ Công Cụ (Dùng Thử 7 Ngày)',
+          ModulesDisplay: 'Toàn Bộ Công Cụ (Dùng Thử 7 Ngày)',
+          CustomerName: 'Khách Hàng Dùng Thử',
+          customer_name: 'Khách Hàng Dùng Thử',
+          ExpiryDate: expiryDate.toISOString(),
+          expires_at: expiryDate.toISOString(),
+          days_remaining: 7,
+          is_trial: true,
+          message: '🎉 Kích hoạt dùng thử 7 ngày thành công! Toàn bộ tính năng DS Tools đã được mở khóa trên máy tính này.'
+        }, null, 2));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ valid: false, Success: false, message: err.message }));
+      }
+    });
+    return;
+  }
+
+  // 2. ENDPOINT: XÁC MINH & KÍCH HOẠT BẢN QUYỀN (HỖ TRỢ COMBO TÙY CHỌN NHIỀU TOOLS)
   const isLicenseEndpoint = req.method === 'POST' && (
     req.url.startsWith('/api/v1/license/verify') ||
     req.url.startsWith('/api/v1/license/activate') ||
@@ -56,10 +157,9 @@ const server = http.createServer(async (req, res) => {
         const data = bodyStr ? JSON.parse(bodyStr) : {};
 
         const key = (data.LicenseKey || data.license_key || '').trim().toUpperCase();
-        const machineId = data.MachineId || data.machine_id || 'UNKNOWN_HWID';
-        const productCodeReq = (data.ProductCode || data.product_code || '').trim().toUpperCase();
+        const machineId = (data.MachineId || data.machine_id || 'UNKNOWN_HWID').trim();
 
-        if (!key && !data.Token) {
+        if (!key && !data.Token && !data.token) {
           res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
           res.end(JSON.stringify({
             valid: false,
@@ -69,44 +169,75 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // Nhận diện Module sản phẩm
-        const productMap = {
-          'MEP-DUCT': 'Ds Duct Tools Pro',
-          'MEP-PIPE': 'Ds Pipe Tools Pro',
-          'MEP-SHEET': 'Ds Sheet Manager Pro',
-          'MEP-FIRE': 'Ds Fire Protection Pro',
-          'MEP-ELEC': 'Ds Electrical Tools Pro',
-          'MEP-AI': 'Ds AI Family & Automation',
-          'MEP-ALL': 'VIP Combo All-in-One Suite'
+        // Tên các module hỗ trợ
+        const moduleNames = {
+          'MEP-DUCT': 'Ống Gió (Duct Tools)',
+          'MEP-PIPE': 'Ống Nước (Pipe Tools)',
+          'MEP-SHEET': 'Bản Vẽ (Sheet Manager)',
+          'MEP-FIRE': 'PCCC (Fire Protection)',
+          'MEP-ELEC': 'Điện (Electrical Tools)',
+          'MEP-AI': 'Trợ Lý AI & Family',
+          'MEP-ALL': 'Toàn Bộ Công Cụ (All-in-One)'
         };
 
-        let resolvedCode = productCodeReq;
-        if (key.includes('VIP') || key.includes('ALL')) resolvedCode = 'MEP-ALL';
-        else if (key.includes('DUCT')) resolvedCode = 'MEP-DUCT';
-        else if (key.includes('PIPE')) resolvedCode = 'MEP-PIPE';
-        else if (key.includes('SHEET') || key.includes('SHT')) resolvedCode = 'MEP-SHEET';
-        else if (key.includes('FIRE')) resolvedCode = 'MEP-FIRE';
-        else if (key.includes('ELEC')) resolvedCode = 'MEP-ELEC';
-        else if (key.includes('AI')) resolvedCode = 'MEP-AI';
+        // Phân giải các module được cấp phép dựa trên Key hoặc Database
+        let allowedModules = [];
 
-        if (!resolvedCode || !productMap[resolvedCode]) {
-          resolvedCode = 'MEP-ALL';
+        // Kiểm tra xem có cấu hình module tùy chọn truyền lên không
+        if (Array.isArray(data.allowed_modules) && data.allowed_modules.length > 0) {
+          allowedModules = data.allowed_modules;
+        } else if (data.ProductCode || data.product_code) {
+          const reqCode = (data.ProductCode || data.product_code).toUpperCase();
+          allowedModules = [reqCode];
+        }
+
+        // Phân giải thông minh từ cú pháp License Key
+        // Ví dụ: DS-DUCT-PIPE-xxx, DS-DUCT-ELEC-xxx, REVIT-VIP-xxx, v.v.
+        if (key.includes('ALL') || key.includes('VIP') || key.startsWith('REVIT-VIP')) {
+          allowedModules = ['MEP-ALL'];
+        } else {
+          const detected = [];
+          if (key.includes('DUCT')) detected.push('MEP-DUCT');
+          if (key.includes('PIPE')) detected.push('MEP-PIPE');
+          if (key.includes('SHEET') || key.includes('SHT')) detected.push('MEP-SHEET');
+          if (key.includes('FIRE')) detected.push('MEP-FIRE');
+          if (key.includes('ELEC')) detected.push('MEP-ELEC');
+          if (key.includes('AI')) detected.push('MEP-AI');
+
+          if (detected.length > 0) {
+            allowedModules = detected;
+          }
+        }
+
+        // Nếu là key chuẩn REVIT-XXXX-XXXX-XXXX thông thường từ web store, mặc định cấp MEP-ALL (toàn bộ)
+        if (allowedModules.length === 0) {
+          allowedModules = ['MEP-ALL'];
         }
 
         const isTrial = key.startsWith('TRIAL-');
-        const durationDays = isTrial ? 14 : 365;
+        const durationDays = isTrial ? 7 : 365;
         const expiryDate = new Date(Date.now() + durationDays * 86400000).toISOString();
         const customer = data.Username || data.customer_name || 'Kỹ Sư Doan Son';
+
+        const modulesDisplay = allowedModules.includes('MEP-ALL')
+          ? 'Toàn Bộ Công Cụ (VIP All-in-One)'
+          : allowedModules.map(m => moduleNames[m] || m).join(', ');
 
         const responseObj = {
           valid: true,
           Success: true,
           Token: 'TOKEN_' + Buffer.from(key + ':' + machineId).toString('base64'),
           token: 'TOKEN_' + Buffer.from(key + ':' + machineId).toString('base64'),
-          ProductCode: resolvedCode,
-          product_code: resolvedCode,
-          ProductName: productMap[resolvedCode],
-          product_name: productMap[resolvedCode],
+          license_key: key,
+          LicenseKey: key,
+          allowed_modules: allowedModules,
+          AllowedModules: allowedModules,
+          modules_display: modulesDisplay,
+          ModulesDisplay: modulesDisplay,
+          ProductCode: allowedModules[0] || 'MEP-ALL',
+          product_code: allowedModules[0] || 'MEP-ALL',
+          ProductName: modulesDisplay,
+          product_name: modulesDisplay,
           CustomerName: customer,
           customer_name: customer,
           ExpiryDate: expiryDate,
@@ -116,8 +247,8 @@ const server = http.createServer(async (req, res) => {
           machines_used: 1,
           max_machines: 3,
           is_trial: isTrial,
-          Message: `Bản quyền ${productMap[resolvedCode]} hợp lệ.`,
-          message: `Bản quyền ${productMap[resolvedCode]} hợp lệ.`
+          Message: `Bản quyền hợp lệ cho gói: ${modulesDisplay}.`,
+          message: `Bản quyền hợp lệ cho gói: ${modulesDisplay}.`
         };
 
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });

@@ -608,6 +608,24 @@ class AdminPanel {
                     <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 2px;">
                       Phiên bản: <span class="badge badge-version" style="font-size: 0.7rem; padding: 2px 6px;">${l.version || 'v2.4.0'}</span>
                     </div>
+                    <div style="margin-top: 4px;">
+                      ${(() => {
+                        const moduleMap = {
+                          'MEP-DUCT': '❄️ Duct',
+                          'MEP-PIPE': '🚰 Pipe',
+                          'MEP-SHEET': '📑 Sheet',
+                          'MEP-FIRE': '🧯 Fire',
+                          'MEP-ELEC': '⚡ Elec',
+                          'MEP-AI': '🤖 AI',
+                          'MEP-ALL': '⭐ Full VIP'
+                        };
+                        const mods = l.allowed_modules || ['MEP-ALL'];
+                        if (mods.includes('MEP-ALL') || mods.length >= 6) {
+                          return `<span class="badge" style="background:#EEF2FF; color:#4F46E5; font-size:0.7rem; font-weight:700;">⭐ Full VIP (Tất Cả Tools)</span>`;
+                        }
+                        return mods.map(m => `<span class="badge" style="background:#F1F5F9; color:#334155; font-size:0.68rem; margin-right:3px;">${moduleMap[m] || m}</span>`).join('');
+                      })()}
+                    </div>
                   </td>
 
                   <td>
@@ -705,6 +723,19 @@ class AdminPanel {
     if (modal) modal.classList.remove('active');
   }
 
+  selectModulePreset(preset) {
+    const checkboxes = document.querySelectorAll('input[name="licModuleCheck"]');
+    checkboxes.forEach(cb => {
+      if (preset === 'all') {
+        cb.checked = true;
+      } else if (preset === 'duct_pipe') {
+        cb.checked = (cb.value === 'MEP-DUCT' || cb.value === 'MEP-PIPE');
+      } else if (preset === 'duct_elec') {
+        cb.checked = (cb.value === 'MEP-DUCT' || cb.value === 'MEP-ELEC');
+      }
+    });
+  }
+
   handleManualLicenseSubmit(event) {
     event.preventDefault();
     const productId = document.getElementById('licAddinSelect').value;
@@ -721,6 +752,19 @@ class AdminPanel {
       return;
     }
 
+    const checkedBoxes = Array.from(document.querySelectorAll('input[name="licModuleCheck"]:checked'));
+    const allowedModules = checkedBoxes.map(cb => cb.value);
+    if (allowedModules.length === 0) {
+      alert('Vui lòng chọn ít nhất 1 module cho giấy phép!');
+      return;
+    }
+
+    const isAll = allowedModules.length >= 6;
+    const finalModules = isAll ? ['MEP-ALL'] : allowedModules;
+    const planName = isAll
+      ? `Gói Full VIP (Tất Cả Tools - ${maxMachines} Máy)`
+      : `Gói Combo (${allowedModules.map(m => m.replace('MEP-', '')).join(' + ')} - ${maxMachines} Máy)`;
+
     const newLic = window.licenseManager.createManualLicense({
       product_id: product.id,
       product_name: product.name,
@@ -729,13 +773,14 @@ class AdminPanel {
       company: company || 'Doanh Nghiệp Đối Tác',
       duration_days: durationDays,
       max_machines: maxMachines,
+      allowed_modules: finalModules,
       subscription_type: durationDays <= 30 ? 'monthly' : 'yearly',
-      plan_name: `Gói Cấp Thủ Công (${maxMachines} Máy)`,
+      plan_name: planName,
       note: note || 'Cấp trực tiếp từ Admin Console'
     });
 
     this.closeManualLicenseModal();
-    alert(`🎉 ĐÃ CẤP GIẤY PHÉP THÀNH CÔNG!\n\n• Mã License Key: ${newLic.license_key}\n• Khách hàng: ${newLic.user_name} (${newLic.user_email})\n• Số máy trạm: ${newLic.max_machines} máy\n• Hạn dùng: ${new Date(newLic.expiry_date).toLocaleDateString('vi-VN')}`);
+    alert(`🎉 ĐÃ CẤP GIẤY PHÉP THÀNH CÔNG!\n\n• Mã License Key: ${newLic.license_key}\n• Gói Module: ${planName}\n• Khách hàng: ${newLic.user_name} (${newLic.user_email})\n• Số máy trạm: ${newLic.max_machines} máy\n• Hạn dùng: ${new Date(newLic.expiry_date).toLocaleDateString('vi-VN')}`);
     this.render();
   }
 
