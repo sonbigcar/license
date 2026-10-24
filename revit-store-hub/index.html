@@ -45,15 +45,22 @@
             <li class="nav-item" data-view="customServiceView">✍️ Dịch Vụ Thuê Viết</li>
             <li class="nav-item" data-view="libraryView">📁 Thư Viện Của Tôi</li>
             <li class="nav-item" data-view="licenseView">🔑 Bản Quyền Của Tôi</li>
-            <!-- TAB QUẢN LÝ TÀI KHOẢN: CHỈ HIỂN THỊ KHI LÀ TÀI KHOẢN ADMIN -->
-            <li id="navItemAdmin" class="nav-item" data-view="adminView" style="display: none; color: #ff5722; font-weight: 800;">
-              👑 Quản Lý Tài Khoản
+            <!-- TAB QUẢN TRỊ HỆ THỐNG / ADMIN -->
+            <li id="navItemAdmin" class="nav-item" data-view="adminView" style="color: #ff5722; font-weight: 800; cursor: pointer;">
+              👑 Quản Trị Hệ Thống
             </li>
           </ul>
         </nav>
 
-        <!-- Nav Actions: Cart & Nút Đăng Nhập / Đăng Ký trên cùng -->
-        <div class="nav-actions">
+        <!-- Nav Actions: Nút Quản Trị Nhanh, Cart & Nút Đăng Nhập / Đăng Ký -->
+        <div class="nav-actions" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="window.storeApp.openProductEditorModal()" style="font-weight: 700; border-color: var(--primary); color: var(--primary); padding: 6px 12px; display: inline-flex; align-items: center; gap: 5px;" title="Thêm sản phẩm mới hoặc điều chỉnh niêm yết giá">
+            <span>✨</span> Thêm Sản Phẩm & Niêm Yết Giá
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="window.adminPanel.openPackageManagerModal()" style="font-weight: 700; border-color: #818CF8; color: #4F46E5; background: #EEF2FF; padding: 6px 12px; display: inline-flex; align-items: center; gap: 5px;" title="Cấu hình & Đăng ký thêm các loại gói module bản quyền">
+            <span>🧩</span> Gói Bản Quyền
+          </button>
+
           <button id="cartBtn" class="cart-btn" aria-label="Xem giỏ hàng">
             🛒 Giỏ hàng
             <span id="cartBadge" class="cart-count" style="display: none;">0</span>

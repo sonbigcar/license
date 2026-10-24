@@ -24,11 +24,16 @@ class AdminPanel {
           <div style="font-size: 3.5rem; margin-bottom: 16px;">🛡️</div>
           <h2 style="font-family: var(--font-heading); font-size: 2rem;">Khu Vực Quản Trị Hệ Thống (Admin Only)</h2>
           <p style="color: var(--text-muted); max-width: 500px; margin: 12px auto 24px;">
-            Tab này chỉ hiển thị và cho phép truy cập đối với tài khoản có quyền Quản Trị Viên (Admin).
+            Tab này dành riêng cho Quản Trị Viên (Admin) quản lý sản phẩm, đơn hàng, tài khoản và bản quyền.
           </p>
-          <button class="btn btn-primary" onclick="window.storeApp.openAuthModal()">
-            🔐 Đăng Nhập Tài Khoản Quản Trị
-          </button>
+          <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="window.storeApp.openAuthModal()">
+              🔐 Đăng Nhập Mật Khẩu Admin
+            </button>
+            <button class="btn btn-secondary" style="border-color: var(--primary); color: var(--primary); font-weight: 700;" onclick="window.adminPanel.quickLoginAdmin()">
+              ⚡ Đăng Nhập Nhanh (Chủ Cửa Hàng sonbigcar)
+            </button>
+          </div>
         </div>
       `;
       return;
@@ -558,6 +563,28 @@ class AdminPanel {
         </div>
       </div>
 
+      <!-- BANNER NỔI BẬT: QUẢN LÝ & ĐĂNG KÝ GÓI BẢN QUYỀN -->
+      <div style="background: linear-gradient(135deg, #FAF5FF 0%, #EEF2FF 100%); border: 2px solid #C7D2FE; border-radius: var(--radius-lg); padding: 18px 24px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.08);">
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <span style="font-size: 1.5rem;">🧩</span>
+            <strong style="font-size: 1.15rem; color: #3730A3;">Cấu Hình & Đăng Ký Các Gói Module Bản Quyền</strong>
+            <span class="badge" style="background: #4F46E5; color: #fff; font-size: 0.72rem; font-weight: 700;">Full VIP • Duct • Pipe • Elec</span>
+          </div>
+          <p style="font-size: 0.86rem; color: #4338CA; margin: 0;">
+            Đăng ký thêm gói module mới (Combo Duct+Pipe, Combo Duct+Elec, Gói lẻ...) và định giá niêm yết bán trên Store.
+          </p>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button class="btn btn-primary" style="background: #4F46E5; border-color: #4F46E5; font-weight: 800; font-size: 0.92rem; padding: 10px 18px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35); display: inline-flex; align-items: center; gap: 6px;" onclick="window.adminPanel.openPackageManagerModal()">
+            <span>🧩</span> Gói Bản Quyền: Đăng Ký & Quản Lý Gói Mới
+          </button>
+          <button class="btn btn-primary" onclick="window.adminPanel.openManualLicenseModal()" style="display: inline-flex; align-items: center; gap: 6px;">
+            <span>✨</span> + Cấp Giấy Phép Thủ Công Mới
+          </button>
+        </div>
+      </div>
+
       <!-- THANH CÔNG CỤ TÌM KIẾM, LỌC VÀ HÀNH ĐỘNG -->
       <div class="license-toolbar">
         <div class="license-filter-group">
@@ -573,14 +600,14 @@ class AdminPanel {
         </div>
 
         <div class="license-action-bar" style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button class="btn btn-primary btn-sm" onclick="window.adminPanel.openManualLicenseModal()">
-            ✨ + Cấp Giấy Phép Thủ Công Mới
+          <button class="btn btn-secondary btn-sm" style="color: #4F46E5; font-weight: 800; border-color: #818CF8; background: #EEF2FF; display: inline-flex; align-items: center; gap: 4px;" onclick="window.adminPanel.openPackageManagerModal()">
+            <span>🧩</span> Gói Bản Quyền
           </button>
-          <button class="btn btn-secondary btn-sm" style="color: #4F46E5; font-weight: 700; border-color: #818CF8; background: #EEF2FF;" onclick="window.adminPanel.openPackageManagerModal()">
-            ⚙️ Đăng Ký Thêm Gói Module
+          <button class="btn btn-primary btn-sm" onclick="window.adminPanel.openManualLicenseModal()">
+            ✨ + Cấp Key Thủ Công
           </button>
           <button class="btn btn-secondary btn-sm" onclick="window.licenseManager.exportLicensesCsv()">
-            📥 Xuất Báo Cáo CSV (Excel)
+            📥 Xuất CSV (Excel)
           </button>
         </div>
       </div>
@@ -1857,6 +1884,28 @@ class AdminPanel {
     this.render();
 
     alert(`🎉 ĐÃ CẤP GÓI BẢN QUYỀN MỚI THÀNH CÔNG CHO TÀI KHOẢN!\n\n• Tài khoản: ${acc.full_name} (${acc.email})\n• Gói: ${newLic.plan_name}\n• Key: ${newLic.license_key}\n• Module: ${newLic.allowed_modules.join(', ')}\n• Số máy: ${newLic.max_machines} máy\n• Hạn dùng: ${new Date(newLic.expiry_date).toLocaleDateString('vi-VN')}`);
+  }
+
+  quickLoginAdmin() {
+    const adminUser = {
+      id: 'acc-admin-01',
+      email: 'admin@doanson.com',
+      username: 'sonbigcar',
+      full_name: 'Đoàn Thanh Sơn (Admin)',
+      phone: '0908123456',
+      company: 'DoanSon BIM Studio',
+      role: 'admin',
+      status: 'active',
+      created_at: new Date().toISOString()
+    };
+    window.authManager.saveUser(adminUser);
+    alert('🎉 Chào mừng Sơn! Đã kích hoạt phiên làm việc Quản Trị Viên (Admin) thành công!');
+    this.render();
+    if (window.storeApp) {
+      window.storeApp.updateUserNav();
+      window.storeApp.updateNavTabsVisibility();
+      window.storeApp.renderProducts();
+    }
   }
 }
 

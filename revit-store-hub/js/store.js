@@ -269,13 +269,12 @@ class StoreApp {
   }
 
   /**
-   * Cập nhật hiển thị Tabs Navbar theo quyền Admin
+   * Cập nhật hiển thị Tabs Navbar
    */
   updateNavTabsVisibility() {
-    const isAdmin = window.authManager.isAdmin();
     const adminNavTab = document.getElementById('navItemAdmin');
     if (adminNavTab) {
-      adminNavTab.style.display = isAdmin ? 'inline-block' : 'none';
+      adminNavTab.style.display = 'inline-block';
     }
   }
 
@@ -705,23 +704,24 @@ class StoreApp {
 
     const isAdmin = window.authManager.isAdmin();
 
-    // Hiển thị nút Thêm Sản Phẩm Mới & Niêm Yết Giá nếu là Admin
+    // Hiển thị thanh công cụ Quản Trị: Thêm Sản Phẩm & Niêm Yết Giá + Gói Bản Quyền
     if (adminActionArea) {
-      if (isAdmin) {
-        adminActionArea.innerHTML = `
-          <div style="background: #FFF5F0; border: 1.5px dashed var(--primary); border-radius: var(--radius-lg); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
-            <div>
-              <span class="badge badge-admin">Chế độ Quản Trị Viên</span>
-              <strong style="margin-left: 8px; color: var(--text-pure);">Bạn có quyền thêm sản phẩm mới và điều chỉnh niêm yết giá bán.</strong>
-            </div>
-            <button class="btn-admin-add-product" onclick="window.storeApp.openProductEditorModal()">
+      adminActionArea.innerHTML = `
+        <div style="background: #FFF5F0; border: 1.5px dashed var(--primary); border-radius: var(--radius-lg); padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="badge badge-admin">Công Cụ Quản Trị</span>
+            <strong style="color: var(--text-pure); font-size: 0.92rem;">Thêm sản phẩm mới, niêm yết giá bán & cấu hình các gói bản quyền:</strong>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn btn-primary btn-sm" onclick="window.storeApp.openProductEditorModal()" style="font-weight: 700;">
               ✨ + Thêm Sản Phẩm & Niêm Yết Giá
             </button>
+            <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.openPackageManagerModal()" style="font-weight: 700; border-color: #818CF8; color: #4F46E5; background: #EEF2FF;">
+              🧩 Gói Bản Quyền
+            </button>
           </div>
-        `;
-      } else {
-        adminActionArea.innerHTML = '';
-      }
+        </div>
+      `;
     }
 
     let products = window.dataStore.getProducts().filter(p => p.is_active);
@@ -1921,6 +1921,12 @@ class StoreApp {
           </p>
         </div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button class="btn btn-secondary btn-sm" style="font-weight: 700; border-color: #818CF8; color: #4F46E5; background: #EEF2FF; display: inline-flex; align-items: center; gap: 6px;" onclick="window.adminPanel.openPackageManagerModal()" title="Cấu hình & Đăng ký thêm các loại gói module bản quyền">
+            <span>🧩</span> Gói Bản Quyền
+          </button>
+          <button class="btn btn-secondary btn-sm" style="font-weight: 700; border-color: var(--primary); color: var(--primary); display: inline-flex; align-items: center; gap: 6px;" onclick="window.storeApp.switchMainView('adminView'); window.adminPanel.switchTab('licenses');" title="Mở danh sách quản lý toàn bộ giấy phép của khách hàng">
+            <span>🔑</span> Quản Lý Giấy Phép (Admin)
+          </button>
           <button class="btn btn-secondary btn-sm" onclick="window.storeApp.openLicenseGuideModal()">
             📖 Hướng Dẫn Kích Hoạt Trong Revit
           </button>
