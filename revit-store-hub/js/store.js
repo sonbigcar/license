@@ -269,12 +269,13 @@ class StoreApp {
   }
 
   /**
-   * Cập nhật hiển thị Tabs Navbar
+   * Cập nhật hiển thị Tabs Navbar (Chỉ tài khoản Admin mới thấy Tab Quản Trị Hệ Thống)
    */
   updateNavTabsVisibility() {
+    const isAdmin = window.authManager && window.authManager.isAdmin();
     const adminNavTab = document.getElementById('navItemAdmin');
     if (adminNavTab) {
-      adminNavTab.style.display = 'inline-block';
+      adminNavTab.style.display = isAdmin ? 'inline-block' : 'none';
     }
   }
 
@@ -704,24 +705,25 @@ class StoreApp {
 
     const isAdmin = window.authManager.isAdmin();
 
-    // Hiển thị thanh công cụ Quản Trị: Thêm Sản Phẩm & Niêm Yết Giá + Gói Bản Quyền
+    // Chỉ hiển thị thanh công cụ Quản Trị trên Catalog nếu là Admin
     if (adminActionArea) {
-      adminActionArea.innerHTML = `
-        <div style="background: #FFF5F0; border: 1.5px dashed var(--primary); border-radius: var(--radius-lg); padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="badge badge-admin">Công Cụ Quản Trị</span>
-            <strong style="color: var(--text-pure); font-size: 0.92rem;">Thêm sản phẩm mới, niêm yết giá bán & cấu hình các gói bản quyền:</strong>
+      if (isAdmin) {
+        adminActionArea.innerHTML = `
+          <div style="background: #FFF5F0; border: 1.5px dashed var(--primary); border-radius: var(--radius-lg); padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="badge badge-admin">Khu Vực Quản Trị Viên</span>
+              <strong style="color: var(--text-pure); font-size: 0.92rem;">Quản lý danh mục & niêm yết giá bán công khai:</strong>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn btn-primary btn-sm" onclick="window.storeApp.openProductEditorModal()" style="font-weight: 700;">
+                ✨ + Thêm Sản Phẩm & Niêm Yết Giá
+              </button>
+            </div>
           </div>
-          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button class="btn btn-primary btn-sm" onclick="window.storeApp.openProductEditorModal()" style="font-weight: 700;">
-              ✨ + Thêm Sản Phẩm & Niêm Yết Giá
-            </button>
-            <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.openPackageManagerModal()" style="font-weight: 700; border-color: #818CF8; color: #4F46E5; background: #EEF2FF;">
-              🧩 Gói Bản Quyền
-            </button>
-          </div>
-        </div>
-      `;
+        `;
+      } else {
+        adminActionArea.innerHTML = '';
+      }
     }
 
     let products = window.dataStore.getProducts().filter(p => p.is_active);
@@ -1115,6 +1117,27 @@ class StoreApp {
       document.getElementById('prodEditInstallGuide').value = '';
     }
 
+    // Nạp danh sách các Loại Bản Quyền (Package Presets) vào Combobox
+    const prod = productId ? window.dataStore.getProductById(productId) : null;
+    const pkgSelect = document.getElementById('prodEditLicensePackage');
+    const pkgGroup = document.getElementById('prodEditLicensePackageGroup');
+    const presets = window.dataStore.getPackagePresets();
+    const currentPkgId = (prod && prod.package_id) ? prod.package_id : 'pkg-full-vip';
+
+    if (pkgSelect) {
+      pkgSelect.innerHTML = presets.map(p => `
+        <option value="${p.id}" ${p.id === currentPkgId ? 'selected' : ''}>
+          ${p.name} - ${this.formatCurrency(p.sale_price || p.price)} [${(p.modules || []).join(', ')}]
+        </option>
+      `).join('');
+    }
+
+    // Ẩn/Hiện Combobox Loại Bản Quyền theo phân loại sản phẩm (Chỉ áp dụng cho Tools)
+    const currentType = prod ? prod.product_type : (document.getElementById('prodEditType')?.value || 'tool');
+    if (pkgGroup) {
+      pkgGroup.style.display = (currentType === 'tool') ? 'block' : 'none';
+    }
+
     // Reset trạng thái khu vực Upload file phần mềm
     const statusArea = document.getElementById('prodUploadStatusArea');
     if (statusArea) statusArea.style.display = 'none';
@@ -1129,6 +1152,13 @@ class StoreApp {
     }
 
     modal.classList.add('active');
+  }
+
+  handleProductTypeChange(type) {
+    const pkgGroup = document.getElementById('prodEditLicensePackageGroup');
+    if (pkgGroup) {
+      pkgGroup.style.display = (type === 'tool') ? 'block' : 'none';
+    }
   }
 
   closeProductEditorModal() {
@@ -1269,11 +1299,19 @@ class StoreApp {
     const existingProd = window.dataStore.getProductById(id);
     const existingMeta = (existingProd && existingProd.metadata) || {};
 
+    // Đọc loại bản quyền từ Combobox nếu sản phẩm là Tools
+    const selectedPkgId = document.getElementById('prodEditLicensePackage') ? document.getElementById('prodEditLicensePackage').value : 'pkg-full-vip';
+    const presets = window.dataStore.getPackagePresets();
+    const selectedPkg = presets.find(p => p.id === selectedPkgId) || presets[0];
+
     const updatedProduct = {
       id: id,
       name: name,
       slug: name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
       product_type: type,
+      package_id: type === 'tool' ? (selectedPkg ? selectedPkg.id : 'pkg-full-vip') : null,
+      package_name: type === 'tool' ? (selectedPkg ? selectedPkg.name : 'Full VIP') : null,
+      allowed_modules: type === 'tool' ? (selectedPkg ? selectedPkg.modules : ['MEP-ALL']) : [],
       category: category,
       price: price,
       sale_price: salePrice,
@@ -1921,12 +1959,6 @@ class StoreApp {
           </p>
         </div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <button class="btn btn-secondary btn-sm" style="font-weight: 700; border-color: #818CF8; color: #4F46E5; background: #EEF2FF; display: inline-flex; align-items: center; gap: 6px;" onclick="window.adminPanel.openPackageManagerModal()" title="Cấu hình & Đăng ký thêm các loại gói module bản quyền">
-            <span>🧩</span> Gói Bản Quyền
-          </button>
-          <button class="btn btn-secondary btn-sm" style="font-weight: 700; border-color: var(--primary); color: var(--primary); display: inline-flex; align-items: center; gap: 6px;" onclick="window.storeApp.switchMainView('adminView'); window.adminPanel.switchTab('licenses');" title="Mở danh sách quản lý toàn bộ giấy phép của khách hàng">
-            <span>🔑</span> Quản Lý Giấy Phép (Admin)
-          </button>
           <button class="btn btn-secondary btn-sm" onclick="window.storeApp.openLicenseGuideModal()">
             📖 Hướng Dẫn Kích Hoạt Trong Revit
           </button>

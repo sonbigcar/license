@@ -45,21 +45,15 @@
             <li class="nav-item" data-view="customServiceView">✍️ Dịch Vụ Thuê Viết</li>
             <li class="nav-item" data-view="libraryView">📁 Thư Viện Của Tôi</li>
             <li class="nav-item" data-view="licenseView">🔑 Bản Quyền Của Tôi</li>
-            <!-- TAB QUẢN TRỊ HỆ THỐNG / ADMIN -->
-            <li id="navItemAdmin" class="nav-item" data-view="adminView" style="color: #ff5722; font-weight: 800; cursor: pointer;">
+            <!-- TAB QUẢN TRỊ HỆ THỐNG / ADMIN (CHỈ ADMIN MỚI THẤY) -->
+            <li id="navItemAdmin" class="nav-item" data-view="adminView" style="display: none; color: #ff5722; font-weight: 800; cursor: pointer;">
               👑 Quản Trị Hệ Thống
             </li>
           </ul>
         </nav>
 
-        <!-- Nav Actions: Nút Quản Trị Nhanh, Cart & Nút Đăng Nhập / Đăng Ký -->
-        <div class="nav-actions" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-          <button type="button" class="btn btn-secondary btn-sm" onclick="window.storeApp.openProductEditorModal()" style="font-weight: 700; border-color: var(--primary); color: var(--primary); padding: 6px 12px; display: inline-flex; align-items: center; gap: 5px;" title="Thêm sản phẩm mới hoặc điều chỉnh niêm yết giá">
-            <span>✨</span> Thêm Sản Phẩm & Niêm Yết Giá
-          </button>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="window.adminPanel.openPackageManagerModal()" style="font-weight: 700; border-color: #818CF8; color: #4F46E5; background: #EEF2FF; padding: 6px 12px; display: inline-flex; align-items: center; gap: 5px;" title="Cấu hình & Đăng ký thêm các loại gói module bản quyền">
-            <span>🧩</span> Gói Bản Quyền
-          </button>
+        <!-- Nav Actions: Cart & Nút Đăng Nhập / Đăng Ký -->
+        <div class="nav-actions" style="display: flex; align-items: center; gap: 8px;">
 
           <button id="cartBtn" class="cart-btn" aria-label="Xem giỏ hàng">
             🛒 Giỏ hàng
@@ -450,7 +444,7 @@
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
             <div class="form-group">
               <label>Phân Loại Sản Phẩm *</label>
-              <select id="prodEditType" class="form-control">
+              <select id="prodEditType" class="form-control" onchange="window.storeApp.handleProductTypeChange(this.value)">
                 <option value="tool">⚙️ Revit Tools (Add-in)</option>
                 <option value="family">📦 Revit Family (.RFA)</option>
                 <option value="template">📄 Project Template (.RTE)</option>
@@ -460,6 +454,22 @@
               <label>Chuyên Mục *</label>
               <input type="text" id="prodEditCategory" class="form-control" placeholder="Ví dụ: MEP - HVAC hoặc Kiến Trúc" required>
             </div>
+          </div>
+
+          <!-- COMBOBOX LỰA CHỌN LOẠI BẢN QUYỀN (YÊU CẦU CỦA USER) -->
+          <div class="form-group" id="prodEditLicensePackageGroup" style="background: #FFFBF7; border: 1.5px solid var(--primary); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label style="font-weight: 800; font-size: 0.9rem; color: var(--primary); margin: 0; display: flex; align-items: center; gap: 6px;">
+                <span>🧩</span> Combobox Lựa Chọn Loại Bản Quyền Cho Sản Phẩm:
+              </label>
+              <span class="badge badge-family" style="font-size: 0.7rem;">Cấp Quyền Theo Gói</span>
+            </div>
+            <select id="prodEditLicensePackage" class="form-control" style="background: #FFFFFF; font-weight: 700; color: #1E293B;">
+              <!-- Nạp động từ Package Presets -->
+            </select>
+            <small style="color: var(--text-muted); font-size: 0.78rem; display: block; margin-top: 4px;">
+              💡 Chọn Loại Bản Quyền mặc định cho công cụ này (Gói Full VIP, Combo Duct+Pipe, Combo Duct+Elec, Gói đơn lẻ...).
+            </small>
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
@@ -1028,13 +1038,13 @@
   </div>
 
   <!-- ====================================================================
-       MODAL ADMIN: QUẢN LÝ & ĐIỀU CHỈNH GÓI BẢN QUYỀN TÀI KHOẢN (YÊU CẦU 3)
+       MODAL ADMIN: ĐIỀU CHỈNH LOẠI BẢN QUYỀN TÀI KHOẢN (YÊU CẦU 3)
        ==================================================================== -->
   <div id="accountLicenseModalOverlay" class="modal-overlay">
     <div class="modal-content" style="max-width: 760px; max-height: 90vh; overflow-y: auto;">
       <div class="modal-header">
         <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-pure); display: flex; align-items: center; gap: 8px;">
-          <span>👤</span> Quản Lý & Điều Chỉnh Gói Bản Quyền Tài Khoản
+          <span>⚙️</span> Điều Chỉnh Loại Bản Quyền Cho Tài Khoản
         </h3>
         <button class="modal-close" onclick="window.adminPanel.closeAccountLicenseModal()">✕</button>
       </div>
@@ -1059,7 +1069,7 @@
         <div style="margin-bottom: 24px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--text-pure); margin: 0; display: flex; align-items: center; gap: 6px;">
-              <span>🔑</span> Các Gói / Key Bản Quyền Đang Sở Hữu
+              <span>🔑</span> Các Loại Bản Quyền Đang Sở Hữu
             </h4>
             <span id="accLicCountBadge" class="badge badge-family"></span>
           </div>
@@ -1069,10 +1079,10 @@
           </div>
         </div>
 
-        <!-- KHỐI 2: CẤP THÊM GÓI BẢN QUYỀN MỚI CHO TÀI KHOẢN NÀY -->
+        <!-- KHỐI 2: CẤP THÊM LOẠI BẢN QUYỀN MỚI CHO TÀI KHOẢN NÀY -->
         <div style="background: #FFFBF7; border: 1.5px dashed var(--primary); border-radius: var(--radius-lg); padding: 20px;">
           <h4 style="font-size: 1rem; font-weight: 800; color: var(--primary); margin: 0 0 12px 0; display: flex; align-items: center; gap: 6px;">
-            <span>✨</span> Cấp Thêm Gói Bản Quyền Mới Trực Tiếp Cho Tài Khoản Này
+            <span>✨</span> Cấp Loại Bản Quyền Mới Cho Tài Khoản Này
           </h4>
           <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 16px 0;">
             Key mới sẽ tự động được gán vào tài khoản này, kỹ sư đăng nhập vào Revit là sử dụng được ngay.
@@ -1087,8 +1097,8 @@
                 </select>
               </div>
               <div class="form-group" style="margin: 0;">
-                <label style="font-size: 0.85rem;">Chọn Gói Module Bản Quyền *</label>
-                <select id="accGrantPkgSelect" class="form-control" required>
+                <label style="font-size: 0.85rem; font-weight: 700; color: var(--primary);">Combobox Lựa Chọn Loại Bản Quyền *</label>
+                <select id="accGrantPkgSelect" class="form-control" required style="font-weight: 700;">
                   <!-- JS populate from Package Presets -->
                 </select>
               </div>

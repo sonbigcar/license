@@ -245,8 +245,8 @@ class AdminPanel {
                   </td>
                   <td>
                     <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                      <button class="btn btn-secondary btn-sm" style="color: #4F46E5; font-weight: 700; border-color: rgba(79, 70, 229, 0.4); background: #EEF2FF;" onclick="window.adminPanel.openAccountLicenseModal('${acc.id}')" title="Xem, điều chỉnh hoặc cấp thêm gói module bản quyền cho tài khoản này">
-                        🧩 Gói Bản Quyền
+                      <button class="btn btn-primary btn-sm" style="background: #4F46E5; border-color: #4F46E5; color: #FFFFFF; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);" onclick="window.adminPanel.openAccountLicenseModal('${acc.id}')" title="Điều chỉnh hoặc thay đổi loại bản quyền cho tài khoản này">
+                        ⚙️ Điều Chỉnh Loại Bản Quyền
                       </button>
                       <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.toggleRole('${acc.id}')" title="Đổi quyền Admin / Customer">
                         ${acc.role === 'admin' ? 'Hạ Kỹ sư' : 'Lên Admin'}
@@ -464,6 +464,9 @@ class AdminPanel {
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <button class="btn btn-primary btn-sm" onclick="window.storeApp.openProductEditorModal()">
             ✨ + Thêm Sản Phẩm & Niêm Yết Giá Mới
+          </button>
+          <button class="btn btn-secondary btn-sm" style="font-weight: 700; border-color: #818CF8; color: #4F46E5; background: #EEF2FF;" onclick="window.adminPanel.openPackageManagerModal()" title="Cấu hình & Đăng ký thêm các loại gói module bản quyền">
+            🧩 Gói Bản Quyền
           </button>
           <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.forceSyncToCloud(this)" title="Đồng bộ danh sách sản phẩm hiện tại lên máy chủ trung tâm">
             ☁️ Đồng Bộ Ngay Lên Máy Chủ
@@ -1762,17 +1765,29 @@ class AdminPanel {
             </div>
           </div>
 
-          <!-- Khu vực đổi gói nhanh hoặc sửa module -->
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <span style="font-size: 0.8rem; color: var(--text-muted);">Đổi nhanh gói:</span>
-              <select style="font-size: 0.78rem; padding: 4px 8px; border-radius: 4px; border: 1px solid #CBD5E1;" onchange="window.adminPanel.handleQuickApplyPackageToLicense('${lic.id}', this.value)">
-                <option value="">-- Chọn gói muốn đổi --</option>
-                ${presets.map(p => `
-                  <option value="${p.id}">${p.name} [${p.modules.join('+')}]</option>
-                `).join('')}
-              </select>
+          <!-- KHU VỰC ĐIỀU CHỈNH LOẠI BẢN QUYỀN CHO KEY NÀY -->
+          <div style="background: #EEF2FF; border: 1.5px solid #C7D2FE; border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+              <label style="font-weight: 800; font-size: 0.86rem; color: #3730A3; display: flex; align-items: center; gap: 6px; margin: 0;">
+                <span>⚙️</span> Điều Chỉnh Loại Bản Quyền Cho Key Này:
+              </label>
+              <span style="font-size: 0.76rem; color: #4338CA;">Loại hiện tại: <strong>${lic.plan_name || 'Bản quyền'}</strong></span>
             </div>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <select id="accPkgSelect_${lic.id}" class="form-control" style="flex: 1; min-width: 260px; font-weight: 700; background: #FFFFFF; color: #1E293B;">
+                ${presets.map(p => {
+                  const isCurrent = lic.plan_name === p.name || (lic.package_id && lic.package_id === p.id);
+                  return `<option value="${p.id}" ${isCurrent ? 'selected' : ''}>${p.name} [${p.modules.join(', ')}]</option>`;
+                }).join('')}
+              </select>
+              <button type="button" class="btn btn-primary btn-sm" style="background: #4F46E5; border-color: #4F46E5; font-weight: 700; padding: 7px 14px; white-space: nowrap;" onclick="window.adminPanel.applyPackageSelectionToLicense('${lic.id}', 'accPkgSelect_${lic.id}')">
+                💾 Cập Nhật Loại Bản Quyền
+              </button>
+            </div>
+          </div>
+
+          <!-- Các thao tác quản trị khác của Key -->
+          <div style="display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 8px;">
 
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
               <button type="button" class="btn btn-secondary btn-sm" style="color: #4F46E5; font-weight: 700; border-color: rgba(79, 70, 229, 0.4); background: #EEF2FF;" onclick="window.adminPanel.openEditModulesModal('${lic.id}')" title="Chọn chi tiết từng module checkbox cho key này">
@@ -1795,6 +1810,15 @@ class AdminPanel {
         </div>
       `;
     }).join('');
+  }
+
+  applyPackageSelectionToLicense(licenseId, selectId) {
+    const selectEl = document.getElementById(selectId);
+    if (!selectEl || !selectEl.value) {
+      alert('Vui lòng chọn loại bản quyền trong combobox trước khi cập nhật!');
+      return;
+    }
+    this.handleQuickApplyPackageToLicense(licenseId, selectEl.value);
   }
 
   async handleQuickApplyPackageToLicense(licenseId, packageId) {
