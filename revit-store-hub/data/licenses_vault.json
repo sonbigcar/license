@@ -1,0 +1,9 @@
+{
+  "REVIT-DEMO-TEST-KEY-01": {
+    "allowed_modules": [
+      "MEP-ALL"
+    ],
+    "plan_name": "Gói Full VIP (Tất Cả Tools)",
+    "updated_at": "2026-10-24T14:27:01.308Z"
+  }
+}

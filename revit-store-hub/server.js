@@ -61,6 +61,56 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  const LICENSES_FILE = path.join(PUBLIC_DIR, 'data', 'licenses_vault.json');
+  function getLicensesVault() {
+    try {
+      if (fs.existsSync(LICENSES_FILE)) {
+        return JSON.parse(fs.readFileSync(LICENSES_FILE, 'utf8') || '{}');
+      }
+    } catch (e) {}
+    return {};
+  }
+  function saveLicensesVault(vault) {
+    try {
+      const dataDir = path.dirname(LICENSES_FILE);
+      if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+      fs.writeFileSync(LICENSES_FILE, JSON.stringify(vault, null, 2), 'utf8');
+    } catch (e) {
+      console.error('[LicensesVault] Lỗi lưu file:', e);
+    }
+  }
+
+  // 0. ENDPOINT: ĐỒNG BỘ MODULE CỦA KEY TỪ ADMIN WEBSITE
+  if (req.method === 'POST' && req.url.startsWith('/api/v1/license/sync')) {
+    const chunks = [];
+    req.on('data', chunk => chunks.push(chunk));
+    req.on('end', () => {
+      try {
+        const bodyStr = Buffer.concat(chunks).toString('utf8');
+        const data = bodyStr ? JSON.parse(bodyStr) : {};
+        const key = (data.license_key || data.LicenseKey || '').trim().toUpperCase();
+
+        if (key) {
+          const licVault = getLicensesVault();
+          licVault[key] = {
+            allowed_modules: data.allowed_modules || ['MEP-ALL'],
+            plan_name: data.plan_name,
+            expiry_date: data.expiry_date,
+            updated_at: new Date().toISOString()
+          };
+          saveLicensesVault(licVault);
+          console.log(`[LicenseSync] Đã cập nhật key ${key}: ${JSON.stringify(licVault[key].allowed_modules)}`);
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ success: true, message: 'Đã đồng bộ module thành công!' }));
+          return;
+        }
+      } catch (err) {}
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ success: false, message: 'Thiếu key' }));
+    });
+    return;
+  }
+
   // 1. ENDPOINT: DÙNG THỬ 7 NGÀY (KIỂM TRA CHẶN HWID DÙNG THỬ NHIỀU LẦN)
   if (req.method === 'POST' && req.url.startsWith('/api/v1/license/trial')) {
     const chunks = [];
@@ -183,8 +233,11 @@ const server = http.createServer(async (req, res) => {
         // Phân giải các module được cấp phép dựa trên Key hoặc Database
         let allowedModules = [];
 
-        // Kiểm tra xem có cấu hình module tùy chọn truyền lên không
-        if (Array.isArray(data.allowed_modules) && data.allowed_modules.length > 0) {
+        // 1. Tra cứu trực tiếp trong kho giấy phép do Admin tùy chỉnh trên website
+        const licVault = getLicensesVault();
+        if (licVault[key] && Array.isArray(licVault[key].allowed_modules) && licVault[key].allowed_modules.length > 0) {
+          allowedModules = licVault[key].allowed_modules;
+        } else if (Array.isArray(data.allowed_modules) && data.allowed_modules.length > 0) {
           allowedModules = data.allowed_modules;
         } else if (data.ProductCode || data.product_code) {
           const reqCode = (data.ProductCode || data.product_code).toUpperCase();

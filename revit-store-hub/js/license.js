@@ -113,6 +113,28 @@ class LicenseManager {
   }
 
   /**
+   * Cập nhật danh sách các module được cấp phép cho License (Full VIP, Duct, Pipe, Sheet, Fire, Elec, AI)
+   */
+  updateLicenseModules(licenseId, allowedModules) {
+    const licenses = window.dataStore.getLicenses();
+    const lic = licenses.find(l => l.id === licenseId);
+    if (!lic) return false;
+
+    const isAll = allowedModules.includes('MEP-ALL') || allowedModules.length >= 6;
+    lic.allowed_modules = isAll ? ['MEP-ALL'] : allowedModules;
+
+    if (isAll) {
+      lic.plan_name = `Gói Full VIP (Tất Cả Tools - ${lic.max_machines} Máy)`;
+    } else {
+      const names = lic.allowed_modules.map(m => m.replace('MEP-', ''));
+      lic.plan_name = `Gói Combo (${names.join(' + ')} - ${lic.max_machines} Máy)`;
+    }
+
+    window.dataStore.updateLicense(lic);
+    return lic;
+  }
+
+  /**
    * Tạm dừng hoặc kích hoạt lại License
    */
   toggleLicenseStatus(licenseId) {

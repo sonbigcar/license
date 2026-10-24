@@ -841,6 +841,70 @@
   </div>
 
   <!-- ====================================================================
+       MODAL ADMIN: CHỈNH SỬA MODULE BẢN QUYỀN (FULL VIP, DUCT, PIPE...)
+       ==================================================================== -->
+  <div id="editLicenseModulesModalOverlay" class="modal-overlay">
+    <div class="modal-content" style="max-width: 620px;">
+      <div class="modal-header">
+        <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-pure);">
+          🧩 Chỉnh Sửa Gói Module Bản Quyền
+        </h3>
+        <button class="modal-close" onclick="window.adminPanel.closeEditModulesModal()">✕</button>
+      </div>
+
+      <div style="padding: 24px;">
+        <input type="hidden" id="editLicId">
+        
+        <div style="background: #FAF3EE; border: 1px solid #EAE0D7; border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 20px;">
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 2px;">License Key Đang Chọn:</div>
+          <div id="editLicKeyDisplay" style="font-family: var(--font-mono); font-weight: 800; font-size: 1.15rem; color: var(--primary);"></div>
+          <div id="editLicUserDisplay" style="font-size: 0.84rem; color: var(--text-dim); margin-top: 4px;"></div>
+        </div>
+
+        <div class="form-group">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+            <label style="margin:0; font-weight:700;">Chọn Gói Quyền Truy Cập Tools:</label>
+            <span style="font-size:0.82rem; color:var(--text-muted);">Chọn nhanh:</span>
+          </div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.adminPanel.setEditModulePreset('all')">⭐ Tất Cả (Full VIP)</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.adminPanel.setEditModulePreset('duct_pipe')">❄️+🚰 Duct + Pipe</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.adminPanel.setEditModulePreset('duct_elec')">❄️+⚡ Duct + Elec</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.adminPanel.setEditModulePreset('duct_only')">❄️ Chỉ Duct</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.adminPanel.setEditModulePreset('pipe_only')">🚰 Chỉ Pipe</button>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; background:#FFFFFF; padding:16px; border-radius:var(--radius-md); border:1px solid #E2E8F0;">
+            <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; cursor:pointer;">
+              <input type="checkbox" name="editLicModuleCheck" value="MEP-DUCT"> ❄️ Ds Duct Tools (Ống Gió)
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; cursor:pointer;">
+              <input type="checkbox" name="editLicModuleCheck" value="MEP-PIPE"> 🚰 Ds Pipe Tools (Ống Nước)
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; cursor:pointer;">
+              <input type="checkbox" name="editLicModuleCheck" value="MEP-SHEET"> 📑 Ds Sheet Manager (Bản Vẽ)
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; cursor:pointer;">
+              <input type="checkbox" name="editLicModuleCheck" value="MEP-FIRE"> 🧯 Ds Fire Protection (PCCC)
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; cursor:pointer;">
+              <input type="checkbox" name="editLicModuleCheck" value="MEP-ELEC"> ⚡ Ds Electrical (Điện)
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; cursor:pointer;">
+              <input type="checkbox" name="editLicModuleCheck" value="MEP-AI"> 🤖 Ds AI Family & MCP
+            </label>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;">
+          <button type="button" class="btn btn-secondary" onclick="window.adminPanel.closeEditModulesModal()">Hủy</button>
+          <button type="button" class="btn btn-primary" onclick="window.adminPanel.saveEditModules()">💾 Lưu Cập Nhật Module</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
        MODAL USER: HƯỚNG DẪN KÍCH HOẠT ADD-IN TRONG AUTODESK REVIT
        ==================================================================== -->
   <div id="licenseGuideModalOverlay" class="modal-overlay">

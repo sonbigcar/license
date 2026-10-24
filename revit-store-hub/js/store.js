@@ -184,6 +184,13 @@ class StoreApp {
       });
     }
 
+    const editLicModOverlay = document.getElementById('editLicenseModulesModalOverlay');
+    if (editLicModOverlay) {
+      editLicModOverlay.addEventListener('click', (e) => {
+        if (e.target.id === 'editLicenseModulesModalOverlay') window.adminPanel.closeEditModulesModal();
+      });
+    }
+
     const licGuideOverlay = document.getElementById('licenseGuideModalOverlay');
     if (licGuideOverlay) {
       licGuideOverlay.addEventListener('click', (e) => {

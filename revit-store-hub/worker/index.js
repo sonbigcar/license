@@ -321,6 +321,21 @@ export default {
       }
 
       // ------------------------------------------------------------------------
+      // 4.5 ENDPOINT: ĐỒNG BỘ MODULE CỦA KEY TỪ ADMIN WEBSITE
+      // ------------------------------------------------------------------------
+      if (path === '/api/v1/license/sync' && request.method === 'POST') {
+        const body = await request.json().catch(() => ({}));
+        const key = (body.license_key || body.LicenseKey || '').trim().toUpperCase();
+        if (key && env && env.LICENSES_KV) {
+          await env.LICENSES_KV.put('lic:' + key, JSON.stringify(body));
+        }
+        return new Response(JSON.stringify({ success: true, message: 'Đã đồng bộ module!' }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // ------------------------------------------------------------------------
       // 5. ENDPOINT: XÁC MINH & KÍCH HOẠT BẢN QUYỀN (HỖ TRỢ COMBO TÙY CHỌN NHIỀU MODULES)
       // ------------------------------------------------------------------------
       const isVerifyOrActivate = (path === '/api/v1/license/verify' || path === '/api/v1/license/activate' || path === '/api/activate' || path === '/api/validate') && request.method === 'POST';
@@ -353,10 +368,22 @@ export default {
         };
 
         let allowedModules = [];
-        if (Array.isArray(body.allowed_modules) && body.allowed_modules.length > 0) {
-          allowedModules = body.allowed_modules;
-        } else if (body.ProductCode || body.product_code) {
-          allowedModules = [(body.ProductCode || body.product_code).toUpperCase()];
+        if (env && env.LICENSES_KV) {
+          try {
+            const stored = await env.LICENSES_KV.get('lic:' + license_key);
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              if (Array.isArray(parsed.allowed_modules)) allowedModules = parsed.allowed_modules;
+            }
+          } catch (e) {}
+        }
+
+        if (allowedModules.length === 0) {
+          if (Array.isArray(body.allowed_modules) && body.allowed_modules.length > 0) {
+            allowedModules = body.allowed_modules;
+          } else if (body.ProductCode || body.product_code) {
+            allowedModules = [(body.ProductCode || body.product_code).toUpperCase()];
+          }
         }
 
         // Nhận diện thông minh combo từ cú pháp key

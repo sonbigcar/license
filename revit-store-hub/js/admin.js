@@ -608,7 +608,7 @@ class AdminPanel {
                     <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 2px;">
                       Phiên bản: <span class="badge badge-version" style="font-size: 0.7rem; padding: 2px 6px;">${l.version || 'v2.4.0'}</span>
                     </div>
-                    <div style="margin-top: 4px;">
+                    <div style="margin-top: 5px; cursor: pointer;" onclick="window.adminPanel.openEditModulesModal('${l.id}')" title="Bấm để chỉnh sửa phân quyền module của key này">
                       ${(() => {
                         const moduleMap = {
                           'MEP-DUCT': '❄️ Duct',
@@ -625,6 +625,7 @@ class AdminPanel {
                         }
                         return mods.map(m => `<span class="badge" style="background:#F1F5F9; color:#334155; font-size:0.68rem; margin-right:3px;">${moduleMap[m] || m}</span>`).join('');
                       })()}
+                      <span style="font-size: 0.72rem; color: var(--primary); text-decoration: underline; margin-left: 4px;">✏️ Sửa</span>
                     </div>
                   </td>
 
@@ -652,6 +653,9 @@ class AdminPanel {
 
                   <td>
                     <div class="license-action-cell">
+                      <button class="btn btn-secondary btn-sm" style="color: #4F46E5; font-weight: 700; border-color: rgba(79, 70, 229, 0.35); background: #EEF2FF;" onclick="window.adminPanel.openEditModulesModal('${l.id}')" title="Chỉnh sửa gói module (Full VIP, Duct, Pipe, Elec...)">
+                        🧩 Sửa Module
+                      </button>
                       <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.openLicenseDevicesModal('${l.id}')" title="Xem danh sách HWID máy trạm">
                         🖥️ Máy Trạm
                       </button>
@@ -889,6 +893,89 @@ class AdminPanel {
       this.openLicenseDevicesModal(licenseId);
       this.render();
     }
+  }
+
+  openEditModulesModal(licenseId) {
+    const licenses = window.dataStore.getLicenses();
+    const lic = licenses.find(l => l.id === licenseId);
+    if (!lic) return;
+
+    document.getElementById('editLicId').value = lic.id;
+    document.getElementById('editLicKeyDisplay').textContent = lic.license_key;
+    document.getElementById('editLicUserDisplay').textContent =
+      `Khách hàng: ${lic.user_name} (${lic.user_email}) • Đơn vị: ${lic.company || 'Cá nhân'} • Gói hiện tại: ${lic.plan_name || 'Tùy chỉnh'}`;
+
+    const mods = lic.allowed_modules || ['MEP-ALL'];
+    const isAll = mods.includes('MEP-ALL') || mods.length >= 6;
+
+    const checkboxes = document.querySelectorAll('input[name="editLicModuleCheck"]');
+    checkboxes.forEach(cb => {
+      if (isAll) {
+        cb.checked = true;
+      } else {
+        cb.checked = mods.includes(cb.value);
+      }
+    });
+
+    const modal = document.getElementById('editLicenseModulesModalOverlay');
+    if (modal) modal.classList.add('active');
+  }
+
+  closeEditModulesModal() {
+    const modal = document.getElementById('editLicenseModulesModalOverlay');
+    if (modal) modal.classList.remove('active');
+  }
+
+  setEditModulePreset(preset) {
+    const checkboxes = document.querySelectorAll('input[name="editLicModuleCheck"]');
+    checkboxes.forEach(cb => {
+      if (preset === 'all') {
+        cb.checked = true;
+      } else if (preset === 'duct_pipe') {
+        cb.checked = (cb.value === 'MEP-DUCT' || cb.value === 'MEP-PIPE');
+      } else if (preset === 'duct_elec') {
+        cb.checked = (cb.value === 'MEP-DUCT' || cb.value === 'MEP-ELEC');
+      } else if (preset === 'duct_only') {
+        cb.checked = (cb.value === 'MEP-DUCT');
+      } else if (preset === 'pipe_only') {
+        cb.checked = (cb.value === 'MEP-PIPE');
+      }
+    });
+  }
+
+  async saveEditModules() {
+    const licId = document.getElementById('editLicId').value;
+    const checkboxes = document.querySelectorAll('input[name="editLicModuleCheck"]:checked');
+    const selected = Array.from(checkboxes).map(cb => cb.value);
+
+    if (selected.length === 0) {
+      alert('Vui lòng chọn ít nhất 1 module cho giấy phép!');
+      return;
+    }
+
+    const updated = window.licenseManager.updateLicenseModules(licId, selected);
+    if (!updated) {
+      alert('Không tìm thấy giấy phép để cập nhật!');
+      return;
+    }
+
+    // Đồng bộ lên Server API để máy trạm Revit Add-in nhận ngay khi gọi Verify
+    try {
+      await fetch('/api/v1/license/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          license_key: updated.license_key,
+          allowed_modules: updated.allowed_modules,
+          plan_name: updated.plan_name,
+          expiry_date: updated.expiry_date
+        })
+      });
+    } catch (e) {}
+
+    this.closeEditModulesModal();
+    alert(`🎉 ĐÃ CẬP NHẬT GÓI MODULE THÀNH CÔNG!\n\n• Key: ${updated.license_key}\n• Gói mới: ${updated.plan_name}\n• Các module được mở: ${updated.allowed_modules.join(', ')}`);
+    this.render();
   }
 
   renderSettingsTab() {
