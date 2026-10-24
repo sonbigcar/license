@@ -1675,7 +1675,20 @@ class AdminPanel {
 
     // Nạp dropdown Gói Module Bản Quyền từ Presets
     const pkgSelect = document.getElementById('accGrantPkgSelect');
-    const presets = window.dataStore.getPackagePresets();
+    let presets = [];
+    try {
+      if (window.dataStore && typeof window.dataStore.getPackagePresets === 'function') {
+        presets = window.dataStore.getPackagePresets();
+      }
+    } catch(e) {}
+    if (!presets || !presets.length) {
+      presets = [
+        { id: 'pkg-full-vip', name: 'Gói Full VIP (Tất Cả Tools)', price: 2400000, sale_price: 1800000, modules: ['MEP-ALL'] },
+        { id: 'pkg-combo-duct-pipe', name: 'Combo Cơ Bản (Duct + Pipe)', price: 1600000, sale_price: 1200000, modules: ['MEP-DUCT', 'MEP-PIPE'] },
+        { id: 'pkg-combo-duct-elec', name: 'Combo Cơ Điện (Duct + Elec)', price: 1600000, sale_price: 1200000, modules: ['MEP-DUCT', 'MEP-ELEC'] },
+        { id: 'pkg-single-tool', name: 'Gói Lẻ 1 Module Tùy Chọn', price: 950000, sale_price: 750000, modules: ['MEP-DUCT'] }
+      ];
+    }
     if (pkgSelect) {
       pkgSelect.innerHTML = presets.map(p => `
         <option value="${p.id}">
@@ -1716,8 +1729,20 @@ class AdminPanel {
       return;
     }
 
-    const now = new Date();
-    const presets = window.dataStore.getPackagePresets();
+    let presets = [];
+    try {
+      if (window.dataStore && typeof window.dataStore.getPackagePresets === 'function') {
+        presets = window.dataStore.getPackagePresets();
+      }
+    } catch(e) {}
+    if (!presets || !presets.length) {
+      presets = [
+        { id: 'pkg-full-vip', name: 'Gói Full VIP (Tất Cả Tools)', price: 2400000, sale_price: 1800000, modules: ['MEP-ALL'] },
+        { id: 'pkg-combo-duct-pipe', name: 'Combo Cơ Bản (Duct + Pipe)', price: 1600000, sale_price: 1200000, modules: ['MEP-DUCT', 'MEP-PIPE'] },
+        { id: 'pkg-combo-duct-elec', name: 'Combo Cơ Điện (Duct + Elec)', price: 1600000, sale_price: 1200000, modules: ['MEP-DUCT', 'MEP-ELEC'] },
+        { id: 'pkg-single-tool', name: 'Gói Lẻ 1 Module Tùy Chọn', price: 950000, sale_price: 750000, modules: ['MEP-DUCT'] }
+      ];
+    }
 
     container.innerHTML = userLics.map(lic => {
       const exp = new Date(lic.expiry_date);

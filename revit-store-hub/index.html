@@ -22,6 +22,8 @@
   <link rel="stylesheet" href="css/portal.css">
   <style>
     .hidden { display: none !important; }
+    #navItemAdmin:not(.admin-authorized) { display: none !important; }
+    #adminCatalogActionArea:not(.admin-authorized) { display: none !important; }
   </style>
 </head>
 <body>
@@ -46,7 +48,7 @@
             <li class="nav-item" data-view="libraryView">📁 Thư Viện Của Tôi</li>
             <li class="nav-item" data-view="licenseView">🔑 Bản Quyền Của Tôi</li>
             <!-- TAB QUẢN TRỊ HỆ THỐNG / ADMIN (CHỈ ADMIN MỚI THẤY) -->
-            <li id="navItemAdmin" class="nav-item" data-view="adminView" style="display: none; color: #ff5722; font-weight: 800; cursor: pointer;">
+            <li id="navItemAdmin" class="nav-item" data-view="adminView" style="display: none !important; color: #ff5722; font-weight: 800; cursor: pointer;">
               👑 Quản Trị Hệ Thống
             </li>
           </ul>
@@ -147,8 +149,8 @@
           <h2 class="catalog-section-title">Danh Mục Sản Phẩm</h2>
         </div>
 
-        <!-- KHU VỰC THAO TÁC CỦA ADMIN: THÊM SẢN PHẨM MỚI & NIÊM YẾT GIÁ -->
-        <div id="adminCatalogActionArea"></div>
+        <!-- KHU VỰC THAO TÁC CỦA ADMIN: THÊM SẢN PHẨM MỚI & NIÊM YẾT GIÁ (MẶC ĐỊNH ẨN VỚI KHÁCH HÀNG) -->
+        <div id="adminCatalogActionArea" style="display: none !important;"></div>
 
         <div class="toolbar-card">
           <div class="search-box">
@@ -465,7 +467,10 @@
               <span class="badge badge-family" style="font-size: 0.7rem;">Cấp Quyền Theo Gói</span>
             </div>
             <select id="prodEditLicensePackage" class="form-control" style="background: #FFFFFF; font-weight: 700; color: #1E293B;">
-              <!-- Nạp động từ Package Presets -->
+              <option value="pkg-full-vip" selected>⭐ Gói Full VIP (Tất Cả Tools) - 1.800.000 ₫ [MEP-ALL]</option>
+              <option value="pkg-combo-duct-pipe">🔥 Combo Cơ Bản (Duct + Pipe) - 1.200.000 ₫ [MEP-DUCT, MEP-PIPE]</option>
+              <option value="pkg-combo-duct-elec">⚡ Combo Cơ Điện (Duct + Elec) - 1.200.000 ₫ [MEP-DUCT, MEP-ELEC]</option>
+              <option value="pkg-single-tool">💡 Gói Lẻ 1 Module Tùy Chọn - 750.000 ₫ [MEP-DUCT]</option>
             </select>
             <small style="color: var(--text-muted); font-size: 0.78rem; display: block; margin-top: 4px;">
               💡 Chọn Loại Bản Quyền mặc định cho công cụ này (Gói Full VIP, Combo Duct+Pipe, Combo Duct+Elec, Gói đơn lẻ...).
@@ -1099,7 +1104,10 @@
               <div class="form-group" style="margin: 0;">
                 <label style="font-size: 0.85rem; font-weight: 700; color: var(--primary);">Combobox Lựa Chọn Loại Bản Quyền *</label>
                 <select id="accGrantPkgSelect" class="form-control" required style="font-weight: 700;">
-                  <!-- JS populate from Package Presets -->
+                  <option value="pkg-full-vip" selected>⭐ Gói Full VIP (Tất Cả Tools) - 1.800.000 ₫ [MEP-ALL]</option>
+                  <option value="pkg-combo-duct-pipe">🔥 Combo Cơ Bản (Duct + Pipe) - 1.200.000 ₫ [MEP-DUCT, MEP-PIPE]</option>
+                  <option value="pkg-combo-duct-elec">⚡ Combo Cơ Điện (Duct + Elec) - 1.200.000 ₫ [MEP-DUCT, MEP-ELEC]</option>
+                  <option value="pkg-single-tool">💡 Gói Lẻ 1 Module Tùy Chọn - 750.000 ₫ [MEP-DUCT]</option>
                 </select>
               </div>
             </div>
@@ -1231,13 +1239,13 @@
     </div>
   </div>
 
-  <!-- Javascript Modules -->
-  <script src="js/data.js?v=20261024_v1"></script>
-  <script src="js/auth.js?v=20261024_v1"></script>
-  <script src="js/payment.js?v=20261024_v1"></script>
-  <script src="js/download.js?v=20261024_v1"></script>
-  <script src="js/license.js?v=20261024_v1"></script>
-  <script src="js/admin.js?v=20261024_v1"></script>
-  <script src="js/store.js?v=20261024_v1"></script>
+  <!-- Javascript Modules (Anti-cache v10) -->
+  <script src="js/data.js?v=20261024_v10"></script>
+  <script src="js/auth.js?v=20261024_v10"></script>
+  <script src="js/payment.js?v=20261024_v10"></script>
+  <script src="js/download.js?v=20261024_v10"></script>
+  <script src="js/license.js?v=20261024_v10"></script>
+  <script src="js/admin.js?v=20261024_v10"></script>
+  <script src="js/store.js?v=20261024_v10"></script>
 </body>
 </html>

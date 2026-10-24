@@ -17,18 +17,19 @@ class StoreApp {
 
   init() {
     this.setupEventListeners();
+    this.updateNavTabsVisibility();
+    this.populateProductEditorPackages();
     this.renderPillars();
     this.renderProducts();
     this.updateCartBadge();
     this.updateUserNav();
-    this.updateNavTabsVisibility();
 
     // Lắng nghe thay đổi User Auth
     window.authManager.subscribe((user) => {
       this.updateUserNav();
       this.updateNavTabsVisibility();
       this.renderPillars();
-      this.renderProducts(); // Re-render để hiển thị nút Admin thêm sản phẩm nếu vừa login admin
+      this.renderProducts();
 
       if (document.getElementById('libraryView') && !document.getElementById('libraryView').classList.contains('hidden')) {
         this.renderUserLibrary();
@@ -272,10 +273,28 @@ class StoreApp {
    * Cập nhật hiển thị Tabs Navbar (Chỉ tài khoản Admin mới thấy Tab Quản Trị Hệ Thống)
    */
   updateNavTabsVisibility() {
-    const isAdmin = window.authManager && window.authManager.isAdmin();
+    const user = window.authManager ? window.authManager.getCurrentUser() : null;
+    const isAdmin = !!(user && user.role === 'admin');
     const adminNavTab = document.getElementById('navItemAdmin');
     if (adminNavTab) {
-      adminNavTab.style.display = isAdmin ? 'inline-block' : 'none';
+      if (isAdmin) {
+        adminNavTab.classList.add('admin-authorized');
+        adminNavTab.style.display = 'inline-block';
+      } else {
+        adminNavTab.classList.remove('admin-authorized');
+        adminNavTab.style.display = 'none';
+      }
+    }
+    const catalogActionArea = document.getElementById('adminCatalogActionArea');
+    if (catalogActionArea) {
+      if (isAdmin) {
+        catalogActionArea.classList.add('admin-authorized');
+        catalogActionArea.style.display = 'block';
+      } else {
+        catalogActionArea.classList.remove('admin-authorized');
+        catalogActionArea.style.display = 'none';
+        catalogActionArea.innerHTML = '';
+      }
     }
   }
 
@@ -334,6 +353,7 @@ class StoreApp {
     alert('Đã đăng xuất tài khoản an toàn.');
 
     // 5. Chuyển về màn hình Cửa hàng và làm mới danh mục
+    this.updateNavTabsVisibility();
     this.switchMainView('storefrontView');
     this.renderProducts();
   }
@@ -387,9 +407,13 @@ class StoreApp {
         window.dataStore.fetchRemoteOrders().catch(() => {});
       }
 
+      this.updateNavTabsVisibility();
+      this.renderProducts();
+
       if (user.role === 'admin') {
         this.switchMainView('adminView');
       } else {
+        this.switchMainView('storefrontView');
         if (document.getElementById('libraryView') && !document.getElementById('libraryView').classList.contains('hidden')) {
           this.renderUserLibrary();
         }
@@ -426,6 +450,9 @@ class StoreApp {
     try {
       const user = await window.authManager.register(fullName, email, password, phone, company, 'customer');
       this.closeAuthModal();
+      this.updateNavTabsVisibility();
+      this.renderProducts();
+      this.switchMainView('storefrontView');
       alert(`🎉 Chúc mừng ${user.full_name}! Tài khoản của bạn đã được đăng ký thành công và đã tự động đăng nhập.`);
 
       // Đồng bộ đơn hàng đám mây về cho tài khoản vừa đăng ký
@@ -445,7 +472,8 @@ class StoreApp {
     const actionArea = document.getElementById('adminPillarsActionArea');
     if (!container) return;
 
-    const isAdmin = window.authManager.isAdmin();
+    const user = window.authManager ? window.authManager.getCurrentUser() : null;
+    const isAdmin = !!(user && user.role === 'admin');
     const config = window.dataStore.getPillarsConfig();
     const pillarKeys = ['tools', 'family_template', 'custom_service'];
 
@@ -661,6 +689,15 @@ class StoreApp {
   }
 
   switchMainView(viewId) {
+    if (viewId === 'adminView') {
+      const user = window.authManager ? window.authManager.getCurrentUser() : null;
+      const isAdmin = !!(user && user.role === 'admin');
+      if (!isAdmin) {
+        alert('Khu vực Quản Trị Hệ Thống chỉ dành riêng cho tài khoản Quản Trị Viên (Admin sonbigcar). Khách hàng không có quyền truy cập tab này.');
+        viewId = 'storefrontView';
+      }
+    }
+
     document.querySelectorAll('.nav-item').forEach(item => {
       item.classList.toggle('active', item.dataset.view === viewId);
     });
@@ -703,11 +740,14 @@ class StoreApp {
     const adminActionArea = document.getElementById('adminCatalogActionArea');
     if (!container) return;
 
-    const isAdmin = window.authManager.isAdmin();
+    const user = window.authManager ? window.authManager.getCurrentUser() : null;
+    const isAdmin = !!(user && user.role === 'admin');
 
     // Chỉ hiển thị thanh công cụ Quản Trị trên Catalog nếu là Admin
     if (adminActionArea) {
       if (isAdmin) {
+        adminActionArea.classList.add('admin-authorized');
+        adminActionArea.style.display = 'block';
         adminActionArea.innerHTML = `
           <div style="background: #FFF5F0; border: 1.5px dashed var(--primary); border-radius: var(--radius-lg); padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -722,6 +762,8 @@ class StoreApp {
           </div>
         `;
       } else {
+        adminActionArea.classList.remove('admin-authorized');
+        adminActionArea.style.display = 'none';
         adminActionArea.innerHTML = '';
       }
     }
@@ -1119,20 +1161,11 @@ class StoreApp {
 
     // Nạp danh sách các Loại Bản Quyền (Package Presets) vào Combobox
     const prod = productId ? window.dataStore.getProductById(productId) : null;
-    const pkgSelect = document.getElementById('prodEditLicensePackage');
-    const pkgGroup = document.getElementById('prodEditLicensePackageGroup');
-    const presets = window.dataStore.getPackagePresets();
     const currentPkgId = (prod && prod.package_id) ? prod.package_id : 'pkg-full-vip';
-
-    if (pkgSelect) {
-      pkgSelect.innerHTML = presets.map(p => `
-        <option value="${p.id}" ${p.id === currentPkgId ? 'selected' : ''}>
-          ${p.name} - ${this.formatCurrency(p.sale_price || p.price)} [${(p.modules || []).join(', ')}]
-        </option>
-      `).join('');
-    }
+    this.populateProductEditorPackages(currentPkgId);
 
     // Ẩn/Hiện Combobox Loại Bản Quyền theo phân loại sản phẩm (Chỉ áp dụng cho Tools)
+    const pkgGroup = document.getElementById('prodEditLicensePackageGroup');
     const currentType = prod ? prod.product_type : (document.getElementById('prodEditType')?.value || 'tool');
     if (pkgGroup) {
       pkgGroup.style.display = (currentType === 'tool') ? 'block' : 'none';
@@ -1152,6 +1185,32 @@ class StoreApp {
     }
 
     modal.classList.add('active');
+  }
+
+  populateProductEditorPackages(selectedId = 'pkg-full-vip') {
+    const pkgSelect = document.getElementById('prodEditLicensePackage');
+    if (!pkgSelect) return;
+    let presets = [];
+    try {
+      if (window.dataStore && typeof window.dataStore.getPackagePresets === 'function') {
+        presets = window.dataStore.getPackagePresets();
+      }
+    } catch (e) {}
+
+    if (!presets || !presets.length) {
+      presets = [
+        { id: 'pkg-full-vip', name: 'Gói Full VIP (Tất Cả Tools)', price: 2400000, sale_price: 1800000, modules: ['MEP-ALL'] },
+        { id: 'pkg-combo-duct-pipe', name: 'Combo Cơ Bản (Duct + Pipe)', price: 1600000, sale_price: 1200000, modules: ['MEP-DUCT', 'MEP-PIPE'] },
+        { id: 'pkg-combo-duct-elec', name: 'Combo Cơ Điện (Duct + Elec)', price: 1600000, sale_price: 1200000, modules: ['MEP-DUCT', 'MEP-ELEC'] },
+        { id: 'pkg-single-tool', name: 'Gói Lẻ 1 Module Tùy Chọn', price: 950000, sale_price: 750000, modules: ['MEP-DUCT'] }
+      ];
+    }
+
+    pkgSelect.innerHTML = presets.map(p => `
+      <option value="${p.id}" ${p.id === selectedId ? 'selected' : ''}>
+        ${p.name} - ${this.formatCurrency(p.sale_price || p.price)} [${(p.modules || []).join(', ')}]
+      </option>
+    `).join('');
   }
 
   handleProductTypeChange(type) {
