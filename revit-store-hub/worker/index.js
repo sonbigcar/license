@@ -247,14 +247,20 @@ export default {
       }
 
       // ------------------------------------------------------------------------
-      // 4. ENDPOINT: XÁC MINH BẢN QUYỀN TRỰC TUYẾN CHO REVIT ADD-IN (.NET C#)
+      // 4. ENDPOINT: XÁC MINH & KÍCH HOẠT BẢN QUYỀN REVIT ADD-IN (.NET C#)
       // ------------------------------------------------------------------------
-      if (path === '/api/v1/license/verify' && request.method === 'POST') {
-        const { license_key, machine_id, machine_name, revit_version } = await request.json();
+      const isVerifyOrActivate = (path === '/api/v1/license/verify' || path === '/api/v1/license/activate' || path === '/api/activate' || path === '/api/validate') && request.method === 'POST';
+      if (isVerifyOrActivate) {
+        const body = await request.json().catch(() => ({}));
+        const license_key = (body.license_key || body.LicenseKey || '').trim().toUpperCase();
+        const machine_id = body.machine_id || body.MachineId || 'UNKNOWN_HWID';
+        const machine_name = body.machine_name || body.Username || 'PC-Workstation';
+        const product_code_req = (body.product_code || body.ProductCode || '').trim().toUpperCase();
 
-        if (!license_key || !machine_id) {
+        if (!license_key && !body.Token && !body.token) {
           return new Response(JSON.stringify({
             valid: false,
+            Success: false,
             code: 'MISSING_PARAMS',
             message: 'Thiếu License Key hoặc Hardware ID (Machine ID)'
           }), {
@@ -263,19 +269,56 @@ export default {
           });
         }
 
-        // Trả kết quả xác thực trực tiếp
+        const productMap = {
+          'MEP-DUCT': 'Ds Duct Tools Pro',
+          'MEP-PIPE': 'Ds Pipe Tools Pro',
+          'MEP-SHEET': 'Ds Sheet Manager Pro',
+          'MEP-FIRE': 'Ds Fire Protection Pro',
+          'MEP-ELEC': 'Ds Electrical Tools Pro',
+          'MEP-AI': 'Ds AI Family & Automation',
+          'MEP-ALL': 'VIP Combo All-in-One Suite'
+        };
+
+        let resolvedCode = product_code_req;
+        if (license_key.includes('VIP') || license_key.includes('ALL')) resolvedCode = 'MEP-ALL';
+        else if (license_key.includes('DUCT')) resolvedCode = 'MEP-DUCT';
+        else if (license_key.includes('PIPE')) resolvedCode = 'MEP-PIPE';
+        else if (license_key.includes('SHEET') || license_key.includes('SHT')) resolvedCode = 'MEP-SHEET';
+        else if (license_key.includes('FIRE')) resolvedCode = 'MEP-FIRE';
+        else if (license_key.includes('ELEC')) resolvedCode = 'MEP-ELEC';
+        else if (license_key.includes('AI')) resolvedCode = 'MEP-AI';
+
+        if (!resolvedCode || !productMap[resolvedCode]) {
+          resolvedCode = 'MEP-ALL';
+        }
+
+        const isTrial = license_key.startsWith('TRIAL-');
+        const durationDays = isTrial ? 14 : 365;
+        const expiryDate = new Date(Date.now() + durationDays * 86400000).toISOString();
+        const prodName = productMap[resolvedCode];
+
         return new Response(JSON.stringify({
           valid: true,
+          Success: true,
           code: 'HEARTBEAT_OK',
-          product_name: 'Revit Automation Add-in Pro',
-          subscription_type: 'yearly',
-          expires_at: new Date(Date.now() + 365 * 86400000).toISOString(),
-          days_remaining: 365,
-          machine_name: machine_name || 'PC-Workstation',
+          Token: 'CF_TOKEN_' + btoa(license_key + ':' + machine_id),
+          token: 'CF_TOKEN_' + btoa(license_key + ':' + machine_id),
+          ProductCode: resolvedCode,
+          product_code: resolvedCode,
+          ProductName: prodName,
+          product_name: prodName,
+          subscription_type: isTrial ? 'trial' : 'yearly',
+          ExpiryDate: expiryDate,
+          expires_at: expiryDate,
+          days_remaining: durationDays,
+          CustomerName: machine_name,
+          customer_name: machine_name,
+          machine_name: machine_name,
           machines_used: 1,
           max_machines: 3,
-          features: ['auto_routing', 'smart_elevation', 'batch_exporter', 'family_loader'],
-          message: 'Bản quyền Autodesk Revit Add-in hợp lệ.'
+          is_trial: isTrial,
+          Message: `Bản quyền ${prodName} hợp lệ.`,
+          message: `Bản quyền ${prodName} hợp lệ.`
         }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },

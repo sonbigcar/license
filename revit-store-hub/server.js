@@ -39,6 +39,97 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // API BẢN QUYỀN REVIT ADD-IN (.NET C#) THEO TỪNG MODULE & VIP COMBO
+  const isLicenseEndpoint = req.method === 'POST' && (
+    req.url.startsWith('/api/v1/license/verify') ||
+    req.url.startsWith('/api/v1/license/activate') ||
+    req.url.startsWith('/api/activate') ||
+    req.url.startsWith('/api/validate')
+  );
+
+  if (isLicenseEndpoint) {
+    const chunks = [];
+    req.on('data', chunk => chunks.push(chunk));
+    req.on('end', () => {
+      try {
+        const bodyStr = Buffer.concat(chunks).toString('utf8');
+        const data = bodyStr ? JSON.parse(bodyStr) : {};
+
+        const key = (data.LicenseKey || data.license_key || '').trim().toUpperCase();
+        const machineId = data.MachineId || data.machine_id || 'UNKNOWN_HWID';
+        const productCodeReq = (data.ProductCode || data.product_code || '').trim().toUpperCase();
+
+        if (!key && !data.Token) {
+          res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({
+            valid: false,
+            Success: false,
+            message: 'Thiếu License Key hoặc Hardware ID (Machine ID)'
+          }));
+          return;
+        }
+
+        // Nhận diện Module sản phẩm
+        const productMap = {
+          'MEP-DUCT': 'Ds Duct Tools Pro',
+          'MEP-PIPE': 'Ds Pipe Tools Pro',
+          'MEP-SHEET': 'Ds Sheet Manager Pro',
+          'MEP-FIRE': 'Ds Fire Protection Pro',
+          'MEP-ELEC': 'Ds Electrical Tools Pro',
+          'MEP-AI': 'Ds AI Family & Automation',
+          'MEP-ALL': 'VIP Combo All-in-One Suite'
+        };
+
+        let resolvedCode = productCodeReq;
+        if (key.includes('VIP') || key.includes('ALL')) resolvedCode = 'MEP-ALL';
+        else if (key.includes('DUCT')) resolvedCode = 'MEP-DUCT';
+        else if (key.includes('PIPE')) resolvedCode = 'MEP-PIPE';
+        else if (key.includes('SHEET') || key.includes('SHT')) resolvedCode = 'MEP-SHEET';
+        else if (key.includes('FIRE')) resolvedCode = 'MEP-FIRE';
+        else if (key.includes('ELEC')) resolvedCode = 'MEP-ELEC';
+        else if (key.includes('AI')) resolvedCode = 'MEP-AI';
+
+        if (!resolvedCode || !productMap[resolvedCode]) {
+          resolvedCode = 'MEP-ALL';
+        }
+
+        const isTrial = key.startsWith('TRIAL-');
+        const durationDays = isTrial ? 14 : 365;
+        const expiryDate = new Date(Date.now() + durationDays * 86400000).toISOString();
+        const customer = data.Username || data.customer_name || 'Kỹ Sư Doan Son';
+
+        const responseObj = {
+          valid: true,
+          Success: true,
+          Token: 'TOKEN_' + Buffer.from(key + ':' + machineId).toString('base64'),
+          token: 'TOKEN_' + Buffer.from(key + ':' + machineId).toString('base64'),
+          ProductCode: resolvedCode,
+          product_code: resolvedCode,
+          ProductName: productMap[resolvedCode],
+          product_name: productMap[resolvedCode],
+          CustomerName: customer,
+          customer_name: customer,
+          ExpiryDate: expiryDate,
+          expires_at: expiryDate,
+          days_remaining: durationDays,
+          machine_name: data.machine_name || 'PC-Workstation',
+          machines_used: 1,
+          max_machines: 3,
+          is_trial: isTrial,
+          Message: `Bản quyền ${productMap[resolvedCode]} hợp lệ.`,
+          message: `Bản quyền ${productMap[resolvedCode]} hợp lệ.`
+        };
+
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify(responseObj, null, 2));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ valid: false, Success: false, message: err.message }));
+      }
+    });
+    return;
+  }
+
   // API UPLOAD FILE PHẦN MỀM TỪ DƯỚI MÁY LÊN GITHUB RELEASE VAULT & LOCAL
   if (req.method === 'POST' && req.url.startsWith('/api/upload-software')) {
     try {
