@@ -291,9 +291,30 @@ class StoreApp {
   }
 
   handleLogout() {
+    // 1. Dọn dẹp giỏ hàng cục bộ để tài khoản sau không thấy
+    this.cart = [];
+    this.saveCart();
+    this.updateCartBadge();
+
+    // 2. Xóa sạch nội dung DOM của các màn hình cá nhân
+    const userPurchasedList = document.getElementById('userPurchasedList');
+    if (userPurchasedList) userPurchasedList.innerHTML = '';
+    const userLicensesList = document.getElementById('userLicensesList');
+    if (userLicensesList) userLicensesList.innerHTML = '';
+
+    // 3. Đóng tất cả các modal đang mở nếu có
+    this.closeAuthModal();
+    this.closeCartDrawer();
+    this.closeDetailModal();
+    this.closePaymentModal();
+
+    // 4. Thực hiện đăng xuất người dùng
     window.authManager.logout();
-    alert('Đã đăng xuất.');
+    alert('Đã đăng xuất tài khoản an toàn.');
+
+    // 5. Chuyển về màn hình Cửa hàng và làm mới danh mục
     this.switchMainView('storefrontView');
+    this.renderProducts();
   }
 
   /**

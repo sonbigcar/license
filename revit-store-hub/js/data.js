@@ -1173,18 +1173,58 @@ class DataStore {
   }
 
   getUserPurchases(userId) {
-    if (!userId) return [];
+    if (!userId) {
+      const user = (window.authManager && window.authManager.getCurrentUser()) || null;
+      if (!user) return [];
+      userId = user.id;
+    }
     const user = (window.authManager && window.authManager.getCurrentUser()) || null;
     const userEmail = (user && user.email) ? user.email.toLowerCase().trim() : null;
 
-    // Đảm bảo đồng bộ mới nhất từ đơn hàng trước khi trả về
-    this.reconcilePurchasesAndLicensesFromOrders();
+    // Nguồn chân lý duy nhất (Single Source of Truth) là các đơn hàng đã thanh toán thành công
+    const orders = this.get('orders') || [];
+    const paidOrders = orders.filter(o => {
+      if (o.status !== 'paid') return false;
+      const oEmail = (o.user_email || '').toLowerCase().trim();
+      const matchId = (o.user_id && o.user_id !== 'acc-guest' && o.user_id === userId);
+      const matchEmail = (userEmail && oEmail && oEmail === userEmail);
+      return matchId || matchEmail;
+    });
 
-    const allPurchases = this.get('user_purchases') || [];
-    return allPurchases.filter(p => 
-      (p.user_id === userId) ||
-      (userEmail && p.user_email && p.user_email.toLowerCase().trim() === userEmail)
-    );
+    const userPurchasesMap = new Map();
+    paidOrders.forEach(o => {
+      (o.items || []).forEach(item => {
+        if (!item || !item.product_id) return;
+        if (!userPurchasesMap.has(item.product_id)) {
+          userPurchasesMap.set(item.product_id, {
+            id: `pur-${o.id}-${item.product_id}`,
+            user_id: userId,
+            user_email: userEmail,
+            product_id: item.product_id,
+            product_name: item.name,
+            product_type: item.product_type || 'tool',
+            order_id: o.id,
+            order_code: o.order_code,
+            purchase_date: o.paid_at || o.created_at,
+            is_active: true
+          });
+        }
+      });
+    });
+
+    // Bổ sung các sản phẩm trong cache user_purchases nếu khớp đúng ID/Email người dùng hiện tại
+    const cachedPurchases = this.get('user_purchases') || [];
+    cachedPurchases.forEach(p => {
+      if (!p || !p.product_id) return;
+      const pEmail = (p.user_email || '').toLowerCase().trim();
+      const matchId = (p.user_id && p.user_id !== 'acc-guest' && p.user_id === userId);
+      const matchEmail = (userEmail && pEmail && pEmail === userEmail);
+      if ((matchId || matchEmail) && !userPurchasesMap.has(p.product_id)) {
+        userPurchasesMap.set(p.product_id, p);
+      }
+    });
+
+    return Array.from(userPurchasesMap.values());
   }
 
   hasPurchasedProduct(userId, productId) {
@@ -1193,33 +1233,38 @@ class DataStore {
     const user = (window.authManager && window.authManager.getCurrentUser()) || null;
     const userEmail = (user && user.email) ? user.email.toLowerCase().trim() : null;
 
-    // Admin có quyền truy cập tất cả sản phẩm
-    if (user && user.role === 'admin') return true;
+    // LƯU Ý BẢO MẬT: Bỏ Admin bypass ở đây để đảm bảo tài khoản Admin chỉ thấy "Đã sở hữu"
+    // đối với các sản phẩm do chính Admin đặt mua (không nhìn thấy nhầm sản phẩm của khách)
 
-    // Đảm bảo đồng bộ mới nhất từ đơn hàng trước khi kiểm tra
-    this.reconcilePurchasesAndLicensesFromOrders();
+    // 1. Kiểm tra trực tiếp trong danh sách đơn hàng đã thanh toán (Single Source of Truth)
+    const orders = this.get('orders') || [];
+    const inOrders = orders.some(o => {
+      if (o.status !== 'paid') return false;
+      const oEmail = (o.user_email || '').toLowerCase().trim();
+      const matchId = (o.user_id && o.user_id !== 'acc-guest' && o.user_id === userId);
+      const matchEmail = (userEmail && oEmail && oEmail === userEmail);
+      if (!matchId && !matchEmail) return false;
+      return (o.items || []).some(item => item && item.product_id === productId);
+    });
+    if (inOrders) return true;
 
-    // 1. Kiểm tra trong danh sách user_purchases
-    const inPurchases = (this.get('user_purchases') || []).some(p => 
-      (p.user_id === userId || (userEmail && p.user_email && p.user_email.toLowerCase().trim() === userEmail)) &&
-      p.product_id === productId && p.is_active
-    );
+    // 2. Kiểm tra trong danh sách user_purchases (phải khớp đúng tài khoản)
+    const inPurchases = (this.get('user_purchases') || []).some(p => {
+      const pEmail = (p.user_email || '').toLowerCase().trim();
+      const matchId = (p.user_id && p.user_id !== 'acc-guest' && p.user_id === userId);
+      const matchEmail = (userEmail && pEmail && pEmail === userEmail);
+      return (matchId || matchEmail) && p.product_id === productId && p.is_active;
+    });
     if (inPurchases) return true;
 
-    // 2. Kiểm tra trong danh sách licenses hoạt động (cho Revit tools)
-    const inLicenses = (this.get('licenses') || []).some(l => 
-      (l.user_id === userId || (userEmail && l.user_email && l.user_email.toLowerCase().trim() === userEmail)) &&
-      l.product_id === productId && l.status === 'active'
-    );
+    // 3. Kiểm tra trong danh sách licenses hoạt động (cho Revit tools)
+    const inLicenses = (this.get('licenses') || []).some(l => {
+      const lEmail = (l.user_email || '').toLowerCase().trim();
+      const matchId = (l.user_id && l.user_id !== 'acc-guest' && l.user_id === userId);
+      const matchEmail = (userEmail && lEmail && lEmail === userEmail);
+      return (matchId || matchEmail) && l.product_id === productId && l.status === 'active';
+    });
     if (inLicenses) return true;
-
-    // 3. Kiểm tra trong danh sách đơn hàng đã thanh toán thành công (status === 'paid')
-    const inOrders = (this.get('orders') || []).some(o => 
-      (o.user_id === userId || (userEmail && o.user_email && o.user_email.toLowerCase().trim() === userEmail)) &&
-      o.status === 'paid' &&
-      (o.items || []).some(item => item.product_id === productId)
-    );
-    if (inOrders) return true;
 
     return false;
   }
@@ -1232,20 +1277,110 @@ class DataStore {
     }
   }
 
-  getLicenses(userId) {
+  getLicenses(userId = null) {
     const user = (window.authManager && window.authManager.getCurrentUser()) || null;
     const userEmail = (user && user.email) ? user.email.toLowerCase().trim() : null;
 
-    // Đảm bảo đồng bộ mới nhất từ đơn hàng
-    this.reconcilePurchasesAndLicensesFromOrders();
+    // Trường hợp Admin Panel gọi không truyền userId để xem bảng tổng hợp toàn bộ giấy phép hệ thống
+    if (!userId) {
+      if (user && user.role === 'admin') {
+        return this.get('licenses') || [];
+      }
+      if (!user) return [];
+      userId = user.id;
+    }
 
-    let allLicenses = this.get('licenses') || [];
-    if (!userId && !userEmail) return allLicenses;
+    // Nguồn chân lý: Các đơn hàng tool đã thanh toán thành công của chính người dùng này
+    const orders = this.get('orders') || [];
+    const paidOrders = orders.filter(o => {
+      if (o.status !== 'paid') return false;
+      const oEmail = (o.user_email || '').toLowerCase().trim();
+      const matchId = (o.user_id && o.user_id !== 'acc-guest' && o.user_id === userId);
+      const matchEmail = (userEmail && oEmail && oEmail === userEmail);
+      return matchId || matchEmail;
+    });
 
-    return allLicenses.filter(l => 
-      (userId && l.user_id === userId) ||
-      (userEmail && l.user_email && l.user_email.toLowerCase().trim() === userEmail)
-    );
+    const storedLicenses = this.get('licenses') || [];
+    const userLicensesMap = new Map();
+
+    paidOrders.forEach(o => {
+      (o.items || []).forEach(item => {
+        if (!item || item.product_type !== 'tool' || !item.product_id) return;
+        if (userLicensesMap.has(item.product_id)) return;
+
+        const licId = `lic-${o.id}-${item.product_id}`;
+        const existingLic = storedLicenses.find(l => 
+          l.id === licId || 
+          (l.order_id === o.id && l.product_id === item.product_id) ||
+          (l.order_code === o.order_code && l.product_id === item.product_id)
+        );
+
+        if (existingLic) {
+          userLicensesMap.set(item.product_id, existingLic);
+        } else {
+          let licenseKey = null;
+          if (o.licenses && Array.isArray(o.licenses)) {
+            const matchedKey = o.licenses.find(k => k.name === item.name || k.product_id === item.product_id);
+            if (matchedKey) licenseKey = matchedKey.key;
+          }
+          if (!licenseKey) {
+            const safeCode = (o.order_code || '888888').toString().padStart(6, '0');
+            const hashPart = Math.abs(item.product_id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) * 31).toString(36).toUpperCase().padStart(4, 'X');
+            licenseKey = `DSMEP-${safeCode}-${hashPart}-PRO`;
+          }
+
+          const prod = this.getProductById(item.product_id);
+          const fileUrl = (prod && prod.metadata && prod.metadata.file_url) || (item.metadata && item.metadata.file_url) || '';
+
+          const paidDate = o.paid_at || o.created_at || new Date().toISOString();
+          const expiryDate = new Date(paidDate);
+          if (item.billing_cycle === 'monthly') {
+            expiryDate.setMonth(expiryDate.getMonth() + 1);
+          } else if (item.billing_cycle === 'lifetime' || item.billing_cycle === 'one_time') {
+            expiryDate.setFullYear(expiryDate.getFullYear() + 50);
+          } else {
+            expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+          }
+
+          const newLic = {
+            id: licId,
+            license_key: licenseKey,
+            user_id: userId,
+            user_name: o.user_name || (user && user.full_name) || 'Khách hàng',
+            user_email: userEmail || o.user_email,
+            product_id: item.product_id,
+            order_id: o.id,
+            order_code: o.order_code,
+            product_name: item.name,
+            download_url: fileUrl,
+            subscription_type: item.billing_cycle || 'yearly',
+            max_machines: 2,
+            status: 'active',
+            start_date: paidDate,
+            expiry_date: expiryDate.toISOString(),
+            activations: []
+          };
+          userLicensesMap.set(item.product_id, newLic);
+          storedLicenses.unshift(newLic);
+        }
+      });
+    });
+
+    // Lưu lại license mới nếu có phát sinh
+    this.save('licenses', storedLicenses);
+
+    // Bổ sung các license trong storage nếu khớp đúng ID/Email người dùng
+    storedLicenses.forEach(l => {
+      if (!l || !l.product_id) return;
+      const lEmail = (l.user_email || '').toLowerCase().trim();
+      const matchId = (l.user_id && l.user_id !== 'acc-guest' && l.user_id === userId);
+      const matchEmail = (userEmail && lEmail && lEmail === userEmail);
+      if ((matchId || matchEmail) && !userLicensesMap.has(l.product_id)) {
+        userLicensesMap.set(l.product_id, l);
+      }
+    });
+
+    return Array.from(userLicensesMap.values());
   }
 
   addLicense(license) {
