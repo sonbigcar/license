@@ -1,7 +1,8 @@
 {
   "REVIT-DEMO-TEST-KEY-01": {
     "allowed_modules": [
-      "MEP-ALL"
+      "MEP-ALL",
+      "PHẦN MỀM QUẢN LÝ CÔNG VIỆC"
     ],
     "plan_name": "Gói Full VIP (Tất Cả Tools)",
     "updated_at": "2026-10-24T14:27:01.308Z"
@@ -17,11 +18,33 @@
   },
   "REVIT-TEST-PKG-MVMIKVSV": {
     "allowed_modules": [
-      "MEP-ALL"
+      "MEP-ALL",
+      "PHẦN MỀM QUẢN LÝ CÔNG VIỆC"
     ],
-    "plan_name": "Gói Full VIP (Tất Cả Tools - 5 Máy)",
+    "plan_name": "Gói Full VIP & Quản Lý Công Việc (5 Máy/User)",
     "expiry_date": "2027-10-24T14:48:45.834Z",
-    "updated_at": "2026-10-24T14:48:45.836Z"
+    "updated_at": "2026-10-24T14:48:45.836Z",
+    "registered_accounts": [
+      {
+        "username": "doanson99",
+        "fullName": "Đoàn sơn",
+        "machineId": "HWID-1792920519377",
+        "registeredAt": "2026-10-25T09:28:39.377Z"
+      },
+      {
+        "username": "bb",
+        "fullName": "aaaa",
+        "machineId": "HWID-1792920818879",
+        "registeredAt": "2026-10-25T09:33:38.879Z"
+      },
+      {
+        "username": "doanson",
+        "fullName": "son",
+        "machineId": "HWID-1792943744297",
+        "registeredAt": "2026-10-25T15:55:44.297Z"
+      }
+    ],
+    "max_accounts": 3
   },
   "REVIT-5QWB-X35Y-9ZBN": {
     "allowed_modules": [
@@ -30,6 +53,36 @@
     ],
     "plan_name": "Combo Cơ Điện Lạnh (Duct + Pipe)",
     "expiry_date": "2027-10-25T00:00:00.000Z",
-    "updated_at": "2026-10-25T09:10:00.000Z"
+    "updated_at": "2026-10-25T09:10:00.000Z",
+    "registered_accounts": [
+      {
+        "username": "doanson99",
+        "fullName": "ĐOÀN SƠN",
+        "machineId": "HWID-1792915704398",
+        "registeredAt": "2026-10-25T08:08:24.398Z"
+      }
+    ],
+    "max_accounts": 3
+  },
+  "REVIT-TASK-VIP-2026": {
+    "allowed_modules": [
+      "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+      "MEP-ALL"
+    ],
+    "plan_name": "Gói Bản Quyền DoanSon - PHẦN MỀM QUẢN LÝ CÔNG VIỆC (10 Tài khoản)",
+    "max_accounts": 10,
+    "expiry_date": "2028-10-25T00:00:00.000Z",
+    "updated_at": "2026-10-25T16:11:50.528Z",
+    "registered_accounts": [
+      {
+        "username": "doanson",
+        "fullName": "Đoàn Sơn",
+        "machineId": "HWID-ADMIN-01",
+        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+        "registeredAt": "2026-10-25T08:00:00.000Z",
+        "lastActive": "2026-10-25T16:11:50.529Z",
+        "status": "Active"
+      }
+    ]
   }
 }

@@ -92,10 +92,14 @@ const server = http.createServer(async (req, res) => {
 
         if (key) {
           const licVault = getLicensesVault();
+          const existing = licVault[key] || {};
           licVault[key] = {
-            allowed_modules: data.allowed_modules || ['MEP-ALL'],
-            plan_name: data.plan_name,
-            expiry_date: data.expiry_date,
+            ...existing,
+            allowed_modules: data.allowed_modules || existing.allowed_modules || ['MEP-ALL'],
+            plan_name: data.plan_name || existing.plan_name || 'Gói Bản Quyền DoanSon Hub',
+            expiry_date: data.expiry_date || existing.expiry_date,
+            max_accounts: data.max_accounts || existing.max_accounts || 5,
+            registered_accounts: data.registered_accounts || existing.registered_accounts || [],
             updated_at: new Date().toISOString()
           };
           saveLicensesVault(licVault);
@@ -227,7 +231,9 @@ const server = http.createServer(async (req, res) => {
           'MEP-FIRE': 'PCCC (Fire Protection)',
           'MEP-ELEC': 'Điện (Electrical Tools)',
           'MEP-AI': 'Trợ Lý AI & Family',
-          'MEP-ALL': 'Toàn Bộ Công Cụ (All-in-One)'
+          'MEP-ALL': 'Toàn Bộ Công Cụ (All-in-One)',
+          'PHẦN MỀM QUẢN LÝ CÔNG VIỆC': 'Phần Mềm Quản Lý Công Việc (Task App)',
+          'TASK-APP': 'Phần Mềm Quản Lý Công Việc (Task App)'
         };
 
         // Phân giải các module được cấp phép dựa trên Key hoặc Database

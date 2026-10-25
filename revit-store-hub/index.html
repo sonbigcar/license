@@ -891,31 +891,15 @@
           </div>
           <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px;">
             <button type="button" class="btn btn-secondary btn-sm" onclick="window.adminPanel.setEditModulePreset('all')">⭐ Tất Cả (Full VIP)</button>
+            <button type="button" class="btn btn-secondary btn-sm" style="color: #15803d; font-weight: 700; background: #f0fdf4; border-color: #86efac;" onclick="window.adminPanel.setEditModulePreset('task_app')">📋 PHẦN MỀM QUẢN LÝ CÔNG VIỆC</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="window.adminPanel.setEditModulePreset('duct_pipe')">❄️+🚰 Duct + Pipe</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="window.adminPanel.setEditModulePreset('duct_elec')">❄️+⚡ Duct + Elec</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="window.adminPanel.setEditModulePreset('duct_only')">❄️ Chỉ Duct</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="window.adminPanel.setEditModulePreset('pipe_only')">🚰 Chỉ Pipe</button>
           </div>
 
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; background:#FFFFFF; padding:16px; border-radius:var(--radius-md); border:1px solid #E2E8F0;">
-            <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; cursor:pointer;">
-              <input type="checkbox" name="editLicModuleCheck" value="MEP-DUCT"> ❄️ Ds Duct Tools (Ống Gió)
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; cursor:pointer;">
-              <input type="checkbox" name="editLicModuleCheck" value="MEP-PIPE"> 🚰 Ds Pipe Tools (Ống Nước)
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; cursor:pointer;">
-              <input type="checkbox" name="editLicModuleCheck" value="MEP-SHEET"> 📑 Ds Sheet Manager (Bản Vẽ)
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; cursor:pointer;">
-              <input type="checkbox" name="editLicModuleCheck" value="MEP-FIRE"> 🧯 Ds Fire Protection (PCCC)
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; cursor:pointer;">
-              <input type="checkbox" name="editLicModuleCheck" value="MEP-ELEC"> ⚡ Ds Electrical (Điện)
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; cursor:pointer;">
-              <input type="checkbox" name="editLicModuleCheck" value="MEP-AI"> 🤖 Ds AI Family & MCP
-            </label>
+          <div id="editLicModulesContainer" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; background:#FFFFFF; padding:16px; border-radius:var(--radius-md); border:1px solid #E2E8F0; max-height: 320px; overflow-y: auto;">
+            <!-- Danh sách module được nạp động từ getModuleCatalog() bao gồm PHẦN MỀM QUẢN LÝ CÔNG VIỆC -->
           </div>
         </div>
 

@@ -1422,7 +1422,9 @@ class DataStore {
       { code: 'MEP-SHEET', name: 'Ds Sheet Manager (Bản Vẽ)', short_name: 'Sheet', icon: '📑', desc: 'Quản lý, xuất hàng loạt PDF/DWG/NWC chuẩn ISO' },
       { code: 'MEP-FIRE', name: 'Ds Fire Protection (PCCC)', short_name: 'Fire', icon: '🧯', desc: 'Đầu phun sprinkler tự động, van cứu hỏa, tính thủy lực' },
       { code: 'MEP-ELEC', name: 'Ds Electrical Tools (Điện)', short_name: 'Elec', icon: '⚡', desc: 'Máng cáp, ống luồn dây điện, thiết bị chiếu sáng' },
-      { code: 'MEP-AI', name: 'Ds AI Family & MCP (AI)', short_name: 'AI', icon: '🤖', desc: 'Trợ lý AI, tạo family tự động từ ảnh & prompt' }
+      { code: 'MEP-AI', name: 'Ds AI Family & MCP (AI)', short_name: 'AI', icon: '🤖', desc: 'Trợ lý AI, tạo family tự động từ ảnh & prompt' },
+      { code: 'PHẦN MỀM QUẢN LÝ CÔNG VIỆC', name: 'PHẦN MỀM QUẢN LÝ CÔNG VIỆC', short_name: 'TaskApp', icon: '📋', desc: 'Quản lý và theo dõi công việc MEP, Revision, Deadline' },
+      { code: 'TASK-APP', name: 'Task Management App', short_name: 'Task', icon: '📋', desc: 'Quản lý công việc MEP (Desktop App)' }
     ];
     const saved = this.get('module_catalog');
     if (!saved || !saved.length) {
@@ -2011,7 +2013,9 @@ class DataStore {
       { code: 'MEP-SHEET', name: 'Ds Sheet Manager (Bản Vẽ BIM)', icon: '📑', desc: 'Tạo sheet tự động, đánh số view, xuất PDF/DWG hàng loạt' },
       { code: 'MEP-FIRE', name: 'Ds Fire Protection (PCCC Sprinkler)', icon: '🧯', desc: 'Bố trí đầu phun Sprinkler, tính thủy lực chữa cháy' },
       { code: 'MEP-ELEC', name: 'Ds Electrical (Hệ Thống Điện & Cáp)', icon: '⚡', desc: 'Vẽ thang máng cáp, bảng tủ điện, tính toán phụ tải' },
-      { code: 'MEP-AI', name: 'Ds AI & MCP Automation (Trợ Lý AI)', icon: '🤖', desc: 'Tự động tạo Family, kiểm tra va chạm bằng mô hình AI' }
+      { code: 'MEP-AI', name: 'Ds AI & MCP Automation (Trợ Lý AI)', icon: '🤖', desc: 'Tự động tạo Family, kiểm tra va chạm bằng mô hình AI' },
+      { code: 'PHẦN MỀM QUẢN LÝ CÔNG VIỆC', name: 'PHẦN MỀM QUẢN LÝ CÔNG VIỆC', icon: '📋', desc: 'Quản lý và theo dõi công việc MEP, Revision, Deadline' },
+      { code: 'TASK-APP', name: 'Task Management App', icon: '📋', desc: 'Quản lý công việc MEP (Desktop App)' }
     ];
     localStorage.setItem('revit_module_catalog', JSON.stringify(defaultCatalog));
     return defaultCatalog;
@@ -2146,3 +2150,128 @@ class DataStore {
 }
 
 window.dataStore = new DataStore();
+
+  /**
+   * ĐỒNG BỘ LICENSES VAULT LÊN GITHUB VÀ LOCALHOST ĐỂ APP TASK VÀ REVIT ADDIN NHẬN DIỆN
+   */
+  async syncLicensesVaultToGitHub(updatedLicense = null) {
+    const { owner, repo, token } = this.GITHUB_CONFIG;
+    if (!token) return { success: false, message: 'Chưa cấu hình GitHub Token' };
+
+    try {
+      const pathInRepo = 'revit-store-hub/data/licenses_vault.json';
+      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${pathInRepo}`;
+      let sha = null;
+      let vault = {};
+
+      try {
+        const getRes = await fetch(apiUrl + `?ref=main&t=${Date.now()}`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        if (getRes.ok) {
+          const fileData = await getRes.json();
+          sha = fileData.sha;
+          if (fileData.content) {
+            const raw = decodeURIComponent(escape(atob(fileData.content.replace(/\s/g, ''))));
+            vault = JSON.parse(raw);
+          }
+        }
+      } catch (e) {
+        console.warn('Could not fetch existing licenses_vault from GitHub:', e);
+      }
+
+      // Also merge current licenses from local DataStore
+      const allLicenses = this.getLicenses();
+      allLicenses.forEach(lic => {
+        if (!lic || !lic.license_key) return;
+        const key = lic.license_key.trim().toUpperCase();
+        const existing = vault[key] || {};
+        vault[key] = {
+          ...existing,
+          allowed_modules: lic.allowed_modules || existing.allowed_modules || ['MEP-ALL'],
+          plan_name: lic.plan_name || existing.plan_name || 'Gói Bản Quyền DoanSon Hub',
+          expiry_date: lic.expiry_date || existing.expiry_date,
+          max_accounts: lic.max_machines || existing.max_accounts || 5,
+          registered_accounts: existing.registered_accounts || [],
+          updated_at: new Date().toISOString()
+        };
+      });
+
+      if (updatedLicense && updatedLicense.license_key) {
+        const key = updatedLicense.license_key.trim().toUpperCase();
+        const existing = vault[key] || {};
+        vault[key] = {
+          ...existing,
+          allowed_modules: updatedLicense.allowed_modules || existing.allowed_modules || ['MEP-ALL'],
+          plan_name: updatedLicense.plan_name || existing.plan_name,
+          expiry_date: updatedLicense.expiry_date || existing.expiry_date,
+          max_accounts: updatedLicense.max_machines || existing.max_accounts || 5,
+          registered_accounts: existing.registered_accounts || [],
+          updated_at: new Date().toISOString()
+        };
+      }
+
+      // Commit to GitHub
+      const jsonStr = JSON.stringify(vault, null, 2);
+      const utf8Bytes = new TextEncoder().encode(jsonStr);
+      let binary = '';
+      for (let i = 0; i < utf8Bytes.length; i++) {
+        binary += String.fromCharCode(utf8Bytes[i]);
+      }
+      const base64Content = btoa(binary);
+
+      const putBody = {
+        message: `Admin update licenses vault (Sync ${updatedLicense ? updatedLicense.license_key : 'all'})`,
+        content: base64Content,
+        branch: 'main'
+      };
+      if (sha) putBody.sha = sha;
+
+      const putRes = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(putBody)
+      });
+
+      // Also try committing to root data/licenses_vault.json if path exists
+      try {
+        const rootPath = 'data/licenses_vault.json';
+        const rootApiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${rootPath}`;
+        let rootSha = null;
+        const rootGet = await fetch(rootApiUrl + `?ref=main&t=${Date.now()}`, {
+          headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+        });
+        if (rootGet.ok) {
+          const rd = await rootGet.json();
+          rootSha = rd.sha;
+          await fetch(rootApiUrl, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `token ${token}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              message: `Sync licenses vault to root`,
+              content: base64Content,
+              branch: 'main',
+              sha: rootSha
+            })
+          });
+        }
+      } catch (errRoot) {}
+
+      localStorage.setItem('revit_licenses_vault', jsonStr);
+      return { success: putRes.ok, vault };
+    } catch (err) {
+      console.error('Error syncing licenses vault to GitHub:', err);
+      return { success: false, error: err.message };
+    }
+  }

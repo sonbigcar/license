@@ -141,7 +141,7 @@ class LicenseManager {
     const lic = licenses.find(l => l.id === licenseId);
     if (!lic) return false;
 
-    const isAll = allowedModules.includes('MEP-ALL') || allowedModules.length >= 6;
+    const isAll = allowedModules.includes('MEP-ALL');
     lic.allowed_modules = isAll ? ['MEP-ALL'] : allowedModules;
 
     if (customPlanName) {

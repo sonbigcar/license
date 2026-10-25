@@ -971,17 +971,62 @@ class AdminPanel {
     document.getElementById('editLicUserDisplay').textContent =
       `Khách hàng: ${lic.user_name} (${lic.user_email}) • Đơn vị: ${lic.company || 'Cá nhân'} • Gói hiện tại: ${lic.plan_name || 'Tùy chỉnh'}`;
 
-    const mods = lic.allowed_modules || ['MEP-ALL'];
-    const isAll = mods.includes('MEP-ALL') || mods.length >= 6;
+    const catalog = window.dataStore.getModuleCatalog() || [];
+    const container = document.getElementById('editLicModulesContainer');
 
-    const checkboxes = document.querySelectorAll('input[name="editLicModuleCheck"]');
-    checkboxes.forEach(cb => {
-      if (isAll) {
-        cb.checked = true;
-      } else {
-        cb.checked = mods.includes(cb.value);
+    if (container) {
+      // Build unique module catalog map
+      const modMap = new Map();
+      catalog.forEach(m => {
+        if (m.code && m.code !== 'MEP-ALL') {
+          modMap.set(m.code.toUpperCase(), m);
+        }
+      });
+
+      // Always ensure PHẦN MỀM QUẢN LÝ CÔNG VIỆC and TASK-APP are present
+      if (!modMap.has('PHẦN MỀM QUẢN LÝ CÔNG VIỆC')) {
+        modMap.set('PHẦN MỀM QUẢN LÝ CÔNG VIỆC', {
+          code: 'PHẦN MỀM QUẢN LÝ CÔNG VIỆC',
+          name: 'PHẦN MỀM QUẢN LÝ CÔNG VIỆC',
+          icon: '📋',
+          desc: 'Quản lý tiến độ công việc MEP, Revision, Deadline'
+        });
       }
-    });
+
+      // Ensure any custom module in lic.allowed_modules is represented
+      (lic.allowed_modules || []).forEach(mCode => {
+        if (mCode && mCode !== 'MEP-ALL' && !modMap.has(mCode.toUpperCase())) {
+          const isTask = mCode.toUpperCase().includes('QUẢN LÝ CÔNG VIỆC') || mCode.toUpperCase().includes('TASK');
+          modMap.set(mCode.toUpperCase(), {
+            code: mCode,
+            name: mCode,
+            icon: isTask ? '📋' : '🧩',
+            desc: 'Module phân quyền'
+          });
+        }
+      });
+
+      const allModulesList = Array.from(modMap.values());
+      const mods = (lic.allowed_modules || ['MEP-ALL']).map(m => (m || '').toUpperCase());
+      const isAll = mods.includes('MEP-ALL');
+
+      container.innerHTML = allModulesList.map(m => {
+        const mCodeUp = (m.code || '').toUpperCase();
+        const checked = isAll || mods.includes(mCodeUp) ||
+          (mCodeUp.includes('QUẢN LÝ CÔNG VIỆC') && mods.some(x => x.includes('TASK') || x.includes('QUẢN LÝ CÔNG VIỆC')));
+        const isHighlight = mCodeUp.includes('QUẢN LÝ CÔNG VIỆC') || mCodeUp.includes('TASK');
+
+        return `
+          <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.88rem; cursor:pointer; padding: 8px 10px; border-radius: 6px; ${isHighlight ? 'background: #f0fdf4; border: 1.5px solid #86efac;' : 'background: #f8fafc; border: 1px solid #e2e8f0;'}">
+            <input type="checkbox" name="editLicModuleCheck" value="${m.code}" ${checked ? 'checked' : ''} style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+            <div style="flex: 1;">
+              <div style="font-weight: 700; color: ${isHighlight ? '#15803d' : '#1e293b'};">${m.icon || '🧩'} ${m.name || m.code}</div>
+              ${m.desc ? `<div style="font-size: 0.76rem; color: #64748b; margin-top: 2px;">${m.desc}</div>` : ''}
+            </div>
+          </label>
+        `;
+      }).join('');
+    }
 
     const modal = document.getElementById('editLicenseModulesModalOverlay');
     if (modal) modal.classList.add('active');
@@ -995,16 +1040,19 @@ class AdminPanel {
   setEditModulePreset(preset) {
     const checkboxes = document.querySelectorAll('input[name="editLicModuleCheck"]');
     checkboxes.forEach(cb => {
+      const valUp = (cb.value || '').toUpperCase();
       if (preset === 'all') {
         cb.checked = true;
+      } else if (preset === 'task_app') {
+        cb.checked = valUp.includes('QUẢN LÝ CÔNG VIỆC') || valUp.includes('TASK');
       } else if (preset === 'duct_pipe') {
-        cb.checked = (cb.value === 'MEP-DUCT' || cb.value === 'MEP-PIPE');
+        cb.checked = (valUp === 'MEP-DUCT' || valUp === 'MEP-PIPE');
       } else if (preset === 'duct_elec') {
-        cb.checked = (cb.value === 'MEP-DUCT' || cb.value === 'MEP-ELEC');
+        cb.checked = (valUp === 'MEP-DUCT' || valUp === 'MEP-ELEC');
       } else if (preset === 'duct_only') {
-        cb.checked = (cb.value === 'MEP-DUCT');
+        cb.checked = (valUp === 'MEP-DUCT');
       } else if (preset === 'pipe_only') {
-        cb.checked = (cb.value === 'MEP-PIPE');
+        cb.checked = (valUp === 'MEP-PIPE');
       }
     });
   }
@@ -1025,7 +1073,7 @@ class AdminPanel {
       return;
     }
 
-    // Đồng bộ lên Server API để máy trạm Revit Add-in nhận ngay khi gọi Verify
+    // 1. Đồng bộ lên Server API nếu có máy chủ node cục bộ
     try {
       await fetch('/api/v1/license/sync', {
         method: 'POST',
@@ -1038,6 +1086,15 @@ class AdminPanel {
         })
       });
     } catch (e) {}
+
+    // 2. Đồng bộ trực tiếp lên GitHub data/licenses_vault.json
+    try {
+      if (window.dataStore && typeof window.dataStore.syncLicensesVaultToGitHub === 'function') {
+        await window.dataStore.syncLicensesVaultToGitHub(updated);
+      }
+    } catch (ghErr) {
+      console.warn('Lỗi đồng bộ GitHub licenses vault:', ghErr);
+    }
 
     this.closeEditModulesModal();
     alert(`🎉 ĐÃ CẬP NHẬT GÓI MODULE THÀNH CÔNG!\n\n• Key: ${updated.license_key}\n• Gói mới: ${updated.plan_name}\n• Các module được mở: ${updated.allowed_modules.join(', ')}`);
