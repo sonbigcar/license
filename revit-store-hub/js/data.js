@@ -2147,11 +2147,8 @@ class DataStore {
       return (accEmail && licEmail === accEmail) || (accId && licUid === accId);
     });
   }
-}
 
-window.dataStore = new DataStore();
-
-  /**
+/**
    * ĐỒNG BỘ LICENSES VAULT LÊN GITHUB VÀ LOCALHOST ĐỂ APP TASK VÀ REVIT ADDIN NHẬN DIỆN
    */
   async syncLicensesVaultToGitHub(updatedLicense = null) {
@@ -2275,3 +2272,6 @@ window.dataStore = new DataStore();
       return { success: false, error: err.message };
     }
   }
+}
+
+window.dataStore = new DataStore();
