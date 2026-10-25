@@ -22,5 +22,14 @@
     "plan_name": "Gói Full VIP (Tất Cả Tools - 5 Máy)",
     "expiry_date": "2027-10-24T14:48:45.834Z",
     "updated_at": "2026-10-24T14:48:45.836Z"
+  },
+  "REVIT-5QWB-X35Y-9ZBN": {
+    "allowed_modules": [
+      "MEP-DUCT",
+      "MEP-PIPE"
+    ],
+    "plan_name": "Combo Cơ Điện Lạnh (Duct + Pipe)",
+    "expiry_date": "2027-10-25T00:00:00.000Z",
+    "updated_at": "2026-10-25T09:10:00.000Z"
   }
 }

@@ -232,39 +232,54 @@ const server = http.createServer(async (req, res) => {
 
         // Phân giải các module được cấp phép dựa trên Key hoặc Database
         let allowedModules = [];
+        let planNameFromVault = null;
 
-        // 1. Tra cứu trực tiếp trong kho giấy phép do Admin tùy chỉnh trên website
+        // 1. ƯU TIÊN 1: Tra cứu trực tiếp trong kho giấy phép do Admin tùy chỉnh trên website
         const licVault = getLicensesVault();
         if (licVault[key] && Array.isArray(licVault[key].allowed_modules) && licVault[key].allowed_modules.length > 0) {
           allowedModules = licVault[key].allowed_modules;
-        } else if (Array.isArray(data.allowed_modules) && data.allowed_modules.length > 0) {
-          allowedModules = data.allowed_modules;
-        } else if (data.ProductCode || data.product_code) {
-          const reqCode = (data.ProductCode || data.product_code).toUpperCase();
-          allowedModules = [reqCode];
+          planNameFromVault = licVault[key].plan_name;
         }
 
-        // Phân giải thông minh từ cú pháp License Key
-        // Ví dụ: DS-DUCT-PIPE-xxx, DS-DUCT-ELEC-xxx, REVIT-VIP-xxx, v.v.
-        if (key.includes('ALL') || key.includes('VIP') || key.startsWith('REVIT-VIP')) {
-          allowedModules = ['MEP-ALL'];
-        } else {
-          const detected = [];
-          if (key.includes('DUCT')) detected.push('MEP-DUCT');
-          if (key.includes('PIPE')) detected.push('MEP-PIPE');
-          if (key.includes('SHEET') || key.includes('SHT')) detected.push('MEP-SHEET');
-          if (key.includes('FIRE')) detected.push('MEP-FIRE');
-          if (key.includes('ELEC')) detected.push('MEP-ELEC');
-          if (key.includes('AI')) detected.push('MEP-AI');
+        // 2. ƯU TIÊN 2: Nếu chưa có trong vault, phân giải thông minh từ tiền tố cú pháp License Key
+        if (allowedModules.length === 0) {
+          if (key.includes('ALL') || key.includes('VIP') || key.startsWith('REVIT-VIP')) {
+            allowedModules = ['MEP-ALL'];
+          } else {
+            const detected = [];
+            if (key.includes('DUCT') || key.includes('-DP-') || key.includes('-DE-')) detected.push('MEP-DUCT');
+            if (key.includes('PIPE') || key.includes('-DP-')) detected.push('MEP-PIPE');
+            if (key.includes('SHEET') || key.includes('SHT')) detected.push('MEP-SHEET');
+            if (key.includes('FIRE')) detected.push('MEP-FIRE');
+            if (key.includes('ELEC') || key.includes('-DE-')) detected.push('MEP-ELEC');
+            if (key.includes('AI')) detected.push('MEP-AI');
 
-          if (detected.length > 0) {
-            allowedModules = detected;
+            if (detected.length > 0) {
+              allowedModules = detected;
+            }
           }
         }
 
-        // Nếu là key chuẩn REVIT-XXXX-XXXX-XXXX thông thường từ web store, mặc định cấp MEP-ALL (toàn bộ)
+        // 3. ƯU TIÊN 3: Kiểm tra body data truyền lên từ client
         if (allowedModules.length === 0) {
-          allowedModules = ['MEP-ALL'];
+          if (Array.isArray(data.allowed_modules) && data.allowed_modules.length > 0) {
+            allowedModules = data.allowed_modules;
+          } else if (data.ProductCode || data.product_code) {
+            const reqCode = (data.ProductCode || data.product_code).toUpperCase();
+            allowedModules = [reqCode];
+          }
+        }
+
+        // 4. NẾU VẪN HOÀN TOÀN KHÔNG XÁC ĐỊNH ĐƯỢC -> TỪ CHỐI KÍCH HOẠT (KHÔNG TỰ GÁN VIP)
+        if (allowedModules.length === 0) {
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({
+            valid: false,
+            Success: false,
+            code: 'INVALID_KEY',
+            message: `Mã bản quyền "${key}" không hợp lệ hoặc chưa được đăng ký trong hệ thống DoanSon.\nVui lòng kiểm tra lại mã key hoặc liên hệ Admin DoanSon để được cấp phép!`
+          }));
+          return;
         }
 
         const isTrial = key.startsWith('TRIAL-');
@@ -272,9 +287,9 @@ const server = http.createServer(async (req, res) => {
         const expiryDate = new Date(Date.now() + durationDays * 86400000).toISOString();
         const customer = data.Username || data.customer_name || 'Kỹ Sư Doan Son';
 
-        const modulesDisplay = allowedModules.includes('MEP-ALL')
+        const modulesDisplay = planNameFromVault || (allowedModules.includes('MEP-ALL')
           ? 'Toàn Bộ Công Cụ (VIP All-in-One)'
-          : allowedModules.map(m => moduleNames[m] || m).join(', ');
+          : allowedModules.map(m => moduleNames[m] || m).join(', '));
 
         const responseObj = {
           valid: true,

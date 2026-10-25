@@ -386,25 +386,34 @@ export default {
           }
         }
 
-        // Nhận diện thông minh combo từ cú pháp key
-        if (license_key.includes('VIP') || license_key.includes('ALL') || license_key.startsWith('REVIT-VIP')) {
-          allowedModules = ['MEP-ALL'];
-        } else {
-          const detected = [];
-          if (license_key.includes('DUCT')) detected.push('MEP-DUCT');
-          if (license_key.includes('PIPE')) detected.push('MEP-PIPE');
-          if (license_key.includes('SHEET') || license_key.includes('SHT')) detected.push('MEP-SHEET');
-          if (license_key.includes('FIRE')) detected.push('MEP-FIRE');
-          if (license_key.includes('ELEC')) detected.push('MEP-ELEC');
-          if (license_key.includes('AI')) detected.push('MEP-AI');
+        // Nhận diện thông minh combo từ cú pháp key nếu chưa có trong KV/Body
+        if (allowedModules.length === 0) {
+          if (license_key.includes('VIP') || license_key.includes('ALL') || license_key.startsWith('REVIT-VIP')) {
+            allowedModules = ['MEP-ALL'];
+          } else {
+            const detected = [];
+            if (license_key.includes('DUCT') || license_key.includes('-DP-') || license_key.includes('-DE-')) detected.push('MEP-DUCT');
+            if (license_key.includes('PIPE') || license_key.includes('-DP-')) detected.push('MEP-PIPE');
+            if (license_key.includes('SHEET') || license_key.includes('SHT')) detected.push('MEP-SHEET');
+            if (license_key.includes('FIRE')) detected.push('MEP-FIRE');
+            if (license_key.includes('ELEC') || license_key.includes('-DE-')) detected.push('MEP-ELEC');
+            if (license_key.includes('AI')) detected.push('MEP-AI');
 
-          if (detected.length > 0) {
-            allowedModules = detected;
+            if (detected.length > 0) {
+              allowedModules = detected;
+            }
           }
         }
 
         if (allowedModules.length === 0) {
-          allowedModules = ['MEP-ALL'];
+          return new Response(JSON.stringify({
+            valid: false,
+            Success: false,
+            code: 'INVALID_KEY',
+            message: `Mã bản quyền "${license_key}" không hợp lệ hoặc chưa được đăng ký trong hệ thống DoanSon.\nVui lòng kiểm tra lại mã key hoặc liên hệ Admin DoanSon để được cấp phép!`
+          }), {
+            headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders }
+          });
         }
 
         const isTrial = license_key.startsWith('TRIAL-');

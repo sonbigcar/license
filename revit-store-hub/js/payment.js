@@ -169,8 +169,6 @@ class PaymentGateway {
       });
 
       if (item.product_type === 'tool') {
-        // Cấp giấy phép bản quyền Revit Add-in vào Bản Quyền Của Tôi
-        const licenseKey = window.licenseManager.generateLicenseKey();
         const expiryDate = new Date();
         if (item.billing_cycle === 'monthly') {
           expiryDate.setMonth(expiryDate.getMonth() + 1);
@@ -193,6 +191,9 @@ class PaymentGateway {
             allowedModules = ['MEP-ALL'];
           }
         }
+
+        // Cấp giấy phép bản quyền Revit Add-in mang đúng tiền tố của gói
+        const licenseKey = window.licenseManager.generateLicenseKey(allowedModules);
 
         const isAll = allowedModules.includes('MEP-ALL') || allowedModules.length >= 6;
         const planName = item.package_name || (isAll 

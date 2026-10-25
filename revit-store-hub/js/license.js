@@ -26,12 +26,33 @@ class LicenseManager {
   }
 
   /**
-   * Sinh key bản quyền định dạng: REVIT-XXXX-XXXX-XXXX
+   * Sinh key bản quyền thông minh mang tiền tố nhận diện gói:
+   * - VIP: REVIT-VIP-XXXX-XXXX
+   * - Combo Duct + Pipe: DS-DUCT-PIPE-XXXX-XXXX
+   * - Combo Duct + Elec: DS-DUCT-ELEC-XXXX-XXXX
+   * - Gói lẻ: DS-DUCT-XXXX-XXXX, DS-PIPE-XXXX-XXXX...
    */
-  generateLicenseKey() {
+  generateLicenseKey(allowedModules = ['MEP-ALL']) {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    const segments = ['REVIT'];
-    for (let s = 0; s < 3; s++) {
+    let prefix = 'REVIT-VIP';
+
+    const mods = (Array.isArray(allowedModules) ? allowedModules : [allowedModules]).map(m => String(m).toUpperCase().replace('MEP-', ''));
+    const isAll = mods.includes('ALL') || mods.length >= 6;
+
+    if (isAll) {
+      prefix = 'REVIT-VIP';
+    } else if (mods.includes('DUCT') && mods.includes('PIPE') && mods.length === 2) {
+      prefix = 'DS-DUCT-PIPE';
+    } else if (mods.includes('DUCT') && mods.includes('ELEC') && mods.length === 2) {
+      prefix = 'DS-DUCT-ELEC';
+    } else if (mods.length === 1) {
+      prefix = `DS-${mods[0]}`;
+    } else if (mods.length > 0) {
+      prefix = `DS-${mods.join('-')}`;
+    }
+
+    const segments = [prefix];
+    for (let s = 0; s < 2; s++) {
       let segment = '';
       for (let i = 0; i < 4; i++) {
         segment += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -45,7 +66,7 @@ class LicenseManager {
    * Tạo License thủ công (Admin cấp trực tiếp cho đối tác/khách hàng)
    */
   createManualLicense(params) {
-    const key = params.license_key || this.generateLicenseKey();
+    const key = params.license_key || this.generateLicenseKey(params.allowed_modules);
     const expiry = new Date();
     expiry.setDate(expiry.getDate() + (Number(params.duration_days) || 365));
 

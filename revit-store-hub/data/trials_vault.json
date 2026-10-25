@@ -10,5 +10,17 @@
     "activated_at": "2026-10-24T13:58:16.092Z",
     "expires_at": "2026-10-31T13:58:16.092Z",
     "ip": "127.0.0.1"
+  },
+  "PC-AUDIT-MVN6913P": {
+    "machine_id": "PC-AUDIT-MVN6913P",
+    "activated_at": "2026-10-25T01:51:23.612Z",
+    "expires_at": "2026-11-01T01:51:23.612Z",
+    "ip": "127.0.0.1"
+  },
+  "PC-AUDIT-MVN6DHFW": {
+    "machine_id": "PC-AUDIT-MVN6DHFW",
+    "activated_at": "2026-10-25T01:54:51.411Z",
+    "expires_at": "2026-11-01T01:54:51.411Z",
+    "ip": "127.0.0.1"
   }
 }
