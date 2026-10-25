@@ -850,6 +850,7 @@ class AdminPanel {
     });
 
     this.closeManualLicenseModal();
+    try { if (window.dataStore && typeof window.dataStore.syncLicensesVaultToGitHub === 'function') { window.dataStore.syncLicensesVaultToGitHub(newLic); } } catch(e){} 
     alert(`🎉 ĐÃ CẤP GIẤY PHÉP THÀNH CÔNG!\n\n• Mã License Key: ${newLic.license_key}\n• Gói Module: ${planName}\n• Khách hàng: ${newLic.user_name} (${newLic.user_email})\n• Số máy trạm: ${newLic.max_machines} máy\n• Hạn dùng: ${new Date(newLic.expiry_date).toLocaleDateString('vi-VN')}`);
     this.render();
   }
@@ -974,47 +975,55 @@ class AdminPanel {
     const catalog = window.dataStore.getModuleCatalog() || [];
     const container = document.getElementById('editLicModulesContainer');
 
-    if (container) {
-      // Build unique module catalog map
-      const modMap = new Map();
+    // Build unique module catalog map
+    const modMap = new Map();
+    // Default core modules
+    const coreModules = [
+      { code: 'PHẦN MỀM QUẢN LÝ CÔNG VIỆC', name: 'PHẦN MỀM QUẢN LÝ CÔNG VIỆC', icon: '📋', desc: 'Quản lý tiến độ công việc MEP, Revision, Deadline' },
+      { code: 'TASK-APP', name: 'Task Management App (Desktop)', icon: '📋', desc: 'App Quản lý công việc Desktop MyWork' },
+      { code: 'MEP-TASK', name: 'MEP Task Management', icon: '📋', desc: 'Phân quyền phần mềm quản lý công việc' },
+      { code: 'MEP-DUCT', name: 'Ds Duct Tools (Ống Gió)', icon: '❄️', desc: 'Vẽ ống gió, căn chỉnh, phụ kiện HVAC' },
+      { code: 'MEP-PIPE', name: 'Ds Pipe Tools (Ống Nước)', icon: '🚰', desc: 'Vẽ ống nước, dốc tự động, bẫy nước MEP' },
+      { code: 'MEP-SHEET', name: 'Ds Sheet Manager (Bản Vẽ)', icon: '📑', desc: 'Quản lý và xuất bản vẽ tự động' },
+      { code: 'MEP-FIRE', name: 'Ds Fire Protection (PCCC)', icon: '🧯', desc: 'Đầu phun Sprinkler, tính thủy lực' },
+      { code: 'MEP-ELEC', name: 'Ds Electrical (Điện)', icon: '⚡', desc: 'Máng cáp, thiết bị điện MEP' },
+      { code: 'MEP-AI', name: 'Ds AI Family & MCP', icon: '🤖', desc: 'Trợ lý AI tự động hóa Revit' }
+    ];
+    coreModules.forEach(m => modMap.set(m.code.toUpperCase(), m));
+
+    // Custom catalog from user
+    if (Array.isArray(catalog)) {
       catalog.forEach(m => {
-        if (m.code && m.code !== 'MEP-ALL') {
+        if (m && m.code && m.code !== 'MEP-ALL') {
           modMap.set(m.code.toUpperCase(), m);
         }
       });
+    }
 
-      // Always ensure PHẦN MỀM QUẢN LÝ CÔNG VIỆC and TASK-APP are present
-      if (!modMap.has('PHẦN MỀM QUẢN LÝ CÔNG VIỆC')) {
-        modMap.set('PHẦN MỀM QUẢN LÝ CÔNG VIỆC', {
-          code: 'PHẦN MỀM QUẢN LÝ CÔNG VIỆC',
-          name: 'PHẦN MỀM QUẢN LÝ CÔNG VIỆC',
-          icon: '📋',
-          desc: 'Quản lý tiến độ công việc MEP, Revision, Deadline'
+    // Any custom module in current license
+    (lic.allowed_modules || []).forEach(mCode => {
+      if (mCode && mCode !== 'MEP-ALL' && !modMap.has(mCode.toUpperCase())) {
+        const isTask = mCode.toUpperCase().includes('CÔNG VIỆC') || mCode.toUpperCase().includes('TASK');
+        modMap.set(mCode.toUpperCase(), {
+          code: mCode,
+          name: mCode,
+          icon: isTask ? '📋' : '🧩',
+          desc: 'Module phân quyền'
         });
       }
+    });
 
-      // Ensure any custom module in lic.allowed_modules is represented
-      (lic.allowed_modules || []).forEach(mCode => {
-        if (mCode && mCode !== 'MEP-ALL' && !modMap.has(mCode.toUpperCase())) {
-          const isTask = mCode.toUpperCase().includes('QUẢN LÝ CÔNG VIỆC') || mCode.toUpperCase().includes('TASK');
-          modMap.set(mCode.toUpperCase(), {
-            code: mCode,
-            name: mCode,
-            icon: isTask ? '📋' : '🧩',
-            desc: 'Module phân quyền'
-          });
-        }
-      });
+    const allModulesList = Array.from(modMap.values());
+    const mods = (lic.allowed_modules || ['MEP-ALL']).map(m => (m || '').toUpperCase());
+    const isAll = mods.includes('MEP-ALL');
 
-      const allModulesList = Array.from(modMap.values());
-      const mods = (lic.allowed_modules || ['MEP-ALL']).map(m => (m || '').toUpperCase());
-      const isAll = mods.includes('MEP-ALL');
-
+    if (container) {
       container.innerHTML = allModulesList.map(m => {
         const mCodeUp = (m.code || '').toUpperCase();
         const checked = isAll || mods.includes(mCodeUp) ||
-          (mCodeUp.includes('QUẢN LÝ CÔNG VIỆC') && mods.some(x => x.includes('TASK') || x.includes('QUẢN LÝ CÔNG VIỆC')));
-        const isHighlight = mCodeUp.includes('QUẢN LÝ CÔNG VIỆC') || mCodeUp.includes('TASK');
+          (mCodeUp.includes('CÔNG VIỆC') && mods.some(x => x.includes('TASK') || x.includes('CÔNG VIỆC'))) ||
+          (mCodeUp.includes('TASK') && mods.some(x => x.includes('TASK') || x.includes('CÔNG VIỆC')));
+        const isHighlight = mCodeUp.includes('CÔNG VIỆC') || mCodeUp.includes('TASK');
 
         return `
           <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.88rem; cursor:pointer; padding: 8px 10px; border-radius: 6px; ${isHighlight ? 'background: #f0fdf4; border: 1.5px solid #86efac;' : 'background: #f8fafc; border: 1px solid #e2e8f0;'}">

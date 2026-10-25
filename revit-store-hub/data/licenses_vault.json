@@ -84,5 +84,19 @@
         "status": "Active"
       }
     ]
+  },
+  "DS-TASK-MYG3-KBNK": {
+    "allowed_modules": [
+      "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+      "TASK-APP",
+      "MEP-TASK",
+      "MEP-ALL"
+    ],
+    "plan_name": "Gói phần mềm công việc (2 Máy)",
+    "max_accounts": 2,
+    "max_machines": 2,
+    "expiry_date": "2027-10-25T00:00:00.000Z",
+    "updated_at": "2026-10-25T17:04:50.092Z",
+    "registered_accounts": []
   }
 }

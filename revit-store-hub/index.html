@@ -899,7 +899,62 @@
           </div>
 
           <div id="editLicModulesContainer" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; background:#FFFFFF; padding:16px; border-radius:var(--radius-md); border:1px solid #E2E8F0; max-height: 320px; overflow-y: auto;">
-            <!-- Danh sách module được nạp động từ getModuleCatalog() bao gồm PHẦN MỀM QUẢN LÝ CÔNG VIỆC -->
+            <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.88rem; cursor:pointer; padding: 8px 10px; border-radius: 6px; background: #f0fdf4; border: 1.5px solid #86efac;">
+              <input type="checkbox" name="editLicModuleCheck" value="PHẦN MỀM QUẢN LÝ CÔNG VIỆC" checked style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 700; color: #15803d;">📋 PHẦN MỀM QUẢN LÝ CÔNG VIỆC</div>
+                <div style="font-size: 0.76rem; color: #64748b; margin-top: 2px;">Quản lý tiến độ công việc MEP, Revision, Deadline</div>
+              </div>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.88rem; cursor:pointer; padding: 8px 10px; border-radius: 6px; background: #f0fdf4; border: 1.5px solid #86efac;">
+              <input type="checkbox" name="editLicModuleCheck" value="TASK-APP" checked style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 700; color: #15803d;">📋 Task Management App (Desktop)</div>
+                <div style="font-size: 0.76rem; color: #64748b; margin-top: 2px;">App Quản lý công việc Desktop MyWork</div>
+              </div>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.88rem; cursor:pointer; padding: 8px 10px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0;">
+              <input type="checkbox" name="editLicModuleCheck" value="MEP-DUCT" style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 700; color: #1e293b;">❄️ Ds Duct Tools (Ống Gió)</div>
+                <div style="font-size: 0.76rem; color: #64748b; margin-top: 2px;">Vẽ ống gió, căn chỉnh, phụ kiện HVAC</div>
+              </div>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.88rem; cursor:pointer; padding: 8px 10px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0;">
+              <input type="checkbox" name="editLicModuleCheck" value="MEP-PIPE" style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 700; color: #1e293b;">🚰 Ds Pipe Tools (Ống Nước)</div>
+                <div style="font-size: 0.76rem; color: #64748b; margin-top: 2px;">Vẽ ống nước, dốc tự động, bẫy nước MEP</div>
+              </div>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.88rem; cursor:pointer; padding: 8px 10px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0;">
+              <input type="checkbox" name="editLicModuleCheck" value="MEP-SHEET" style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 700; color: #1e293b;">📑 Ds Sheet Manager (Bản Vẽ)</div>
+                <div style="font-size: 0.76rem; color: #64748b; margin-top: 2px;">Quản lý và xuất bản vẽ tự động</div>
+              </div>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.88rem; cursor:pointer; padding: 8px 10px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0;">
+              <input type="checkbox" name="editLicModuleCheck" value="MEP-FIRE" style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 700; color: #1e293b;">🧯 Ds Fire Protection (PCCC)</div>
+                <div style="font-size: 0.76rem; color: #64748b; margin-top: 2px;">Đầu phun Sprinkler, tính thủy lực</div>
+              </div>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.88rem; cursor:pointer; padding: 8px 10px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0;">
+              <input type="checkbox" name="editLicModuleCheck" value="MEP-ELEC" style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 700; color: #1e293b;">⚡ Ds Electrical (Điện)</div>
+                <div style="font-size: 0.76rem; color: #64748b; margin-top: 2px;">Máng cáp, thiết bị điện MEP</div>
+              </div>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.88rem; cursor:pointer; padding: 8px 10px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0;">
+              <input type="checkbox" name="editLicModuleCheck" value="MEP-AI" style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 700; color: #1e293b;">🤖 Ds AI Family & MCP</div>
+                <div style="font-size: 0.76rem; color: #64748b; margin-top: 2px;">Trợ lý AI tự động hóa Revit</div>
+              </div>
+            </label>
           </div>
         </div>
 
@@ -1219,12 +1274,12 @@
   </div>
 
   <!-- Javascript Modules (Anti-cache v20261025_v1) -->
-  <script src="js/data.js?v=20261025_v1"></script>
-  <script src="js/auth.js?v=20261025_v1"></script>
-  <script src="js/payment.js?v=20261025_v1"></script>
+  <script src="js/data.js?v=20261026_v3"></script>
+  <script src="js/auth.js?v=20261026_v3"></script>
+  <script src="js/payment.js?v=20261026_v3"></script>
   <script src="js/download.js?v=20261025_v1"></script>
-  <script src="js/license.js?v=20261025_v1"></script>
-  <script src="js/admin.js?v=20261025_v1"></script>
-  <script src="js/store.js?v=20261025_v1"></script>
+  <script src="js/license.js?v=20261026_v3"></script>
+  <script src="js/admin.js?v=20261026_v3"></script>
+  <script src="js/store.js?v=20261026_v3"></script>
 </body>
 </html>
