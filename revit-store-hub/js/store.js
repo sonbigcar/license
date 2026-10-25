@@ -850,15 +850,11 @@ class StoreApp {
                   <button class="btn btn-sm" style="background: #EBFDF5; color: #047857; border: 1px solid #A7F3D0; font-weight: 600;" onclick="window.storeApp.switchMainView('libraryView')" title="Bạn đã sở hữu sản phẩm này. Bấm để vào Thư Viện">
                     ✓ Đã mua
                   </button>
-                ` : (product.product_type === 'tool' ? `
-                  <button class="btn btn-primary btn-sm" onclick="window.storeApp.viewProductDetail('${product.id}')" title="Xem và chọn gói module bản quyền theo nhu cầu">
-                    🛒 Chọn Gói
-                  </button>
                 ` : `
-                  <button class="btn btn-primary btn-sm" onclick="window.storeApp.addToCart('${product.id}')">
-                    + Mua
+                  <button class="btn btn-primary btn-sm" onclick="window.storeApp.addToCart('${product.id}')" title="Thêm vào giỏ hàng">
+                    🛒 Thêm Giỏ Hàng
                   </button>
-                `)}
+                `}
               </div>
             </div>
 
@@ -927,71 +923,47 @@ class StoreApp {
               ${product.name}
             </h2>
 
-            <!-- HIỂN THỊ GIÁ NIÊM YẾT VÀ GIÁ GÓI CHỌN -->
-            <div style="margin-bottom: 16px;">
+            <!-- HIỂN THỊ GIÁ NIÊM YẾT SẢN PHẨM -->
+            <div style="margin-bottom: 16px; display: flex; align-items: baseline; gap: 8px;">
               <span id="detailProductPriceDisplay" style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">
-                ${(() => {
-                  if (isTool) {
-                    const presets = window.dataStore.getPackagePresets();
-                    return this.formatCurrency(presets[0]?.sale_price || presets[0]?.price || product.sale_price || product.price);
-                  }
-                  return this.formatCurrency(product.sale_price || product.price);
-                })()}
+                ${this.formatCurrency(product.sale_price || product.price)}
               </span>
-              <span id="detailProductCycleDisplay" style="color: var(--text-dim); font-size: 0.9rem;"> / ${isTool ? (product.billing_cycle === 'monthly' ? 'Tháng' : 'Năm') : 'Gói mua trọn đời'}</span>
+              ${product.sale_price && product.sale_price < product.price ? `
+                <span style="font-size: 1.1rem; color: var(--text-dim); text-decoration: line-through;">
+                  ${this.formatCurrency(product.price)}
+                </span>
+              ` : ''}
+              <span id="detailProductCycleDisplay" style="color: var(--text-dim); font-size: 0.9rem;"> / ${isTool ? (product.billing_cycle === 'monthly' ? 'Tháng' : (product.billing_cycle === 'lifetime' ? 'Trọn đời' : 'Năm')) : 'Gói mua trọn đời'}</span>
             </div>
 
-            <!-- NẾU LÀ SẢN PHẨM TOOL: KHỐI CHỌN GÓI MODULE BẢN QUYỀN (YÊU CẦU 2) -->
+            <!-- NẾU LÀ SẢN PHẨM TOOL: HIỂN THỊ THÔNG TIN LOẠI BẢN QUYỀN ĐƯỢC CẤP -->
             ${isTool ? `
-              <div style="background: #FFFBF7; border: 1.5px solid var(--primary); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                  <label style="font-weight: 800; color: var(--text-pure); font-size: 0.95rem; margin: 0; display: flex; align-items: center; gap: 6px;">
-                    <span>🧩</span> Chọn Gói Module Bản Quyền:
-                  </label>
-                  <span class="badge badge-family" style="font-size: 0.72rem;">Đa Dạng Tùy Chọn</span>
+              <div style="background: #FFFBF7; border: 1.5px solid #FDBA74; border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span style="font-weight: 800; color: var(--text-pure); font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+                    <span>🔑</span> Bản Quyền Cấp Phép Đi Kèm:
+                  </span>
+                  <span class="badge badge-tool" style="font-weight: 700; font-size: 0.78rem;">
+                    ${product.package_name || 'Gói Bản Quyền Chuẩn'}
+                  </span>
                 </div>
-
-                <div id="toolPackageOptionsList" style="display: flex; flex-direction: column; gap: 10px;">
+                <p style="font-size: 0.84rem; color: var(--text-muted); margin: 0 0 8px 0;">
+                  Khi đặt mua công cụ này, bạn sẽ nhận được License Key mở khóa các module tính năng:
+                </p>
+                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                   ${(() => {
-                    const presets = window.dataStore.getPackagePresets();
                     const catalog = window.dataStore.getModuleCatalog();
                     const catalogMap = {};
                     catalog.forEach(m => { catalogMap[m.code] = `${m.icon || '🧩'} ${m.name}`; });
-
-                    this.currentSelectedPackageId = presets[0] ? presets[0].id : null;
-
-                    return presets.map((pkg, idx) => {
-                      const isSelected = idx === 0;
-                      const isAll = (pkg.modules || []).includes('MEP-ALL');
-                      const moduleBadges = isAll
-                        ? `<span class="badge" style="background:#EEF2FF; color:#4F46E5; font-size:0.7rem; font-weight:700;">⭐ Full VIP (Tất Cả Tools)</span>`
-                        : (pkg.modules || []).map(m => `
-                            <span class="badge" style="background:#F1F5F9; color:#334155; font-size:0.68rem; margin-right:3px;">
-                              ${catalogMap[m] || m}
-                            </span>
-                          `).join('');
-
-                      return `
-                        <div class="tool-pkg-option-card ${isSelected ? 'active' : ''}" id="toolPkgCard_${pkg.id}" onclick="window.storeApp.selectToolPackage('${pkg.id}')" style="cursor: pointer; border: 1.5px solid ${isSelected ? 'var(--primary)' : '#E2E8F0'}; background: ${isSelected ? '#FFF8F5' : '#FFFFFF'}; border-radius: var(--radius-md); padding: 12px 14px; transition: all 0.2s ease;">
-                          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                              <input type="radio" name="toolSelectedPackageRadio" id="radio_${pkg.id}" value="${pkg.id}" ${isSelected ? 'checked' : ''} style="accent-color: var(--primary); cursor: pointer;">
-                              <strong style="font-size: 0.95rem; color: var(--text-pure);">${pkg.name}</strong>
-                              ${pkg.badge ? `<span class="badge badge-family" style="font-size: 0.68rem; padding: 2px 6px;">${pkg.badge}</span>` : ''}
-                            </div>
-                            <div style="text-align: right;">
-                              ${pkg.price > (pkg.sale_price || pkg.price) ? `<span style="font-size: 0.75rem; color: var(--text-dim); text-decoration: line-through; margin-right: 4px;">${this.formatCurrency(pkg.price)}</span>` : ''}
-                              <strong style="font-size: 1.05rem; color: var(--primary);">${this.formatCurrency(pkg.sale_price || pkg.price)}</strong>
-                            </div>
-                          </div>
-                          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 6px 24px;">${pkg.desc || ''}</p>
-                          <div style="margin-left: 24px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
-                            <span style="font-size: 0.72rem; color: var(--text-dim);">Module:</span>
-                            ${moduleBadges}
-                          </div>
-                        </div>
-                      `;
-                    }).join('');
+                    const mods = (product.allowed_modules && product.allowed_modules.length) ? product.allowed_modules : ['MEP-ALL'];
+                    if (mods.includes('MEP-ALL')) {
+                      return `<span class="badge" style="background:#EEF2FF; color:#4F46E5; font-size:0.75rem; font-weight:700;">⭐ Full VIP (Mở Toàn Bộ Tools & Trợ Lý AI)</span>`;
+                    }
+                    return mods.map(m => `
+                      <span class="badge" style="background:#F1F5F9; color:#334155; font-size:0.72rem; padding: 4px 8px;">
+                        ${catalogMap[m] || m}
+                      </span>
+                    `).join('');
                   })()}
                 </div>
               </div>
@@ -1009,8 +981,8 @@ class StoreApp {
                 📁 Vào Thư Viện Của Tôi Để Tải Ngay
               </button>
             ` : `
-              <button class="btn btn-primary btn-lg" style="width: 100%;" onclick="${isTool ? `window.storeApp.addToolPackageToCart('${product.id}')` : `window.storeApp.addToCart('${product.id}'); window.storeApp.closeDetailModal(); window.storeApp.openCartDrawer();`}">
-                🛒 ${isTool ? 'Thêm Gói Đã Chọn Vào Giỏ & Thanh Toán' : 'Thêm Vào Giỏ & Thanh Toán VietQR'}
+              <button class="btn btn-primary btn-lg" style="width: 100%; font-weight: 800;" onclick="window.storeApp.addToCart('${product.id}'); window.storeApp.closeDetailModal();">
+                🛒 Thêm Vào Giỏ Hàng - ${this.formatCurrency(product.sale_price || product.price)}
               </button>
             `}
           </div>
@@ -1083,13 +1055,13 @@ class StoreApp {
     const cartItem = {
       id: cartItemId,
       product_id: product.id,
-      name: pkg ? `${product.name} - ${pkg.name}` : product.name,
-      package_id: pkg ? pkg.id : null,
-      package_name: pkg ? pkg.name : 'Gói Tiêu Chuẩn',
-      allowed_modules: pkg ? pkg.modules : ['MEP-ALL'],
+      name: product.name,
+      package_id: pkg ? pkg.id : (product.package_id || null),
+      package_name: pkg ? pkg.name : (product.package_name || 'Gói Tiêu Chuẩn'),
+      allowed_modules: pkg ? pkg.modules : (product.allowed_modules || ['MEP-ALL']),
       product_type: 'tool',
-      price: pkg ? pkg.price : product.price,
-      sale_price: pkg ? (pkg.sale_price || pkg.price) : (product.sale_price || product.price),
+      price: product.price,
+      sale_price: product.sale_price || product.price,
       billing_cycle: product.billing_cycle || 'yearly',
       thumbnail_url: product.thumbnail_url,
       metadata: product.metadata
@@ -1208,7 +1180,7 @@ class StoreApp {
 
     pkgSelect.innerHTML = presets.map(p => `
       <option value="${p.id}" ${p.id === selectedId ? 'selected' : ''}>
-        ${p.name} - ${this.formatCurrency(p.sale_price || p.price)} [${(p.modules || []).join(', ')}]
+        ${p.name} [${(p.modules || []).join(', ')}]
       </option>
     `).join('');
   }
@@ -1441,12 +1413,19 @@ class StoreApp {
     const product = window.dataStore.getProductById(productId);
     if (!product) return;
 
-    if (this.cart.some(item => item.id === productId)) {
+    if (this.cart.some(item => item.id === productId || item.product_id === productId)) {
       alert(`Sản phẩm "${product.name}" đã có trong giỏ hàng.`);
+      this.openCartDrawer();
       return;
     }
 
-    this.cart.push(product);
+    const cartItem = {
+      ...product,
+      product_id: product.id,
+      allowed_modules: (product.product_type === 'tool' && (!product.allowed_modules || !product.allowed_modules.length)) ? ['MEP-ALL'] : (product.allowed_modules || [])
+    };
+
+    this.cart.push(cartItem);
     this.saveCart();
     this.openCartDrawer();
   }

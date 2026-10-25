@@ -1529,18 +1529,10 @@ class AdminPanel {
             </div>
           </div>
 
-          <div style="text-align: right; min-width: 170px;">
-            <div style="font-size: 0.8rem; color: var(--text-dim); text-decoration: line-through;">
-              ${window.storeApp.formatCurrency(pkg.price)}
-            </div>
-            <div style="font-family: var(--font-heading); font-size: 1.3rem; font-weight: 800; color: var(--primary);">
-              ${window.storeApp.formatCurrency(pkg.sale_price || pkg.price)}
-            </div>
-            <div style="margin-top: 8px; display: flex; gap: 6px; justify-content: flex-end;">
-              <button class="btn btn-secondary btn-sm" style="color: var(--danger); font-size: 0.78rem; padding: 4px 8px;" onclick="window.adminPanel.handleDeletePackage('${pkg.id}')" title="Xóa gói này">
-                🗑️ Xóa Gói
-              </button>
-            </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="btn btn-secondary btn-sm" style="color: var(--danger); font-size: 0.85rem; padding: 6px 14px; border-color: #FECDD3;" onclick="window.adminPanel.handleDeletePackage('${pkg.id}')" title="Xóa loại bản quyền này">
+              🗑️ Xóa Gói
+            </button>
           </div>
         </div>
       `;
@@ -1580,23 +1572,19 @@ class AdminPanel {
     event.preventDefault();
     const name = document.getElementById('newPkgName').value.trim();
     const badge = document.getElementById('newPkgBadge').value.trim();
-    const price = Number(document.getElementById('newPkgPrice').value) || 0;
-    const sale_price = Number(document.getElementById('newPkgSalePrice').value) || price;
     const desc = document.getElementById('newPkgDesc').value.trim();
 
     const checkedBoxes = Array.from(document.querySelectorAll('input[name="newPkgModuleCheckbox"]:checked'));
     const modules = checkedBoxes.map(cb => cb.value);
 
     if (modules.length === 0) {
-      alert('Vui lòng chọn ít nhất 1 module cho gói bản quyền này!');
+      alert('Vui lòng chọn ít nhất 1 module cho loại bản quyền này!');
       return;
     }
 
     const newPkg = window.dataStore.addPackagePreset({
       name,
       badge: badge || '✨ Gói Mới',
-      price,
-      sale_price,
       modules,
       desc
     });
@@ -1604,11 +1592,9 @@ class AdminPanel {
     // Reset Form
     document.getElementById('newPkgName').value = '';
     document.getElementById('newPkgBadge').value = '';
-    document.getElementById('newPkgPrice').value = '';
-    document.getElementById('newPkgSalePrice').value = '';
     document.getElementById('newPkgDesc').value = '';
 
-    alert(`🎉 ĐÃ ĐĂNG KÝ GÓI BẢN QUYỀN THÀNH CÔNG!\n\n• Tên Gói: ${newPkg.name}\n• Giá bán: ${window.storeApp.formatCurrency(newPkg.sale_price)}\n• Module: ${newPkg.modules.join(', ')}\n\nGói này hiện đã có sẵn trên trang mua hàng và khu vực cấp phép cho tài khoản!`);
+    alert(`🎉 ĐÃ ĐĂNG KÝ LOẠI BẢN QUYỀN THÀNH CÔNG!\n\n• Tên Loại: ${newPkg.name}\n• Module Mở Khóa: ${newPkg.modules.join(', ')}\n\nLoại bản quyền này đã sẵn sàng để bạn chọn gán khi Thêm / Sửa sản phẩm hoặc điều chỉnh key cho tài khoản.`);
     this.switchPkgModalTab('list');
     if (window.storeApp && typeof window.storeApp.render === 'function') {
       window.storeApp.render();
@@ -1692,7 +1678,7 @@ class AdminPanel {
     if (pkgSelect) {
       pkgSelect.innerHTML = presets.map(p => `
         <option value="${p.id}">
-          ${p.name} - ${window.storeApp.formatCurrency(p.sale_price || p.price)} [${p.modules.join(', ')}]
+          ${p.name} [${p.modules.join(', ')}]
         </option>
       `).join('');
     }

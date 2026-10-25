@@ -1452,44 +1452,44 @@ class DataStore {
   getPackagePresets() {
     const defaultPresets = [
       {
-        id: 'pkg-full-vip',
+        id: 'pkg_vip',
         name: 'Gói Full VIP (Tất Cả Tools)',
         code_tag: 'VIP-ALL',
         modules: ['MEP-ALL'],
-        price: 2400000,
-        sale_price: 1800000,
-        badge: 'Khuyên Dùng ⭐',
-        desc: 'Mở khóa trọn bộ tất cả các công cụ hiện tại và tính năng mới cập nhật'
+        badge: '⭐ VIP Toàn Năng',
+        desc: 'Mở khóa không giới hạn toàn bộ công cụ Duct, Pipe, Sheet, Fire, Elec & Trợ Lý AI'
       },
       {
-        id: 'pkg-combo-duct-pipe',
-        name: 'Combo Cơ Bản (Duct + Pipe)',
-        code_tag: 'DUCT-PIPE',
+        id: 'pkg_duct_pipe',
+        name: 'Combo Cơ Điện Lạnh (Duct + Pipe)',
+        code_tag: 'COMBO-DUCT-PIPE',
         modules: ['MEP-DUCT', 'MEP-PIPE'],
-        price: 1600000,
-        sale_price: 1200000,
-        badge: 'Phổ Biến 🔥',
-        desc: 'Chuyên sâu hệ Ống Gió HVAC và Cấp Thoát Nước'
+        badge: '❄️+🚰 Combo Khuyên Dùng',
+        desc: 'Tối ưu cho kỹ sư HVAC và Cấp Thoát Nước (Ống Gió & Ống Nước BIM)'
       },
       {
-        id: 'pkg-combo-duct-elec',
-        name: 'Combo Cơ Điện (Duct + Elec)',
-        code_tag: 'DUCT-ELEC',
+        id: 'pkg_duct_elec',
+        name: 'Combo HVAC & Điện (Duct + Elec)',
+        code_tag: 'COMBO-DUCT-ELEC',
         modules: ['MEP-DUCT', 'MEP-ELEC'],
-        price: 1600000,
-        sale_price: 1200000,
-        badge: 'Ưa Chuộng ⚡',
-        desc: 'Chuyên sâu hệ Ống Gió và Hệ Thống Điện / Máng Cáp'
+        badge: '❄️+⚡ Combo Cơ Điện',
+        desc: 'Kết hợp vẽ ống gió thông gió lạnh và thang máng cáp, chiếu sáng điện'
       },
       {
-        id: 'pkg-single-tool',
-        name: 'Gói Lẻ 1 Module Tùy Chọn',
-        code_tag: 'SINGLE-TOOL',
+        id: 'pkg_duct_only',
+        name: 'Gói Lẻ - Ds Duct Tool',
+        code_tag: 'SINGLE-DUCT',
         modules: ['MEP-DUCT'],
-        price: 950000,
-        sale_price: 750000,
-        badge: 'Tiết Kiệm 💡',
-        desc: 'Chọn 1 module duy nhất bạn cần sử dụng nhất (Duct, Pipe, Sheet, Fire, Elec...)'
+        badge: '❄️ Tiết Kiệm',
+        desc: 'Dành riêng cho kỹ sư chuyên thiết kế mô hình hệ thống ống gió'
+      },
+      {
+        id: 'pkg_pipe_only',
+        name: 'Gói Lẻ - Ds Pipe Tool',
+        code_tag: 'SINGLE-PIPE',
+        modules: ['MEP-PIPE'],
+        badge: '🚰 Tiết Kiệm',
+        desc: 'Dành riêng cho kỹ sư chuyên thiết kế & thi công hệ đường ống nước'
       }
     ];
     const saved = this.get('package_presets');
@@ -1507,7 +1507,14 @@ class DataStore {
   addPackagePreset(pkg) {
     const list = this.getPackagePresets();
     pkg.id = pkg.id || ('pkg-' + Date.now().toString(16));
-    list.push(pkg);
+    list.push({
+      id: pkg.id,
+      name: pkg.name || 'Gói Bản Quyền Tùy Chỉnh',
+      code_tag: pkg.code_tag || ('PKG-' + Date.now().toString(16).toUpperCase()),
+      modules: Array.isArray(pkg.modules) && pkg.modules.length > 0 ? pkg.modules : ['MEP-ALL'],
+      badge: pkg.badge || '✨ Gói Mới',
+      desc: pkg.desc || ''
+    });
     this.savePackagePresets(list);
     return list;
   }
@@ -2052,9 +2059,7 @@ class DataStore {
         name: 'Gói Full VIP (Tất Cả Tools)',
         code_tag: 'VIP-ALL',
         modules: ['MEP-ALL'],
-        price: 2990000,
-        sale_price: 1490000,
-        badge: '⭐ VIP Toàn Năng (Tiết Kiệm 50%)',
+        badge: '⭐ VIP Toàn Năng',
         desc: 'Mở khóa không giới hạn toàn bộ công cụ Duct, Pipe, Sheet, Fire, Elec & Trợ Lý AI.'
       },
       {
@@ -2062,8 +2067,6 @@ class DataStore {
         name: 'Combo Cơ Điện Lạnh (Duct + Pipe)',
         code_tag: 'COMBO-DUCT-PIPE',
         modules: ['MEP-DUCT', 'MEP-PIPE'],
-        price: 1790000,
-        sale_price: 990000,
         badge: '❄️+🚰 Combo Khuyên Dùng',
         desc: 'Tối ưu cho kỹ sư HVAC và Cấp Thoát Nước (Chuyên trị Ống Gió & Ống Nước BIM).'
       },
@@ -2072,8 +2075,6 @@ class DataStore {
         name: 'Combo HVAC & Điện (Duct + Elec)',
         code_tag: 'COMBO-DUCT-ELEC',
         modules: ['MEP-DUCT', 'MEP-ELEC'],
-        price: 1790000,
-        sale_price: 990000,
         badge: '❄️+⚡ Combo Cơ Điện',
         desc: 'Kết hợp vẽ ống gió thông gió lạnh và thang máng cáp, chiếu sáng điện nặng.'
       },
@@ -2082,8 +2083,6 @@ class DataStore {
         name: 'Gói Lẻ - Ds Duct Tool',
         code_tag: 'SINGLE-DUCT',
         modules: ['MEP-DUCT'],
-        price: 990000,
-        sale_price: 590000,
         badge: '❄️ Tiết Kiệm',
         desc: 'Dành riêng cho kỹ sư chuyên mô hình hóa & ra bản vẽ hệ thống ống gió thông gió.'
       },
@@ -2092,8 +2091,6 @@ class DataStore {
         name: 'Gói Lẻ - Ds Pipe Tool',
         code_tag: 'SINGLE-PIPE',
         modules: ['MEP-PIPE'],
-        price: 990000,
-        sale_price: 590000,
         badge: '🚰 Tiết Kiệm',
         desc: 'Dành riêng cho kỹ sư chuyên thiết kế & thi công đường ống cấp thoát nước, cứu hỏa.'
       }
@@ -2116,8 +2113,6 @@ class DataStore {
       name: pkg.name || 'Gói Bản Quyền Tùy Chỉnh',
       code_tag: pkg.code_tag || ('PKG-' + Date.now().toString(36).toUpperCase()),
       modules: Array.isArray(pkg.modules) && pkg.modules.length > 0 ? pkg.modules : ['MEP-ALL'],
-      price: Number(pkg.price) || 1000000,
-      sale_price: Number(pkg.sale_price) || Number(pkg.price) || 1000000,
       badge: pkg.badge || '✨ Gói Mới',
       desc: pkg.desc || ''
     };
