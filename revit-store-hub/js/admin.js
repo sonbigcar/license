@@ -145,6 +145,9 @@ class AdminPanel {
     if (tab === 'orders' && window.dataStore && typeof window.dataStore.fetchRemoteOrders === 'function') {
       await window.dataStore.fetchRemoteOrders();
       this.render();
+    } else if (tab === 'licenses' && window.dataStore && typeof window.dataStore.fetchRemoteLicensesVault === 'function') {
+      await window.dataStore.fetchRemoteLicensesVault();
+      this.render();
     }
   }
 
@@ -606,6 +609,9 @@ class AdminPanel {
           <button class="btn btn-secondary btn-sm" style="color: #4F46E5; font-weight: 800; border-color: #818CF8; background: #EEF2FF; display: inline-flex; align-items: center; gap: 4px;" onclick="window.adminPanel.openPackageManagerModal()">
             <span>🧩</span> Gói Bản Quyền
           </button>
+          <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.refreshLicensesFromCloud(this)" style="font-weight: 700; color: var(--primary);" title="Đồng bộ danh sách thiết bị và bản quyền mới nhất từ GitHub Cloud">
+            🔄 Đồng Bộ Thiết Bị
+          </button>
           <button class="btn btn-primary btn-sm" onclick="window.adminPanel.openManualLicenseModal()">
             ✨ + Cấp Key Thủ Công
           </button>
@@ -641,7 +647,7 @@ class AdminPanel {
               const remainingDays = Math.round((exp - now) / (1000 * 60 * 60 * 24));
               const isExpired = remainingDays <= 0 || l.status === 'expired';
               const isNearExpiry = remainingDays > 0 && remainingDays <= 30;
-              const usedMachines = (l.activations || []).length;
+              const usedMachines = (l.activations || []).length || (l.registered_accounts || []).length;
               const isFull = usedMachines >= l.max_machines;
 
               let statusBadge = `<span class="badge badge-family">🟢 Hoạt Động</span>`;
@@ -857,7 +863,7 @@ class AdminPanel {
 
   openLicenseDevicesModal(licenseId) {
     const licenses = window.dataStore.getLicenses();
-    const lic = licenses.find(l => l.id === licenseId);
+    const lic = licenses.find(l => l.id === licenseId || l.license_key === licenseId);
     if (!lic) return;
 
     const modal = document.getElementById('licenseDevicesModalOverlay');
@@ -869,7 +875,7 @@ class AdminPanel {
       title.innerHTML = `🖥️ Máy Trạm Đã Kích Hoạt: <span style="font-family:var(--font-mono); color:var(--primary); font-size:1.05rem;">${lic.license_key}</span>`;
     }
 
-    const activations = lic.activations || [];
+    const activations = (lic.activations && lic.activations.length > 0) ? lic.activations : (lic.registered_accounts || []);
 
     body.innerHTML = `
       <div style="background: #FAF3EE; border: 1px solid #EAE0D7; border-radius: var(--radius-lg); padding: 18px; margin-bottom: 20px;">
@@ -901,38 +907,43 @@ class AdminPanel {
         <div style="text-align: center; padding: 36px 20px; background: #FFFBF9; border: 1px dashed #EAE0D7; border-radius: var(--radius-lg); color: var(--text-muted);">
           <div style="font-size: 2.2rem; margin-bottom: 8px;">💻</div>
           <p>Chưa có máy tính trạm nào kích hoạt key này.</p>
-          <small style="color: var(--text-dim);">Khi kỹ sư dán mã key vào Revit Add-in, máy tính trạm sẽ lập tức xuất hiện tại đây.</small>
+          <small style="color: var(--text-dim);">Khi kỹ sư dán mã key vào Revit Add-in hoặc Phần mềm, máy tính trạm sẽ lập tức xuất hiện tại đây.</small>
         </div>
       ` : `
         <div>
-          ${activations.map(act => `
+          ${activations.map(act => {
+            const mId = act.machine_id || act.machineId || 'UNKNOWN_HWID';
+            const mName = act.machine_name || act.fullName || act.username || 'BIM Workstation';
+            const pingTime = act.last_checked_at || act.lastActive || act.registeredAt;
+            const formattedPing = pingTime ? new Date(pingTime).toLocaleString('vi-VN') : 'Vừa kích hoạt';
+            return `
             <div class="device-card-item">
               <div class="device-info-col">
                 <div class="device-icon-box">🖥️</div>
                 <div>
                   <div style="font-weight: 800; color: var(--text-pure); font-size: 1rem; display: flex; align-items: center; gap: 8px;">
-                    <span>${act.machine_name || 'BIM Workstation'}</span>
-                    <button style="border:none; background:none; cursor:pointer; font-size:0.85rem;" title="Đổi tên máy" onclick="window.adminPanel.adminRenameDevice('${lic.id}', '${act.machine_id}', '${act.machine_name || ''}')">✏️</button>
+                    <span>${mName}</span>
+                    <button style="border:none; background:none; cursor:pointer; font-size:0.85rem;" title="Đổi tên máy" onclick="window.adminPanel.adminRenameDevice('${lic.id}', '${mId}', '${mName}')">✏️</button>
                   </div>
                   <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--primary); margin-top: 2px;">
-                    HWID: ${act.machine_id}
+                    HWID: ${mId}
                   </div>
                   <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 4px;">
-                    HĐH: <strong>${act.os_info || 'Windows 11'}</strong> • Bản Revit: <span class="badge badge-version" style="font-size: 0.68rem; padding: 1px 6px;">${act.revit_version || '2025'}</span> • IP: ${act.ip_address || '118.70.182.45'}
+                    HĐH: <strong>${act.os_info || 'Windows'}</strong> • Ứng dụng: <span class="badge badge-version" style="font-size: 0.68rem; padding: 1px 6px;">${act.app || (act.revit_version ? `Revit ${act.revit_version}` : 'Revit Tool')}</span> ${act.ip_address ? `• IP: ${act.ip_address}` : ''}
                   </div>
                   <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 2px;">
-                    Heartbeat gần nhất: ${new Date(act.last_checked_at).toLocaleString('vi-VN')}
+                    Kích hoạt/Heartbeat: ${formattedPing} ${act.username ? `(User: ${act.username})` : ''}
                   </div>
                 </div>
               </div>
 
               <div>
-                <button class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="window.adminPanel.adminDeactivateDevice('${lic.id}', '${act.machine_id}')">
+                <button class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="window.adminPanel.adminDeactivateDevice('${lic.id}', '${mId}')">
                   🗑️ Gỡ Máy Này
                 </button>
               </div>
             </div>
-          `).join('')}
+          `}).join('')}
         </div>
       `}
     `;
@@ -959,6 +970,27 @@ class AdminPanel {
       window.licenseManager.deactivateSingleMachine(licenseId, machineId);
       this.openLicenseDevicesModal(licenseId);
       this.render();
+    }
+  }
+
+  async refreshLicensesFromCloud(btn = null) {
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Đang đồng bộ...';
+    }
+    try {
+      if (window.dataStore && typeof window.dataStore.fetchRemoteLicensesVault === 'function') {
+        await window.dataStore.fetchRemoteLicensesVault();
+      }
+      this.render();
+      alert('🎉 Đã đồng bộ thành công toàn bộ dữ liệu bản quyền và thiết bị kích hoạt từ GitHub Cloud!');
+    } catch (e) {
+      alert('Lỗi kết nối máy chủ: ' + e.message);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '🔄 Đồng Bộ Thiết Bị';
+      }
     }
   }
 
