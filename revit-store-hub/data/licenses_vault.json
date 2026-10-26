@@ -5,7 +5,7 @@
       "PHẦN MỀM QUẢN LÝ CÔNG VIỆC"
     ],
     "plan_name": "Gói Full VIP (Tất Cả Tools)",
-    "updated_at": "2026-10-26T13:04:35.797Z",
+    "updated_at": "2026-10-26T13:04:37.798Z",
     "expiry_date": "2027-10-26T13:00:01.525Z",
     "max_accounts": 3,
     "max_machines": 3,
@@ -18,7 +18,7 @@
     ],
     "plan_name": "Combo Cơ Điện Lạnh (Duct + Pipe)",
     "expiry_date": "2027-10-24T14:48:35.704Z",
-    "updated_at": "2026-10-26T13:04:35.797Z",
+    "updated_at": "2026-10-26T13:04:37.798Z",
     "max_accounts": 3,
     "max_machines": 3,
     "registered_accounts": []
@@ -30,7 +30,7 @@
     ],
     "plan_name": "Gói Full VIP & Quản Lý Công Việc (5 Máy/User)",
     "expiry_date": "2027-10-24T14:48:45.834Z",
-    "updated_at": "2026-10-26T13:04:35.797Z",
+    "updated_at": "2026-10-26T13:04:37.798Z",
     "registered_accounts": [
       {
         "username": "doanson99",
@@ -62,7 +62,7 @@
     ],
     "plan_name": "Gói Combo (PHẦN MỀM QUẢN LÝ CÔNG VIỆC + TASK-APP + TASK - 3 Máy)",
     "expiry_date": "2027-10-25T00:00:00.000Z",
-    "updated_at": "2026-10-26T13:04:35.797Z",
+    "updated_at": "2026-10-26T13:04:37.798Z",
     "registered_accounts": [
       {
         "username": "doanson99",
@@ -82,7 +82,7 @@
     "plan_name": "Gói Bản Quyền DoanSon - PHẦN MỀM QUẢN LÝ CÔNG VIỆC (10 Tài khoản)",
     "max_accounts": 10,
     "expiry_date": "2028-10-25T00:00:00.000Z",
-    "updated_at": "2026-10-26T13:04:35.797Z",
+    "updated_at": "2026-10-26T13:04:37.798Z",
     "registered_accounts": [
       {
         "username": "doanson",
@@ -107,7 +107,7 @@
     "max_accounts": 2,
     "max_machines": 2,
     "expiry_date": "2027-10-25T00:00:00.000Z",
-    "updated_at": "2026-10-26T13:04:35.797Z",
+    "updated_at": "2026-10-26T13:04:37.797Z",
     "registered_accounts": [
       {
         "username": "sonson",
@@ -138,7 +138,7 @@
     "max_accounts": 2,
     "max_machines": 2,
     "registered_accounts": [],
-    "updated_at": "2026-10-26T13:04:35.797Z"
+    "updated_at": "2026-10-26T13:04:37.798Z"
   },
   "DSMEP-330247-XF8J-PRO": {
     "allowed_modules": [
@@ -149,7 +149,7 @@
     "max_accounts": 2,
     "max_machines": 2,
     "registered_accounts": [],
-    "updated_at": "2026-10-26T13:04:35.797Z"
+    "updated_at": "2026-10-26T13:04:37.798Z"
   },
   "REVIT-UCLW-7S2G-TJX8": {
     "allowed_modules": [
@@ -161,6 +161,6 @@
     "max_accounts": 2,
     "max_machines": 2,
     "registered_accounts": [],
-    "updated_at": "2026-10-26T13:04:35.797Z"
+    "updated_at": "2026-10-26T13:04:37.798Z"
   }
 }
