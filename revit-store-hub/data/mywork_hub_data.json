@@ -1,0 +1,1586 @@
+{
+  "activeTasks": [
+    {
+      "id": "TASK-035",
+      "code": "TASK-035",
+      "title": "4444444444",
+      "project": "Nhà xưởng A",
+      "discipline": "Điện",
+      "assignee": "Chưa có người nhận",
+      "assigner": "son",
+      "priority": "Cao",
+      "startDate": "2026-10-25",
+      "initialDeadline": "2026-11-01",
+      "currentDeadline": "2026-11-01",
+      "isOverdue": false,
+      "status": "To do",
+      "description": "",
+      "revisions": [],
+      "deadlineHistory": [
+        {
+          "date": "25/10/2026",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "2026-11-01",
+          "user": "son"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "act-1792945430044",
+          "time": "25/10/2026 23:23",
+          "desc": "Tạo task mới (Mở cho nhân viên tự đăng ký nhận việc)",
+          "user": "son"
+        }
+      ],
+      "teamCode": "MEP-NXA-2026"
+    },
+    {
+      "id": "TASK-034",
+      "code": "TASK-034",
+      "title": "aaaaaaaaaaaa",
+      "project": "Nhà xưởng A",
+      "discipline": "Điện",
+      "assignee": "Đoàn Sơn",
+      "assigner": "Đoàn Sơn",
+      "priority": "Cao",
+      "startDate": "2026-10-25",
+      "initialDeadline": "2026-11-01",
+      "currentDeadline": "2026-11-01",
+      "isOverdue": false,
+      "status": "Chạy",
+      "description": "",
+      "revisions": [],
+      "deadlineHistory": [
+        {
+          "date": "25/10/2026",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "2026-11-01",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "act-1792920778832",
+          "time": "25/10/2026 16:32",
+          "desc": "Chuyển người phụ trách: Đoàn Sơn",
+          "user": "Đoàn sơn"
+        },
+        {
+          "id": "act-1792920753062",
+          "time": "25/10/2026 16:32",
+          "desc": "Kỹ sư Đoàn sơn đã nhận việc này",
+          "user": "Đoàn sơn"
+        },
+        {
+          "id": "act-1792920431854",
+          "time": "25/10/2026 16:27",
+          "desc": "Tạo task mới (Mở cho nhân viên tự đăng ký nhận việc)",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "teamCode": "MEP-NXA-2026",
+      "startedAt": "25/10/2026 16:32"
+    },
+    {
+      "id": "TASK-028",
+      "code": "TASK-028",
+      "title": "Bóc tách khối lượng MEP",
+      "project": "Nhà xưởng A",
+      "discipline": "Báo giá",
+      "assignee": "Lê Văn C",
+      "assigner": "Đoàn Sơn",
+      "priority": "Cao",
+      "startDate": "2025-11-06",
+      "initialDeadline": "2025-11-13",
+      "currentDeadline": "2026-10-28",
+      "isOverdue": false,
+      "overdueNote": "Còn 1 ngày",
+      "status": "Chạy",
+      "description": "Thực hiện bóc tách khối lượng đường ống, phụ kiện và thiết bị MEP cho hạng mục nhà xưởng A.",
+      "revisions": [
+        {
+          "id": "REV-028-1",
+          "label": "Revision 01",
+          "title": "123",
+          "assignee": "Hoàng Văn E",
+          "deadline": "2026-10-28",
+          "status": "In progress",
+          "createdAt": "25/10/2026 15:39"
+        }
+      ],
+      "deadlineHistory": [
+        {
+          "date": "06/11/2025",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "13/11/2025",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "act-1792918266416",
+          "time": "25/10/2026 15:51",
+          "desc": "Chuyển người phụ trách: Lê Văn C",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "act-1792917547819",
+          "time": "25/10/2026 15:39",
+          "desc": "Phát sinh Revision 01 (123) - Đưa công việc trở lại danh sách Đang xử lý",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "act-1792917408838",
+          "time": "25/10/2026 15:36",
+          "desc": "Đánh dấu hoàn thành công việc",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "act-4",
+          "time": "12/11/2025 16:00",
+          "desc": "Đã chuyển trạng thái sang Review",
+          "user": "Hoàng Văn E"
+        },
+        {
+          "id": "act-5",
+          "time": "06/11/2025 08:30",
+          "desc": "Tạo task",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "completedDate": "2026-10-25",
+      "executionTime": "2 ngày",
+      "revisionLabel": "R1",
+      "latestRevisionNote": "Revision 01: 123"
+    },
+    {
+      "id": "TASK-001",
+      "code": "TASK-001",
+      "title": "Vẽ Shop Drawing điện",
+      "project": "Nhà xưởng A",
+      "discipline": "Điện",
+      "assignee": "Nguyễn Văn A",
+      "assigner": "Trần Thị B",
+      "priority": "Cao",
+      "completedDate": "2025-11-12",
+      "executionTime": "3 ngày",
+      "revisionLabel": "R2",
+      "status": "Chạy",
+      "description": "Đã hoàn thành bàn giao hồ sơ shop drawing điện giai đoạn 1.",
+      "revisions": [
+        {
+          "id": "REV-001-A",
+          "label": "Revision 01",
+          "title": "Sửa đường kính ống luồn dây cáp nguồn",
+          "status": "In progress",
+          "deadline": "2025-11-16",
+          "assignee": "Nguyễn Văn A",
+          "createdAt": "2025-11-12 14:00"
+        },
+        {
+          "id": "REV-001-2",
+          "label": "Revision 02",
+          "title": "ngu lol",
+          "assignee": "Nguyễn Văn A",
+          "deadline": "2026-10-28",
+          "status": "In progress",
+          "createdAt": "25/10/2026 15:38"
+        }
+      ],
+      "deadlineHistory": [
+        {
+          "date": "05/11/2025",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "12/11/2025",
+          "user": "Trần Thị B"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "act-1792917508955",
+          "time": "25/10/2026 15:38",
+          "desc": "Phát sinh Revision 02 (ngu lol) - Đưa công việc trở lại danh sách Đang xử lý",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "c-act-1",
+          "time": "12/11/2025 17:00",
+          "desc": "Đánh dấu hoàn thành task gốc",
+          "user": "Nguyễn Văn A"
+        },
+        {
+          "id": "c-act-2",
+          "time": "12/11/2025 14:00",
+          "desc": "Tạo Revision 01 yêu cầu sửa ống luồn dây",
+          "user": "Trần Thị B"
+        }
+      ],
+      "currentDeadline": "2026-10-28",
+      "latestRevisionNote": "Revision 02: ngu lol",
+      "startedAt": "25/10/2026 17:02",
+      "progress": 0
+    },
+    {
+      "id": "TASK-034",
+      "code": "TASK-034",
+      "title": "aaaaaaaaaaaa",
+      "project": "Nhà xưởng A",
+      "discipline": "Điện",
+      "assignee": "Đoàn Sơn",
+      "assigner": "Đoàn Sơn",
+      "priority": "Cao",
+      "startDate": "2026-10-25",
+      "initialDeadline": "2026-11-01",
+      "currentDeadline": "2026-11-01",
+      "isOverdue": false,
+      "status": "Chạy",
+      "description": "",
+      "revisions": [],
+      "deadlineHistory": [
+        {
+          "date": "25/10/2026",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "2026-11-01",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "act-1792920778832",
+          "time": "25/10/2026 16:32",
+          "desc": "Chuyển người phụ trách: Đoàn Sơn",
+          "user": "Đoàn sơn"
+        },
+        {
+          "id": "act-1792920753062",
+          "time": "25/10/2026 16:32",
+          "desc": "Kỹ sư Đoàn sơn đã nhận việc này",
+          "user": "Đoàn sơn"
+        },
+        {
+          "id": "act-1792917461103",
+          "time": "25/10/2026 15:37",
+          "desc": "Bắt đầu làm việc (In Progress) lúc 25/10/2026 15:37",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "act-1792917435005",
+          "time": "25/10/2026 15:37",
+          "desc": "Tạo task mới (Mở cho nhân viên tự đăng ký nhận việc)",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "teamCode": "REVIT-STORE-HUB",
+      "startedAt": "25/10/2026 15:37"
+    },
+    {
+      "id": "TASK-033",
+      "code": "TASK-033",
+      "title": "sâsasasa",
+      "project": "Nhà xưởng A",
+      "discipline": "Điện",
+      "assignee": "Chưa có người nhận",
+      "assigner": "Đoàn Sơn",
+      "priority": "Cao",
+      "startDate": "2026-10-25",
+      "initialDeadline": "2026-11-01",
+      "currentDeadline": "2026-11-01",
+      "isOverdue": false,
+      "status": "Trống",
+      "description": "",
+      "revisions": [],
+      "deadlineHistory": [
+        {
+          "date": "25/10/2026",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "2026-11-01",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "act-1792917431619",
+          "time": "25/10/2026 15:37",
+          "desc": "Tạo task mới (Mở cho nhân viên tự đăng ký nhận việc)",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "teamCode": "REVIT-STORE-HUB"
+    },
+    {
+      "id": "TASK-032",
+      "code": "TASK-032",
+      "title": "sâsasa",
+      "project": "Nhà xưởng A",
+      "discipline": "Điện",
+      "assignee": "Chưa có người nhận",
+      "assigner": "Đoàn Sơn",
+      "priority": "Cao",
+      "startDate": "2026-10-25",
+      "initialDeadline": "2026-11-01",
+      "currentDeadline": "2026-11-01",
+      "isOverdue": false,
+      "status": "Trống",
+      "description": "",
+      "revisions": [],
+      "deadlineHistory": [
+        {
+          "date": "25/10/2026",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "2026-11-01",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "act-1792917428521",
+          "time": "25/10/2026 15:37",
+          "desc": "Tạo task mới (Mở cho nhân viên tự đăng ký nhận việc)",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "teamCode": "REVIT-STORE-HUB"
+    },
+    {
+      "id": "TASK-030",
+      "code": "TASK-030",
+      "title": "DSĐSS",
+      "project": "Nhà xưởng A",
+      "discipline": "Điện",
+      "assignee": "Đoàn Sơn",
+      "assigner": "Đoàn Sơn",
+      "priority": "Cao",
+      "startDate": "2026-10-25",
+      "initialDeadline": "2026-11-01",
+      "currentDeadline": "2026-11-01",
+      "isOverdue": false,
+      "status": "Chạy",
+      "description": "",
+      "revisions": [],
+      "deadlineHistory": [
+        {
+          "date": "25/10/2026",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "2026-11-01",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "act-1792915413390",
+          "time": "25/10/2026 15:03",
+          "desc": "Kỹ sư Đoàn Sơn đã nhận việc này",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "act-1792901946672",
+          "time": "25/10/2026 11:19",
+          "desc": "Tạo task mới (Mở cho nhân viên tự đăng ký nhận việc)",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "teamCode": "ALL-PROJECTS"
+    },
+    {
+      "id": "TASK-029",
+      "code": "TASK-029",
+      "title": "DSDS",
+      "project": "Nhà xưởng A",
+      "discipline": "Điện",
+      "assignee": "Chưa có người nhận",
+      "assigner": "Đoàn Sơn",
+      "priority": "Cao",
+      "startDate": "2026-10-25",
+      "initialDeadline": "2026-11-01",
+      "currentDeadline": "2026-11-01",
+      "isOverdue": false,
+      "status": "Trống",
+      "description": "",
+      "revisions": [],
+      "deadlineHistory": [
+        {
+          "date": "25/10/2026",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "2026-11-01",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "act-1792901943200",
+          "time": "25/10/2026 11:19",
+          "desc": "Tạo task mới (Mở cho nhân viên tự đăng ký nhận việc)",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "teamCode": "ALL-PROJECTS"
+    },
+    {
+      "id": "TASK-023",
+      "code": "TASK-023",
+      "title": "Vẽ Shop Drawing điện",
+      "project": "Nhà xưởng A",
+      "discipline": "Điện",
+      "assignee": "Trần Thị B",
+      "assigner": "Trần Thị B",
+      "priority": "Cao",
+      "startDate": "2025-11-05",
+      "initialDeadline": "2025-11-12",
+      "currentDeadline": "2025-11-12",
+      "isOverdue": true,
+      "overdueNote": "Quá hạn",
+      "overdueReason": "Phát sinh công việc ưu tiên khác",
+      "overdueAdjuster": "Nguyễn Văn A - 12/11/2025",
+      "status": "Chạy",
+      "description": "Vẽ shop drawing hệ thống điện theo bản vẽ thiết kế.",
+      "revisions": [
+        {
+          "id": "REV-001",
+          "label": "Revision 01",
+          "title": "Sửa lỗi cao độ tuyến ống điện trên bản vẽ.",
+          "status": "In progress",
+          "deadline": "2025-11-14",
+          "assignee": "Nguyễn Văn A",
+          "createdAt": "2025-11-12 10:15"
+        }
+      ],
+      "deadlineHistory": [
+        {
+          "date": "12/11/2025",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "12/11/2025",
+          "user": "Nguyễn Văn A"
+        },
+        {
+          "date": "12/11/2025",
+          "type": "extended",
+          "title": "Gia hạn deadline",
+          "deadline": "15/11/2025",
+          "user": "Nguyễn Văn A",
+          "reason": "Phát sinh công việc ưu tiên khác"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "act-1792920411492",
+          "time": "25/10/2026 16:26",
+          "desc": "Chuyển người phụ trách: Trần Thị B",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "act-1",
+          "time": "12/11/2025 10:30",
+          "desc": "Đã gia hạn deadline từ 12/11 → 15/11",
+          "user": "Nguyễn Văn A"
+        },
+        {
+          "id": "act-2",
+          "time": "12/11/2025 09:15",
+          "desc": "Đã cập nhật trạng thái: To do → In progress",
+          "user": "Nguyễn Văn A"
+        },
+        {
+          "id": "act-3",
+          "time": "05/11/2025 14:20",
+          "desc": "Tạo task",
+          "user": "Trần Thị B"
+        }
+      ],
+      "progress": 0,
+      "startedAt": "25/10/2026 22:54"
+    },
+    {
+      "id": "TASK-012",
+      "code": "TASK-012",
+      "title": "Bóc tách vật tư điện",
+      "project": "Nhà xưởng B",
+      "discipline": "Điện",
+      "assignee": "Đoàn Sơn",
+      "assigner": "Đoàn Sơn",
+      "priority": "Trung bình",
+      "startDate": "2025-11-09",
+      "initialDeadline": "2025-11-15",
+      "currentDeadline": "2025-11-15",
+      "isOverdue": false,
+      "status": "Chạy",
+      "description": "Thống kê chủng loại máng cáp, dây cáp và phụ kiện đấu nối tủ MSB.",
+      "revisions": [],
+      "deadlineHistory": [
+        {
+          "date": "09/11/2025",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "15/11/2025",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "act-1792920790002",
+          "time": "25/10/2026 16:33",
+          "desc": "Chuyển người phụ trách: Đoàn Sơn",
+          "user": "Đoàn sơn"
+        },
+        {
+          "id": "act-1792920783877",
+          "time": "25/10/2026 16:33",
+          "desc": "Kỹ sư Đoàn sơn đã nhận việc này",
+          "user": "Đoàn sơn"
+        },
+        {
+          "id": "act-1792918332813",
+          "time": "25/10/2026 15:52",
+          "desc": "Chuyển người phụ trách: Chưa có người nhận",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "act-1792918236610",
+          "time": "25/10/2026 15:50",
+          "desc": "Kỹ sư Đoàn Sơn đã nhận việc này",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "act-1792917915061",
+          "time": "25/10/2026 15:45",
+          "desc": "Chuyển người phụ trách: Chưa có người nhận",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "act-8",
+          "time": "09/11/2025 10:00",
+          "desc": "Tạo task",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "startedAt": "25/10/2026 15:50"
+    },
+    {
+      "id": "TASK-005",
+      "code": "TASK-005",
+      "title": "Thống kê vật tư MEP",
+      "project": "Văn phòng",
+      "discipline": "Báo giá",
+      "assignee": "Chưa có người nhận",
+      "assigner": "Đoàn Sơn",
+      "priority": "Trung bình",
+      "startDate": "2025-11-10",
+      "initialDeadline": "2025-11-16",
+      "currentDeadline": "2025-11-16",
+      "isOverdue": false,
+      "status": "Trống",
+      "description": "Tổng hợp BOQ toàn bộ các bộ môn MEP tòa nhà văn phòng phục vụ mua sắm vật tư đợt 2.",
+      "revisions": [],
+      "deadlineHistory": [
+        {
+          "date": "10/11/2025",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "16/11/2025",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "act-1792917913914",
+          "time": "25/10/2026 15:45",
+          "desc": "Chuyển người phụ trách: Chưa có người nhận",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "act-9",
+          "time": "10/11/2025 08:30",
+          "desc": "Tạo task",
+          "user": "Đoàn Sơn"
+        }
+      ]
+    },
+    {
+      "id": "TASK-021",
+      "code": "TASK-021",
+      "title": "Vẽ shop drawing cấp thoát nước",
+      "project": "Nhà xưởng B",
+      "discipline": "Cấp thoát nước",
+      "assignee": "Chưa có người nhận",
+      "assigner": "Đoàn Sơn",
+      "priority": "Thấp",
+      "startDate": "2025-11-10",
+      "initialDeadline": "2025-11-20",
+      "currentDeadline": "2025-11-20",
+      "isOverdue": false,
+      "status": "Trống",
+      "description": "Triển khai bản vẽ chi tiết ống cấp nước sạch PPR và ống thoát nước uPVC khu vực vệ sinh.",
+      "revisions": [],
+      "deadlineHistory": [
+        {
+          "date": "10/11/2025",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "20/11/2025",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "act-1792918331581",
+          "time": "25/10/2026 15:52",
+          "desc": "Chuyển người phụ trách: Chưa có người nhận",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "act-1792917922572",
+          "time": "25/10/2026 15:45",
+          "desc": "Chuyển người phụ trách: Đoàn Sơn",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "act-11",
+          "time": "10/11/2025 15:20",
+          "desc": "Tạo task",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "startedAt": "25/10/2026 15:36"
+    },
+    {
+      "id": "TASK-026",
+      "code": "TASK-026",
+      "title": "Kiểm tra bản vẽ PCCC",
+      "project": "Nhà xưởng A",
+      "discipline": "PCCC",
+      "assignee": "Chưa có người nhận",
+      "assigner": "Đoàn Sơn",
+      "priority": "Thấp",
+      "startDate": "2025-11-11",
+      "initialDeadline": "2025-11-22",
+      "currentDeadline": "2025-11-22",
+      "isOverdue": false,
+      "status": "Trống",
+      "description": "Đối chiếu vị trí đầu phun Sprinkler với đèn chiếu sáng và ống gió.",
+      "revisions": [],
+      "deadlineHistory": [
+        {
+          "date": "11/11/2025",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "22/11/2025",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "act-1792917912800",
+          "time": "25/10/2026 15:45",
+          "desc": "Chuyển người phụ trách: Chưa có người nhận",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "act-12",
+          "time": "11/11/2025 11:15",
+          "desc": "Tạo task",
+          "user": "Đoàn Sơn"
+        }
+      ]
+    },
+    {
+      "id": "TASK-034",
+      "code": "TASK-034",
+      "title": "aaaaaaaaaaaa",
+      "project": "Văn phòng",
+      "discipline": "HVAC",
+      "assignee": "Đoàn Sơn",
+      "assigner": "Lê Thị H",
+      "priority": "Thấp",
+      "startDate": "2025-11-12",
+      "initialDeadline": "2025-11-25",
+      "currentDeadline": "2025-11-25",
+      "isOverdue": false,
+      "status": "Chạy",
+      "description": "Điều chỉnh vị trí miệng gió cấp theo layout trần thạch cao mới từ bên kiến trúc.",
+      "revisions": [],
+      "deadlineHistory": [
+        {
+          "date": "12/11/2025",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "25/11/2025",
+          "user": "Lê Thị H"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "act-1792920778832",
+          "time": "25/10/2026 16:32",
+          "desc": "Chuyển người phụ trách: Đoàn Sơn",
+          "user": "Đoàn sơn"
+        },
+        {
+          "id": "act-1792920753062",
+          "time": "25/10/2026 16:32",
+          "desc": "Kỹ sư Đoàn sơn đã nhận việc này",
+          "user": "Đoàn sơn"
+        },
+        {
+          "id": "act-1792917461103",
+          "time": "25/10/2026 15:37",
+          "desc": "Bắt đầu làm việc (In Progress) lúc 25/10/2026 15:37",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "act-13",
+          "time": "12/11/2025 08:00",
+          "desc": "Tạo task",
+          "user": "Lê Thị H"
+        }
+      ],
+      "startedAt": "25/10/2026 15:37"
+    },
+    {
+      "id": "TASK-038",
+      "code": "TASK-038",
+      "title": "Phối hợp với tư vấn",
+      "project": "Khu công nghiệp",
+      "discipline": "Báo giá",
+      "assignee": "Chưa có người nhận",
+      "assigner": "Đoàn Sơn",
+      "priority": "Thấp",
+      "startDate": "2025-11-12",
+      "initialDeadline": "2025-11-28",
+      "currentDeadline": "2025-11-28",
+      "isOverdue": false,
+      "status": "Trống",
+      "description": "Gửi biên bản giải trình các điểm không đồng bộ giữa kiến trúc và kỹ thuật MEP.",
+      "revisions": [],
+      "deadlineHistory": [
+        {
+          "date": "12/11/2025",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "28/11/2025",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "act-1792917916396",
+          "time": "25/10/2026 15:45",
+          "desc": "Chuyển người phụ trách: Chưa có người nhận",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "act-14",
+          "time": "12/11/2025 10:00",
+          "desc": "Tạo task",
+          "user": "Đoàn Sơn"
+        }
+      ]
+    }
+  ],
+  "completedTasks": [
+    {
+      "id": "TASK-017",
+      "code": "TASK-017",
+      "title": "Lập bản vẽ cải tạo hệ thống điện",
+      "project": "Khu công nghiệp",
+      "discipline": "Điện",
+      "assignee": "Nguyễn Văn A",
+      "assigner": "Trần Thị B",
+      "priority": "Trung bình",
+      "startDate": "2025-11-07",
+      "initialDeadline": "2025-11-17",
+      "currentDeadline": "2025-11-17",
+      "isOverdue": false,
+      "status": "Completed",
+      "description": "Cập nhật lại phương án đi dây cáp trục đứng theo biên bản hiện trường ngày 06/11.",
+      "revisions": [
+        {
+          "id": "REV-017-1",
+          "label": "Revision 01",
+          "title": "Điều chỉnh lộ cấp nguồn trạm biến áp",
+          "status": "In progress",
+          "deadline": "2025-11-16",
+          "assignee": "Nguyễn Văn A",
+          "createdAt": "2025-11-11 16:30"
+        }
+      ],
+      "deadlineHistory": [
+        {
+          "date": "07/11/2025",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "17/11/2025",
+          "user": "Trần Thị B"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "act-1792922549809",
+          "time": "25/10/2026 17:02",
+          "desc": "Đánh dấu hoàn thành công việc",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "act-10",
+          "time": "07/11/2025 13:45",
+          "desc": "Tạo task",
+          "user": "Trần Thị B"
+        }
+      ],
+      "completedDate": "2026-10-25",
+      "executionTime": "2 ngày",
+      "revisionLabel": "R1"
+    },
+    {
+      "id": "TASK-007",
+      "code": "TASK-007",
+      "title": "Kiểm tra tải lạnh văn phòng",
+      "project": "Văn phòng",
+      "discipline": "HVAC",
+      "assignee": "Đoàn Sơn",
+      "assigner": "Đoàn Sơn",
+      "priority": "Cao",
+      "completedDate": "2026-10-25",
+      "executionTime": "2 ngày",
+      "revisionLabel": "R1",
+      "status": "Xong",
+      "description": "Tính toán nhiệt tải lạnh cho các phòng họp và khu làm việc mở.",
+      "revisions": [
+        {
+          "id": "REV-007-1",
+          "label": "Revision 01",
+          "title": "bi ngu lol",
+          "assignee": "Đoàn Sơn",
+          "deadline": "2026-10-28",
+          "status": "In progress",
+          "createdAt": "25/10/2026 16:29"
+        }
+      ],
+      "deadlineHistory": [],
+      "activityLog": [
+        {
+          "id": "act-1792920578635",
+          "time": "25/10/2026 16:29",
+          "desc": "Đánh dấu hoàn thành công việc",
+          "user": "Đoàn sơn"
+        },
+        {
+          "id": "act-1792920562322",
+          "time": "25/10/2026 16:29",
+          "desc": "Phát sinh Revision 01 (bi ngu lol) giao cho Đoàn Sơn - Đưa task trở lại In Progress",
+          "user": "Đoàn sơn"
+        }
+      ],
+      "isReopenedFromCompleted": true,
+      "reopenedAt": "25/10/2026 16:29",
+      "reopenedReason": "Revision 01: bi ngu lol",
+      "reopenedAssignee": "Đoàn Sơn",
+      "currentDeadline": "2026-10-28",
+      "latestRevisionNote": "Revision 01: bi ngu lol (Đoàn Sơn)"
+    },
+    {
+      "id": "TASK-031",
+      "code": "TASK-031",
+      "title": "Kiểm tra cao độ ống gió",
+      "project": "Văn phòng",
+      "discipline": "HVAC",
+      "assignee": "Nguyễn Văn A",
+      "assigner": "Đoàn Sơn",
+      "priority": "Cao",
+      "startDate": "2025-11-08",
+      "initialDeadline": "2025-11-14",
+      "currentDeadline": "2025-11-14",
+      "isOverdue": false,
+      "status": "Xong",
+      "description": "Rà soát xung đột cao độ trần với tuyến ống gió chính khu vực hành lang và phòng họp.",
+      "revisions": [
+        {
+          "id": "REV-031-1",
+          "label": "Revision 01",
+          "title": "Cập nhật cao độ qua dầm tầng 3",
+          "status": "Completed",
+          "deadline": "2025-11-10",
+          "assignee": "Lê Thị H",
+          "createdAt": "2025-11-09 11:00"
+        },
+        {
+          "id": "REV-031-2",
+          "label": "Revision 02",
+          "title": "Bổ sung chi tiết cửa gió tầng 4",
+          "status": "Completed",
+          "deadline": "2025-11-14",
+          "assignee": "Lê Thị H",
+          "createdAt": "2025-11-11 14:00"
+        }
+      ],
+      "deadlineHistory": [
+        {
+          "date": "08/11/2025",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "14/11/2025",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "act-1792918634837",
+          "time": "25/10/2026 15:57",
+          "desc": "Đã hoàn thành revision REV-031-2",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "act-1792918534245",
+          "time": "25/10/2026 15:55",
+          "desc": "Đánh dấu hoàn thành công việc",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "act-1792918533179",
+          "time": "25/10/2026 15:55",
+          "desc": "Chuyển người phụ trách: Nguyễn Văn A",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "act-1792918264929",
+          "time": "25/10/2026 15:51",
+          "desc": "Chuyển người phụ trách: Trần Thị B",
+          "user": "Đoàn Sơn"
+        },
+        {
+          "id": "act-6",
+          "time": "11/11/2025 14:00",
+          "desc": "Tạo Revision 02",
+          "user": "Lê Thị H"
+        },
+        {
+          "id": "act-7",
+          "time": "08/11/2025 09:00",
+          "desc": "Tạo task",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "completedDate": "2026-10-25",
+      "executionTime": "2 ngày",
+      "revisionLabel": "R2"
+    },
+    {
+      "id": "TASK-002",
+      "code": "TASK-002",
+      "title": "Vẽ Shop Drawing HVAC",
+      "project": "Nhà xưởng A",
+      "discipline": "HVAC",
+      "assignee": "Trần Thị B",
+      "assigner": "Đoàn Sơn",
+      "priority": "Cao",
+      "completedDate": "2025-11-11",
+      "executionTime": "2 ngày",
+      "revisionLabel": "-",
+      "status": "Xong",
+      "description": "Đã hoàn tất kiểm tra và bàn giao hệ thống ống gió cấp/hồi xưởng may.",
+      "revisions": [],
+      "deadlineHistory": [
+        {
+          "date": "07/11/2025",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "11/11/2025",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "c-act-3",
+          "time": "11/11/2025 16:30",
+          "desc": "Đã hoàn thành",
+          "user": "Trần Thị B"
+        }
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "code": "TASK-003",
+      "title": "Bóc tách khối lượng MEP",
+      "project": "Nhà xưởng A",
+      "discipline": "Báo giá",
+      "assignee": "Hoàng Văn E",
+      "assigner": "Đoàn Sơn",
+      "priority": "Cao",
+      "completedDate": "2025-11-10",
+      "executionTime": "2 ngày",
+      "revisionLabel": "R1",
+      "status": "Xong",
+      "description": "Hoàn thành bóc tách chi tiết phục vụ nghiệm thu đợt 1.",
+      "revisions": [
+        {
+          "id": "REV-003-1",
+          "label": "Revision 01",
+          "title": "Bổ sung khối lượng giá đỡ máng cáp",
+          "status": "Completed",
+          "deadline": "2025-11-10",
+          "assignee": "Hoàng Văn E",
+          "createdAt": "2025-11-09 10:00"
+        }
+      ],
+      "deadlineHistory": [
+        {
+          "date": "06/11/2025",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "10/11/2025",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "c-act-4",
+          "time": "10/11/2025 18:00",
+          "desc": "Đã hoàn thành",
+          "user": "Hoàng Văn E"
+        }
+      ]
+    },
+    {
+      "id": "TASK-004",
+      "code": "TASK-004",
+      "title": "Kiểm tra xung đột MEP",
+      "project": "Nhà xưởng A",
+      "discipline": "Báo giá",
+      "assignee": "Đỗ Thị F",
+      "assigner": "Đoàn Sơn",
+      "priority": "Trung bình",
+      "completedDate": "2025-11-08",
+      "executionTime": "1 ngày",
+      "revisionLabel": "-",
+      "status": "Xong",
+      "description": "Chạy Navisworks Clash Detection và xuất báo cáo xung đột cho toàn dự án.",
+      "revisions": [],
+      "deadlineHistory": [
+        {
+          "date": "06/11/2025",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "08/11/2025",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "c-act-5",
+          "time": "08/11/2025 17:15",
+          "desc": "Đã hoàn thành",
+          "user": "Đỗ Thị F"
+        }
+      ]
+    },
+    {
+      "id": "TASK-006",
+      "code": "TASK-006",
+      "title": "Lập bản vẽ hoàn công",
+      "project": "Nhà xưởng A",
+      "discipline": "Điện",
+      "assignee": "Lê Văn C",
+      "assigner": "Đoàn Sơn",
+      "priority": "Thấp",
+      "completedDate": "2025-11-05",
+      "executionTime": "2 ngày",
+      "revisionLabel": "-",
+      "status": "Xong",
+      "description": "Hồ sơ bản vẽ as-built hệ thống tủ điện phân phối tầng trệt.",
+      "revisions": [],
+      "deadlineHistory": [
+        {
+          "date": "03/11/2025",
+          "type": "initial",
+          "title": "Deadline ban đầu",
+          "deadline": "05/11/2025",
+          "user": "Đoàn Sơn"
+        }
+      ],
+      "activityLog": [
+        {
+          "id": "c-act-6",
+          "time": "05/11/2025 16:00",
+          "desc": "Đã hoàn thành",
+          "user": "Lê Văn C"
+        }
+      ]
+    },
+    {
+      "id": "TASK-008",
+      "code": "TASK-008",
+      "title": "Sơ đồ nguyên lý cấp điện tầng 2",
+      "project": "Văn phòng",
+      "discipline": "Điện",
+      "assignee": "Nguyễn Văn A",
+      "assigner": "Trần Thị B",
+      "priority": "Trung bình",
+      "completedDate": "2025-11-03",
+      "executionTime": "4 ngày",
+      "revisionLabel": "R2",
+      "status": "Xong",
+      "description": "Sơ đồ cấp nguồn một sợi và tính toán tiết diện cáp.",
+      "revisions": [],
+      "deadlineHistory": [],
+      "activityLog": []
+    },
+    {
+      "id": "TASK-009",
+      "code": "TASK-009",
+      "title": "Mô hình phối hợp ống cấp nước",
+      "project": "Văn phòng",
+      "discipline": "Cấp thoát nước",
+      "assignee": "Phạm Thị D",
+      "assigner": "Đoàn Sơn",
+      "priority": "Thấp",
+      "completedDate": "2025-11-02",
+      "executionTime": "3 ngày",
+      "revisionLabel": "-",
+      "status": "Xong",
+      "description": "Mô hình 3D Revit ống cấp nước lạnh và nóng trục kỹ thuật.",
+      "revisions": [],
+      "deadlineHistory": [],
+      "activityLog": []
+    },
+    {
+      "id": "TASK-010",
+      "code": "TASK-010",
+      "title": "Họp rà soát va chạm hệ thống MEP",
+      "project": "Văn phòng",
+      "discipline": "Báo giá",
+      "assignee": "Đoàn Sơn",
+      "assigner": "Đoàn Sơn",
+      "priority": "Cao",
+      "completedDate": "2025-11-01",
+      "executionTime": "1 ngày",
+      "revisionLabel": "-",
+      "status": "Xong",
+      "description": "Chủ trì cuộc họp giải quyết 15 điểm va chạm critical giữa HVAC và dầm sàn.",
+      "revisions": [],
+      "deadlineHistory": [],
+      "activityLog": []
+    },
+    {
+      "id": "TASK-013",
+      "code": "TASK-013",
+      "title": "Bản vẽ mương cáp ngầm",
+      "project": "Khu công nghiệp",
+      "discipline": "Điện",
+      "assignee": "Nguyễn Văn A",
+      "assigner": "Trần Thị B",
+      "priority": "Cao",
+      "completedDate": "2025-10-29",
+      "executionTime": "5 ngày",
+      "revisionLabel": "R1",
+      "status": "Xong",
+      "description": "Bản vẽ mặt cắt chi tiết mương bê tông cáp ngầm trung thế 22kV.",
+      "revisions": [],
+      "deadlineHistory": [],
+      "activityLog": []
+    },
+    {
+      "id": "TASK-014",
+      "code": "TASK-014",
+      "title": "Bản vẽ trạm bơm PCCC",
+      "project": "Khu công nghiệp",
+      "discipline": "PCCC",
+      "assignee": "Lê Văn C",
+      "assigner": "Đoàn Sơn",
+      "priority": "Cao",
+      "completedDate": "2025-10-27",
+      "executionTime": "3 ngày",
+      "revisionLabel": "-",
+      "status": "Xong",
+      "description": "Bản vẽ lắp đặt bơm điện chính, bơm diesel dự phòng và bình tích áp.",
+      "revisions": [],
+      "deadlineHistory": [],
+      "activityLog": []
+    },
+    {
+      "id": "TASK-015",
+      "code": "TASK-015",
+      "title": "Tính toán lưu lượng cấp nước thô",
+      "project": "Khu công nghiệp",
+      "discipline": "Cấp thoát nước",
+      "assignee": "Phạm Thị D",
+      "assigner": "Đoàn Sơn",
+      "priority": "Trung bình",
+      "completedDate": "2025-10-25",
+      "executionTime": "2 ngày",
+      "revisionLabel": "-",
+      "status": "Xong",
+      "description": "Thuyết minh tính toán áp lực và lưu lượng phục vụ xưởng sản xuất sơn.",
+      "revisions": [],
+      "deadlineHistory": [],
+      "activityLog": []
+    },
+    {
+      "id": "TASK-016",
+      "code": "TASK-016",
+      "title": "Layout chiếu sáng xưởng 1",
+      "project": "Nhà máy",
+      "discipline": "Điện",
+      "assignee": "Trần Thị B",
+      "assigner": "Đoàn Sơn",
+      "priority": "Trung bình",
+      "completedDate": "2025-10-24",
+      "executionTime": "3 ngày",
+      "revisionLabel": "-",
+      "status": "Xong",
+      "description": "Bố trí đèn LED Highbay 150W đảm bảo độ rọi trung bình 300 Lux.",
+      "revisions": [],
+      "deadlineHistory": [],
+      "activityLog": []
+    },
+    {
+      "id": "TASK-018",
+      "code": "TASK-018",
+      "title": "Sơ đồ công nghệ tháp giải nhiệt",
+      "project": "Nhà máy",
+      "discipline": "HVAC",
+      "assignee": "Lê Thị H",
+      "assigner": "Đoàn Sơn",
+      "priority": "Cao",
+      "completedDate": "2025-10-22",
+      "executionTime": "4 ngày",
+      "revisionLabel": "-",
+      "status": "Xong",
+      "description": "Sơ đồ P&ID hệ thống tháp giải nhiệt Chiller 500RT.",
+      "revisions": [],
+      "deadlineHistory": [],
+      "activityLog": []
+    },
+    {
+      "id": "TASK-019",
+      "code": "TASK-019",
+      "title": "Kiểm tra áp lực mạng cấp cứu hỏa",
+      "project": "Nhà máy",
+      "discipline": "PCCC",
+      "assignee": "Lê Văn C",
+      "assigner": "Đoàn Sơn",
+      "priority": "Cao",
+      "completedDate": "2025-10-20",
+      "executionTime": "2 ngày",
+      "revisionLabel": "-",
+      "status": "Xong",
+      "description": "Thử áp lực tĩnh 10 bar đường ống thép tráng kẽm D100.",
+      "revisions": [],
+      "deadlineHistory": [],
+      "activityLog": []
+    },
+    {
+      "id": "TASK-020",
+      "code": "TASK-020",
+      "title": "Danh mục van và phụ kiện đường ống",
+      "project": "Nhà máy",
+      "discipline": "Cấp thoát nước",
+      "assignee": "Phạm Thị D",
+      "assigner": "Đoàn Sơn",
+      "priority": "Thấp",
+      "completedDate": "2025-10-18",
+      "executionTime": "2 ngày",
+      "revisionLabel": "R1",
+      "status": "Xong",
+      "description": "Danh mục kỹ thuật các loại van bướm, van cổng và van một chiều.",
+      "revisions": [],
+      "deadlineHistory": [],
+      "activityLog": []
+    },
+    {
+      "id": "TASK-022",
+      "code": "TASK-022",
+      "title": "Mô hình Revit trạm biến áp 110kV",
+      "project": "Nhà máy",
+      "discipline": "Điện",
+      "assignee": "Nguyễn Văn A",
+      "assigner": "Đoàn Sơn",
+      "priority": "Cao",
+      "completedDate": "2025-10-15",
+      "executionTime": "6 ngày",
+      "revisionLabel": "R1",
+      "status": "Xong",
+      "description": "Mô hình LOD 350 máy biến áp, kháng điện và dàn thanh cái.",
+      "revisions": [],
+      "deadlineHistory": [],
+      "activityLog": []
+    },
+    {
+      "id": "TASK-024",
+      "code": "TASK-024",
+      "title": "Báo cáo tiến độ MEP tháng 10",
+      "project": "Nhà máy",
+      "discipline": "Báo giá",
+      "assignee": "Đoàn Sơn",
+      "assigner": "Đoàn Sơn",
+      "priority": "Trung bình",
+      "completedDate": "2025-10-14",
+      "executionTime": "1 ngày",
+      "revisionLabel": "-",
+      "status": "Xong",
+      "description": "Báo cáo tổng hợp gửi Ban Quản lý dự án và Tổng thầu.",
+      "revisions": [],
+      "deadlineHistory": [],
+      "activityLog": []
+    }
+  ],
+  "users": [
+    {
+      "id": "u1",
+      "username": "vana",
+      "name": "Nguyễn Văn A",
+      "role": "Kỹ sư Điện",
+      "discipline": "Điện",
+      "phone": "0901 234 567",
+      "email": "vana@mep.vn",
+      "teamCode": "MEP-NXA-2026",
+      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "u2",
+      "username": "thib",
+      "name": "Trần Thị B",
+      "role": "Kỹ sư Điện",
+      "discipline": "Điện",
+      "phone": "0902 345 678",
+      "email": "thib@mep.vn",
+      "teamCode": "MEP-NXA-2026",
+      "avatar": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "u3",
+      "username": "vanc",
+      "name": "Lê Văn C",
+      "role": "Kỹ sư PCCC",
+      "discipline": "PCCC",
+      "phone": "0903 456 789",
+      "email": "vanc@mep.vn",
+      "teamCode": "MEP-NXA-2026",
+      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "u4",
+      "username": "thid",
+      "name": "Phạm Thị D",
+      "role": "Kỹ sư Cấp thoát nước",
+      "discipline": "Cấp thoát nước",
+      "phone": "0904 567 890",
+      "email": "thid@mep.vn",
+      "teamCode": "OFFICE-MEP-88",
+      "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "u5",
+      "username": "vane",
+      "name": "Hoàng Văn E",
+      "role": "Kỹ sư Tổng hợp",
+      "discipline": "Tổng hợp",
+      "phone": "0905 678 901",
+      "email": "vane@mep.vn",
+      "teamCode": "OFFICE-MEP-88",
+      "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "u6",
+      "username": "thif",
+      "name": "Đỗ Thị F",
+      "role": "Kỹ sư Dự toán",
+      "discipline": "Tổng hợp",
+      "phone": "0906 789 012",
+      "email": "thif@mep.vn",
+      "teamCode": "OFFICE-MEP-88",
+      "avatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "u7",
+      "username": "thih",
+      "name": "Lê Thị H",
+      "role": "Kỹ sư HVAC",
+      "discipline": "HVAC",
+      "phone": "0907 890 123",
+      "email": "thih@mep.vn",
+      "teamCode": "OFFICE-MEP-88",
+      "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "u8",
+      "username": "doanson",
+      "name": "son",
+      "role": "Leader MEP",
+      "discipline": "Tổng hợp",
+      "phone": "0908 901 234",
+      "email": "doanson@mep.vn",
+      "teamCode": "REVIT-STORE-HUB",
+      "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&auto=format&fit=crop&q=80",
+      "isVIP": true,
+      "licenseKey": "REVIT-TEST-PKG-MVMIKVSV"
+    },
+    {
+      "id": "u-1792943564839",
+      "username": "doanson99",
+      "name": "sơn",
+      "pin": "1234",
+      "role": "Kỹ sư MEP",
+      "discipline": "Điện",
+      "teamCode": "",
+      "isVIP": true,
+      "licenseKey": "REVIT-TEST-PKG-MVMIKVSV"
+    },
+    {
+      "id": "u-1792948490834",
+      "username": "sonson",
+      "name": "SON",
+      "pin": "1234",
+      "role": "Kỹ sư MEP",
+      "discipline": "Điện",
+      "teamCode": "REVIT-STORE-HUB",
+      "isVIP": true,
+      "licenseKey": "DS-TASK-MYG3-KBNK"
+    }
+  ],
+  "projects": [
+    "Nhà xưởng A",
+    "Nhà xưởng B",
+    "Văn phòng",
+    "Khu công nghiệp",
+    "Nhà máy"
+  ],
+  "disciplines": [
+    {
+      "id": "Điện",
+      "label": "Điện",
+      "color": "#d97706",
+      "bg": "#fef3c7",
+      "border": "#fde68a"
+    },
+    {
+      "id": "HVAC",
+      "label": "HVAC",
+      "color": "#0284c7",
+      "bg": "#e0f2fe",
+      "border": "#bae6fd"
+    },
+    {
+      "id": "Báo giá",
+      "label": "Báo giá",
+      "color": "#475569",
+      "bg": "#47556918",
+      "border": "#47556940"
+    },
+    {
+      "id": "Cấp thoát nước",
+      "label": "Cấp thoát nước",
+      "color": "#0f766e",
+      "bg": "#ccfbf1",
+      "border": "#99f6e4"
+    },
+    {
+      "id": "PCCC",
+      "label": "PCCC",
+      "color": "#e11d48",
+      "bg": "#ffe4e6",
+      "border": "#fecdd3"
+    },
+    {
+      "id": "Kiến trúc",
+      "label": "Kiến trúc",
+      "color": "#7c3aed",
+      "bg": "#f5f3ff",
+      "border": "#ddd6fe"
+    },
+    {
+      "id": "Kết cấu",
+      "label": "Kết cấu",
+      "color": "#0891b2",
+      "bg": "#ecfeff",
+      "border": "#a5f3fc"
+    }
+  ],
+  "statuses": [
+    {
+      "id": "Trống",
+      "label": "Trống",
+      "color": "#64748b",
+      "bg": "#64748b18",
+      "systemRole": "custom"
+    },
+    {
+      "id": "Chạy",
+      "label": "Chạy",
+      "color": "#2563eb",
+      "bg": "#2563eb18",
+      "systemRole": "in_progress"
+    },
+    {
+      "id": "Review",
+      "label": "Review",
+      "color": "#9333ea",
+      "bg": "#9333ea18",
+      "systemRole": "review"
+    },
+    {
+      "id": "Xong",
+      "label": "Xong",
+      "color": "#16a34a",
+      "bg": "#16a34a18",
+      "systemRole": "completed"
+    },
+    {
+      "id": "Chờ duyệt",
+      "label": "Chờ duyệt",
+      "color": "#d97706",
+      "bg": "#d9770618",
+      "systemRole": "pending"
+    }
+  ],
+  "teams": [
+    {
+      "id": "team-all",
+      "name": "Tất cả nhóm (Toàn bộ dự án)",
+      "code": "ALL-PROJECTS",
+      "description": "Chế độ xem tổng hợp toàn bộ các team và dự án",
+      "leader": "Đoàn Sơn",
+      "isDefault": true
+    },
+    {
+      "id": "team-1",
+      "name": "Team Cơ Điện Nhà Xưởng (MEP)",
+      "code": "MEP-NXA-2026",
+      "description": "Nhóm phụ trách Shop Drawing và thi công Nhà xưởng A & B",
+      "leader": "Đoàn Sơn",
+      "isDefault": false
+    },
+    {
+      "id": "team-2",
+      "name": "Team MEP Tòa Nhà Văn Phòng",
+      "code": "OFFICE-MEP-88",
+      "description": "Nhóm thiết kế và triển khai MEP văn phòng",
+      "leader": "Nguyễn Văn A",
+      "isDefault": false
+    },
+    {
+      "id": "team-3",
+      "name": "Team Revit Family & Tools Hub",
+      "code": "REVIT-STORE-HUB",
+      "description": "Nhóm phát triển thư viện Family và Tools Revit tự động",
+      "leader": "Đoàn Sơn",
+      "isDefault": false
+    }
+  ],
+  "currentTeam": {
+    "id": "team-3",
+    "name": "Team Revit Family & Tools Hub",
+    "code": "REVIT-STORE-HUB",
+    "description": "Nhóm phát triển thư viện Family và Tools Revit tự động",
+    "leader": "Đoàn Sơn",
+    "isDefault": false
+  },
+  "updatedAt": "2026-10-26T15:48:19.030Z"
+}

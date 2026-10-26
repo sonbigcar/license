@@ -49,20 +49,33 @@
   "REVIT-5QWB-X35Y-9ZBN": {
     "allowed_modules": [
       "MEP-DUCT",
-      "MEP-PIPE"
+      "MEP-PIPE",
+      "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+      "TASK-APP",
+      "MEP-TASK"
     ],
-    "plan_name": "Combo Cơ Điện Lạnh (Duct + Pipe)",
+    "plan_name": "Combo Cơ Điện Lạnh (Duct + Pipe) & Quản Lý Công Việc",
     "expiry_date": "2027-10-25T00:00:00.000Z",
-    "updated_at": "2026-10-25T09:10:00.000Z",
+    "updated_at": "2026-10-27T00:25:00.000Z",
     "registered_accounts": [
       {
         "username": "doanson99",
         "fullName": "ĐOÀN SƠN",
         "machineId": "HWID-1792915704398",
         "registeredAt": "2026-10-25T08:08:24.398Z"
+      },
+      {
+        "username": "doanson",
+        "fullName": "son",
+        "machineId": "HWID-1793019891827",
+        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+        "registeredAt": "2026-10-26T13:04:51.827Z",
+        "lastActive": "2026-10-26T13:04:51.827Z",
+        "status": "Active"
       }
     ],
-    "max_accounts": 3
+    "max_accounts": 3,
+    "max_machines": 3
   },
   "REVIT-TASK-VIP-2026": {
     "allowed_modules": [
@@ -96,7 +109,26 @@
     "max_accounts": 2,
     "max_machines": 2,
     "expiry_date": "2027-10-25T00:00:00.000Z",
-    "updated_at": "2026-10-25T17:04:50.092Z",
-    "registered_accounts": []
+    "updated_at": "2026-10-26T14:32:13.478Z",
+    "registered_accounts": [
+      {
+        "username": "sonson",
+        "fullName": "SON",
+        "machineId": "HWID-1792948490833",
+        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+        "registeredAt": "2026-10-25T17:14:50.833Z",
+        "lastActive": "2026-10-25T17:14:50.833Z",
+        "status": "Active"
+      },
+      {
+        "username": "doanson",
+        "fullName": "sơn",
+        "machineId": "HWID-1793019618751",
+        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+        "registeredAt": "2026-10-26T13:00:18.751Z",
+        "lastActive": "2026-10-26T13:00:18.751Z",
+        "status": "Active"
+      }
+    ]
   }
 }
