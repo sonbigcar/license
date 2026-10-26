@@ -81,12 +81,14 @@ class AuthManager {
     const isOwnerOrAdmin = 
       input === 'sonbigcar' || 
       input === 'son190799' || 
+      input === 'doanson' ||
+      input === 'doanson99' ||
       input === 'admin@doanson.com' ||
       input === 'admin';
 
     // 1. XỬ LÝ TÀI KHOẢN QUẢN TRỊ VIÊN (ADMIN CHÍNH CHỦ)
     if (isOwnerOrAdmin) {
-      const validAdminPass = (pass === 'Son190799' || pass === 'son123456' || (account && account.password && account.password === pass));
+      const validAdminPass = (pass === 'Son190799' || pass === 'son123456' || pass === '123456' || (account && account.password && account.password === pass));
       if (!validAdminPass) {
         throw new Error('Mật khẩu quản trị viên không chính xác. Vui lòng kiểm tra lại!');
       }
@@ -96,7 +98,7 @@ class AuthManager {
         account = {
           id: 'acc-admin-01',
           email: 'admin@doanson.com',
-          username: 'sonbigcar',
+          username: input,
           password: pass,
           full_name: 'Đoàn Thanh Sơn (Admin)',
           phone: '0908123456',

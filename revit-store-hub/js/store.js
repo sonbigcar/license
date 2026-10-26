@@ -719,8 +719,13 @@ class StoreApp {
       }
     } else if (viewId === 'licenseView') {
       this.renderUserLicenses();
-      if (window.dataStore && typeof window.dataStore.fetchRemoteOrders === 'function') {
-        window.dataStore.fetchRemoteOrders().then(() => this.renderUserLicenses()).catch(() => {});
+      if (window.dataStore) {
+        if (typeof window.dataStore.fetchRemoteLicensesVault === 'function') {
+          window.dataStore.fetchRemoteLicensesVault().then(() => this.renderUserLicenses()).catch(() => {});
+        }
+        if (typeof window.dataStore.fetchRemoteOrders === 'function') {
+          window.dataStore.fetchRemoteOrders().then(() => this.renderUserLicenses()).catch(() => {});
+        }
       }
     } else if (viewId === 'adminView') {
       window.adminPanel.render();
@@ -1997,6 +2002,9 @@ class StoreApp {
           </p>
         </div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button class="btn btn-primary btn-sm" onclick="window.storeApp.refreshLicensesFromCloud(this)">
+            🔄 Đồng Bộ Thiết Bị Mới Nhất
+          </button>
           <button class="btn btn-secondary btn-sm" onclick="window.storeApp.openLicenseGuideModal()">
             📖 Hướng Dẫn Kích Hoạt Trong Revit
           </button>
@@ -2123,7 +2131,7 @@ class StoreApp {
                     <tr>
                       <th>Tên Máy Trạm</th>
                       <th>Hardware ID (HWID)</th>
-                      <th>Phiên Bản Revit</th>
+                      <th>Ứng Dụng / Phiên Bản</th>
                       <th>IP Kết Nối</th>
                       <th>Lần Ping Gần Nhất</th>
                       <th>Trạng Thái</th>
@@ -2131,31 +2139,36 @@ class StoreApp {
                     </tr>
                   </thead>
                   <tbody>
-                    ${activations.map(act => `
+                    ${activations.map(act => {
+                      const mId = act.machine_id || act.machineId || 'UNKNOWN_HWID';
+                      const mName = act.machine_name || act.fullName || act.username || 'PC-Workstation';
+                      const pingTime = act.last_checked_at || act.lastActive || act.registeredAt;
+                      const formattedPing = pingTime ? `${new Date(pingTime).toLocaleDateString('vi-VN')} ${new Date(pingTime).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})}` : 'Vừa kích hoạt';
+                      return `
                       <tr>
                         <td>
-                          <strong>${act.machine_name || 'PC-Workstation'}</strong>
-                          <button style="border:none; background:none; cursor:pointer; font-size:0.8rem; margin-left:4px;" onclick="window.storeApp.renameUserMachine('${lic.id}', '${act.machine_id}', '${act.machine_name || ''}')" title="Đổi tên máy">
+                          <strong>${mName}</strong>
+                          <button style="border:none; background:none; cursor:pointer; font-size:0.8rem; margin-left:4px;" onclick="window.storeApp.renameUserMachine('${lic.id}', '${mId}', '${mName}')" title="Đổi tên máy">
                             ✏️
                           </button>
-                          <br><small style="color: var(--text-dim); font-size: 0.76rem;">${act.os_info || 'Windows 11'}</small>
+                          <br><small style="color: var(--text-dim); font-size: 0.76rem;">${act.app ? `${act.app} • ` : ''}${act.os_info || 'Windows'}</small>
                         </td>
                         <td style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--primary); font-weight: 600;">
-                          ${act.machine_id}
+                          ${mId}
                         </td>
-                        <td><span class="badge badge-version">Revit v${act.revit_version || '2025'}</span></td>
-                        <td style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-dim);">${act.ip_address || '118.70.182.45'}</td>
-                        <td>${new Date(act.last_checked_at).toLocaleDateString('vi-VN')} ${new Date(act.last_checked_at).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})}</td>
+                        <td><span class="badge badge-version">${act.revit_version ? `Revit v${act.revit_version}` : (act.app || 'Đã Kích Hoạt')}</span></td>
+                        <td style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-dim);">${act.ip_address || 'Online Cloud'}</td>
+                        <td>${formattedPing}</td>
                         <td>
                           <span class="badge badge-family" style="font-size: 0.68rem;">🟢 Đang Kết Nối</span>
                         </td>
                         <td>
-                          <button class="btn btn-secondary btn-sm" style="color: var(--danger); font-size: 0.78rem;" onclick="window.storeApp.deactivateMachine('${lic.id}', '${act.machine_id}')">
+                          <button class="btn btn-secondary btn-sm" style="color: var(--danger); font-size: 0.78rem;" onclick="window.storeApp.deactivateMachine('${lic.id}', '${mId}')">
                             🗑️ Gỡ Máy Này
                           </button>
                         </td>
                       </tr>
-                    `).join('')}
+                    `}).join('')}
                   </tbody>
                 </table>
               </div>
@@ -2164,6 +2177,30 @@ class StoreApp {
         </div>
       `;
     }).join('');
+  }
+
+  async refreshLicensesFromCloud(btn = null) {
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Đang đồng bộ...';
+    }
+    try {
+      if (window.dataStore && typeof window.dataStore.fetchRemoteLicensesVault === 'function') {
+        await window.dataStore.fetchRemoteLicensesVault();
+      }
+      if (window.dataStore && typeof window.dataStore.fetchRemoteOrders === 'function') {
+        await window.dataStore.fetchRemoteOrders();
+      }
+      this.renderUserLicenses();
+      alert('🎉 Đã cập nhật thành công danh sách thiết bị và giấy phép từ Cloud!');
+    } catch (e) {
+      alert('Không thể tải từ máy chủ: ' + e.message);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '🔄 Đồng Bộ Thiết Bị Mới Nhất';
+      }
+    }
   }
 
   renewUserLicense(licenseId) {

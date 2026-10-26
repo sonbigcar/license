@@ -175,11 +175,16 @@ class LicenseManager {
    */
   resetAllActivations(licenseId) {
     const licenses = window.dataStore.getLicenses();
-    const lic = licenses.find(l => l.id === licenseId);
+    const lic = licenses.find(l => l.id === licenseId || l.license_key === licenseId);
     if (!lic) return false;
 
     lic.activations = [];
+    lic.registered_accounts = [];
     window.dataStore.updateLicense(lic);
+
+    if (window.dataStore && typeof window.dataStore.syncLicensesVaultToGitHub === 'function') {
+      window.dataStore.syncLicensesVaultToGitHub(lic).catch(e => console.warn('[Reset] Lỗi sync GitHub:', e));
+    }
     return true;
   }
 
@@ -188,11 +193,16 @@ class LicenseManager {
    */
   deactivateSingleMachine(licenseId, machineId) {
     const licenses = window.dataStore.getLicenses();
-    const lic = licenses.find(l => l.id === licenseId);
+    const lic = licenses.find(l => l.id === licenseId || l.license_key === licenseId);
     if (!lic) return false;
 
-    lic.activations = (lic.activations || []).filter(a => a.machine_id !== machineId);
+    lic.activations = (lic.activations || []).filter(a => (a.machine_id || a.machineId) !== machineId);
+    lic.registered_accounts = (lic.registered_accounts || []).filter(a => (a.machineId || a.machine_id) !== machineId);
     window.dataStore.updateLicense(lic);
+
+    if (window.dataStore && typeof window.dataStore.syncLicensesVaultToGitHub === 'function') {
+      window.dataStore.syncLicensesVaultToGitHub(lic).catch(e => console.warn('[Deactivate] Lỗi sync GitHub:', e));
+    }
     return true;
   }
 
@@ -201,13 +211,28 @@ class LicenseManager {
    */
   renameMachine(licenseId, machineId, newFriendlyName) {
     const licenses = window.dataStore.getLicenses();
-    const lic = licenses.find(l => l.id === licenseId);
+    const lic = licenses.find(l => l.id === licenseId || l.license_key === licenseId);
     if (!lic) return false;
 
-    const act = (lic.activations || []).find(a => a.machine_id === machineId);
+    let updated = false;
+    const act = (lic.activations || []).find(a => (a.machine_id || a.machineId) === machineId);
     if (act) {
       act.machine_name = newFriendlyName;
+      updated = true;
+    }
+
+    const reg = (lic.registered_accounts || []).find(a => (a.machineId || a.machine_id) === machineId);
+    if (reg) {
+      reg.fullName = newFriendlyName;
+      reg.machine_name = newFriendlyName;
+      updated = true;
+    }
+
+    if (updated) {
       window.dataStore.updateLicense(lic);
+      if (window.dataStore && typeof window.dataStore.syncLicensesVaultToGitHub === 'function') {
+        window.dataStore.syncLicensesVaultToGitHub(lic).catch(e => console.warn('[Rename] Lỗi sync GitHub:', e));
+      }
       return true;
     }
     return false;

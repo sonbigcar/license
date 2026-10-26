@@ -23,10 +23,30 @@
 
 .portal-tabs {
   display: flex;
-  gap: 10px;
-  border-bottom: 1px solid #EAE0D7;
+  gap: 8px;
+  border-bottom: 2px solid #EAE0D7;
   margin-bottom: 28px;
   overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #E2D9D0 transparent;
+  padding-bottom: 2px;
+}
+
+.portal-tabs::-webkit-scrollbar {
+  height: 5px;
+}
+
+.portal-tabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.portal-tabs::-webkit-scrollbar-thumb {
+  background: #E2D9D0;
+  border-radius: 4px;
+}
+
+.portal-tabs::-webkit-scrollbar-thumb:hover {
+  background: #CBD5E1;
 }
 
 .portal-tab-btn {
@@ -186,43 +206,100 @@
 .admin-stat-card {
   background: #FFFFFF;
   border: var(--border-light);
-  padding: 24px;
+  padding: 22px 24px;
   border-radius: var(--radius-xl);
   border-left: 4px solid var(--primary);
   box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-smooth), box-shadow var(--transition-smooth);
+}
+
+.admin-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .admin-table-container {
   overflow-x: auto;
   border-radius: var(--radius-xl);
-  border: var(--border-light);
+  border: 1px solid #EAE0D7;
   background: #FFFFFF;
   box-shadow: var(--shadow-sm);
+  scrollbar-width: thin;
+  scrollbar-color: #E2D9D0 transparent;
+  position: relative;
+}
+
+.admin-table-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.admin-table-container::-webkit-scrollbar-track {
+  background: #FAF5F0;
+}
+
+.admin-table-container::-webkit-scrollbar-thumb {
+  background: #D5C7BC;
+  border-radius: 4px;
+}
+
+.admin-table-container::-webkit-scrollbar-thumb:hover {
+  background: #B8A89A;
 }
 
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
+  text-align: left;
 }
 
 .data-table th, .data-table td {
-  padding: 16px 20px;
+  padding: 12px 16px;
   text-align: left;
   border-bottom: 1px solid #F0E6DE;
+  vertical-align: middle;
 }
 
 .data-table th {
-  background: #FFFBF9;
+  background: #FFF8F4;
   color: var(--text-dim);
   font-weight: 800;
   text-transform: uppercase;
-  font-size: 0.78rem;
-  letter-spacing: 0.6px;
+  font-size: 0.76rem;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #EAE0D7;
+  white-space: nowrap;
 }
 
-.data-table tr:hover td {
-  background: #FFF9F5;
+.data-table tbody tr:nth-child(even) td {
+  background: #FCFAF8;
+}
+
+.data-table tbody tr:hover td {
+  background: #FFF7ED !important;
+}
+
+/* Cột hành động cố định bên phải khi cuộn ngang */
+.data-table th.col-actions,
+.data-table td.col-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Badge rút gọn cho gói bản quyền trong bảng tài khoản */
+.account-lic-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  line-height: 1.3;
 }
 
 /* ==========================================================================

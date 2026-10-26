@@ -24,6 +24,7 @@ class DataStore {
     this.fetchRemotePillarsConfig();
     this.fetchRemoteOrders();
     this.fetchRemoteAccounts();
+    this.fetchRemoteLicensesVault();
   }
 
   /**
@@ -1280,12 +1281,15 @@ class DataStore {
   getLicenses(userId = null) {
     const user = (window.authManager && window.authManager.getCurrentUser()) || null;
     const userEmail = (user && user.email) ? user.email.toLowerCase().trim() : null;
+    const userName = (user && user.username) ? user.username.toLowerCase().trim() : null;
 
-    // Trường hợp Admin Panel gọi không truyền userId để xem bảng tổng hợp toàn bộ giấy phép hệ thống
+    // Nếu là Admin (Chủ sở hữu hệ thống), trả về toàn bộ bản quyền hệ thống & Vault
+    // để Admin kiểm tra và quản lý mọi máy trạm / thiết bị kích hoạt từ các Tools
+    if (user && user.role === 'admin') {
+      return this.get('licenses') || [];
+    }
+
     if (!userId) {
-      if (user && user.role === 'admin') {
-        return this.get('licenses') || [];
-      }
       if (!user) return [];
       userId = user.id;
     }
@@ -1358,7 +1362,8 @@ class DataStore {
             status: 'active',
             start_date: paidDate,
             expiry_date: expiryDate.toISOString(),
-            activations: []
+            activations: [],
+            registered_accounts: []
           };
           userLicensesMap.set(item.product_id, newLic);
           storedLicenses.unshift(newLic);
@@ -1366,19 +1371,35 @@ class DataStore {
       });
     });
 
-    // Lưu lại license mới nếu có phát sinh
-    this.save('licenses', storedLicenses);
-
-    // Bổ sung các license trong storage nếu khớp đúng ID/Email người dùng
+    // Bổ sung các license trong storage nếu khớp ID, Email, Username, hoặc danh sách thiết bị đã kích hoạt
     storedLicenses.forEach(l => {
-      if (!l || !l.product_id) return;
+      if (!l || !l.license_key) return;
       const lEmail = (l.user_email || '').toLowerCase().trim();
+      const lUser = (l.user_name || '').toLowerCase().trim();
       const matchId = (l.user_id && l.user_id !== 'acc-guest' && l.user_id === userId);
-      const matchEmail = (userEmail && lEmail && lEmail === userEmail);
-      if ((matchId || matchEmail) && !userLicensesMap.has(l.product_id)) {
-        userLicensesMap.set(l.product_id, l);
+      const matchEmail = Boolean(userEmail && lEmail && lEmail === userEmail);
+      const matchUsername = Boolean(userName && lUser && (lUser === userName || lUser.includes(userName)));
+      
+      // Khớp từ danh sách máy trạm đăng ký (registered_accounts) từ tools / phần mềm
+      const matchReg = Array.isArray(l.registered_accounts) && l.registered_accounts.some(r => {
+        const rUser = (r.username || '').toLowerCase().trim();
+        return (userName && rUser === userName) || (userEmail && rUser === userEmail);
+      });
+
+      // Khớp từ danh sách activations
+      const matchAct = Array.isArray(l.activations) && l.activations.some(a => {
+        const aUser = (a.username || '').toLowerCase().trim();
+        return (userName && aUser === userName) || (userEmail && aUser === userEmail);
+      });
+
+      const mapKey = l.id || l.license_key;
+      if ((matchId || matchEmail || matchUsername || matchReg || matchAct) && !userLicensesMap.has(mapKey)) {
+        userLicensesMap.set(mapKey, l);
       }
     });
+
+    // Lưu lại license mới nếu có phát sinh
+    this.save('licenses', storedLicenses);
 
     return Array.from(userLicensesMap.values());
   }
@@ -2149,6 +2170,171 @@ class DataStore {
   }
 
 /**
+   * TỰ ĐỘNG TẢI LICENSES VAULT & THÔNG TIN THIẾT BỊ / MÁY TÍNH KÍCH HOẠT TỪ GITHUB
+   * Đảm bảo mọi lượt kích hoạt từ Revit Add-in và Phần mềm Quản Lý Công Việc đều lập tức hiển thị trên website
+   */
+  async fetchRemoteLicensesVault() {
+    const { owner, repo, token } = this.GITHUB_CONFIG;
+    const pathInRepo = 'revit-store-hub/data/licenses_vault.json';
+    let vault = null;
+
+    // 1. Ưu tiên cao: Lấy trực tiếp từ GitHub Contents API (0s cache với GitHub Token)
+    if (token) {
+      try {
+        const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${pathInRepo}?ref=main&t=${Date.now()}`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3.raw'
+          },
+          cache: 'no-store'
+        });
+        if (res.ok) {
+          vault = await res.json();
+        }
+      } catch (e) {
+        console.warn('Lỗi fetch GitHub Contents licenses_vault:', e.message);
+      }
+    }
+
+    // 2. Dự phòng: raw.githubusercontent.com và file local
+    if (!vault || typeof vault !== 'object') {
+      const candidateUrls = [
+        `https://raw.githubusercontent.com/${owner}/${repo}/main/${pathInRepo}?t=${Date.now()}`,
+        `data/licenses_vault.json?t=${Date.now()}`
+      ];
+      for (const url of candidateUrls) {
+        try {
+          const res = await fetch(url, { cache: 'no-store' });
+          if (res.ok) {
+            vault = await res.json();
+            if (vault && typeof vault === 'object') break;
+          }
+        } catch (e) {}
+      }
+    }
+
+    if (!vault || typeof vault !== 'object') {
+      return this.get('licenses') || [];
+    }
+
+    localStorage.setItem('revit_licenses_vault', JSON.stringify(vault));
+
+    // 3. Tiến hành chuẩn hóa và đồng bộ các license & thiết bị vào DataStore
+    const storedLicenses = this.get('licenses') || [];
+    const accounts = this.getAccounts() || [];
+
+    for (const [key, vData] of Object.entries(vault)) {
+      if (!vData || typeof vData !== 'object') continue;
+      const upperKey = key.trim().toUpperCase();
+
+      const regAccounts = Array.isArray(vData.registered_accounts) ? vData.registered_accounts : [];
+      const vActivations = Array.isArray(vData.activations) ? vData.activations : [];
+
+      // Gộp các thiết bị kích hoạt từ cả registered_accounts và activations không trùng HWID
+      const combinedDevicesMap = new Map();
+
+      regAccounts.forEach(reg => {
+        const mId = (reg.machineId || reg.machine_id || '').trim();
+        if (!mId) return;
+        combinedDevicesMap.set(mId, {
+          machine_id: mId,
+          machine_name: reg.fullName || reg.machine_name || reg.username || 'PC-Workstation',
+          username: reg.username || '',
+          app: reg.app || 'Revit Add-in / Task App',
+          os_info: reg.os_info || 'Windows 11',
+          revit_version: reg.revit_version || '2025',
+          ip_address: reg.ip_address || '',
+          last_checked_at: reg.lastActive || reg.last_checked_at || reg.registeredAt || new Date().toISOString(),
+          registered_at: reg.registeredAt || new Date().toISOString(),
+          status: reg.status || 'Active'
+        });
+      });
+
+      vActivations.forEach(act => {
+        const mId = (act.machine_id || act.machineId || '').trim();
+        if (!mId) return;
+        const prev = combinedDevicesMap.get(mId) || {};
+        combinedDevicesMap.set(mId, {
+          ...prev,
+          machine_id: mId,
+          machine_name: act.machine_name || prev.machine_name || 'PC-Workstation',
+          username: act.username || prev.username || '',
+          app: act.app || prev.app || 'Revit Add-in',
+          os_info: act.os_info || prev.os_info || 'Windows 11',
+          revit_version: act.revit_version || prev.revit_version || '2025',
+          ip_address: act.ip_address || prev.ip_address || '',
+          last_checked_at: act.last_checked_at || prev.last_checked_at || new Date().toISOString(),
+          registered_at: act.registered_at || prev.registered_at || new Date().toISOString(),
+          status: act.status || prev.status || 'Active'
+        });
+      });
+
+      const normalizedActivations = Array.from(combinedDevicesMap.values());
+
+      // Cập nhật license nếu đã có trong local storage
+      const existingIdx = storedLicenses.findIndex(l => 
+        (l.license_key && l.license_key.trim().toUpperCase() === upperKey)
+      );
+
+      if (existingIdx >= 0) {
+        storedLicenses[existingIdx].activations = normalizedActivations;
+        storedLicenses[existingIdx].registered_accounts = regAccounts;
+        if (vData.allowed_modules) storedLicenses[existingIdx].allowed_modules = vData.allowed_modules;
+        if (vData.plan_name) storedLicenses[existingIdx].plan_name = vData.plan_name;
+        if (vData.expiry_date) storedLicenses[existingIdx].expiry_date = vData.expiry_date;
+        if (vData.max_accounts || vData.max_machines) {
+          storedLicenses[existingIdx].max_machines = vData.max_accounts || vData.max_machines;
+        }
+      } else {
+        // Tạo mới license từ Vault
+        const firstUser = regAccounts[0];
+        let matchedAcc = null;
+        if (firstUser && firstUser.username) {
+          const uLower = firstUser.username.toLowerCase();
+          matchedAcc = accounts.find(a => 
+            (a.username && a.username.toLowerCase() === uLower) ||
+            (a.email && a.email.toLowerCase().includes(uLower))
+          );
+        }
+
+        storedLicenses.push({
+          id: 'lic-vault-' + upperKey.replace(/[^A-Z0-9]/g, '-'),
+          license_key: upperKey,
+          user_id: matchedAcc ? matchedAcc.id : (firstUser ? firstUser.username : 'acc-vault'),
+          user_name: matchedAcc ? matchedAcc.full_name : (firstUser ? (firstUser.fullName || firstUser.username) : 'Khách Hàng DoanSon'),
+          user_email: matchedAcc ? matchedAcc.email : (firstUser ? `${firstUser.username}@gmail.com` : 'khachhang@doanson.com'),
+          company: matchedAcc ? (matchedAcc.company || 'DoanSon BIM') : 'Cá nhân',
+          product_id: 'tool-vault-' + upperKey.toLowerCase(),
+          product_name: vData.plan_name || 'Gói Bản Quyền DoanSon Hub',
+          plan_name: vData.plan_name || 'Gói Bản Quyền DoanSon Hub',
+          allowed_modules: vData.allowed_modules || ['MEP-ALL'],
+          subscription_type: 'yearly',
+          max_machines: vData.max_accounts || vData.max_machines || 3,
+          status: 'active',
+          start_date: vData.updated_at || new Date().toISOString(),
+          expiry_date: vData.expiry_date || new Date(Date.now() + 365 * 86400000).toISOString(),
+          download_url: 'downloads/MEP_Routing_Pro_v2.4.0_Setup.exe',
+          version: 'v2.4.0',
+          activations: normalizedActivations,
+          registered_accounts: regAccounts
+        });
+      }
+    }
+
+    this.save('licenses', storedLicenses);
+
+    // Tự động render lại view nếu đang xem bản quyền
+    if (window.storeApp && document.getElementById('licenseView') && !document.getElementById('licenseView').classList.contains('hidden')) {
+      window.storeApp.renderUserLicenses();
+    }
+    if (window.adminPanel && document.getElementById('adminView') && !document.getElementById('adminView').classList.contains('hidden')) {
+      window.adminPanel.render();
+    }
+
+    return storedLicenses;
+  }
+
+/**
    * ĐỒNG BỘ LICENSES VAULT LÊN GITHUB VÀ LOCALHOST ĐỂ APP TASK VÀ REVIT ADDIN NHẬN DIỆN
    */
   async syncLicensesVaultToGitHub(updatedLicense = null) {
@@ -2180,19 +2366,34 @@ class DataStore {
         console.warn('Could not fetch existing licenses_vault from GitHub:', e);
       }
 
-      // Also merge current licenses from local DataStore
+      // Merge current licenses from local DataStore
       const allLicenses = this.getLicenses();
       allLicenses.forEach(lic => {
         if (!lic || !lic.license_key) return;
         const key = lic.license_key.trim().toUpperCase();
         const existing = vault[key] || {};
+        
+        // Chuẩn hóa danh sách registered_accounts
+        const regAccounts = (lic.registered_accounts !== undefined)
+          ? lic.registered_accounts
+          : (lic.activations || []).map(a => ({
+              username: a.username || lic.user_name || 'user',
+              fullName: a.machine_name || 'PC-Workstation',
+              machineId: a.machine_id,
+              registeredAt: a.registered_at || new Date().toISOString(),
+              lastActive: a.last_checked_at || new Date().toISOString(),
+              status: a.status || 'Active',
+              app: a.app || 'Revit Tools'
+            }));
+
         vault[key] = {
           ...existing,
           allowed_modules: lic.allowed_modules || existing.allowed_modules || ['MEP-ALL'],
           plan_name: lic.plan_name || existing.plan_name || 'Gói Bản Quyền DoanSon Hub',
           expiry_date: lic.expiry_date || existing.expiry_date,
-          max_accounts: lic.max_machines || existing.max_accounts || 5,
-          registered_accounts: existing.registered_accounts || [],
+          max_accounts: lic.max_machines || existing.max_accounts || 3,
+          max_machines: lic.max_machines || existing.max_machines || 3,
+          registered_accounts: regAccounts,
           updated_at: new Date().toISOString()
         };
       });
@@ -2200,13 +2401,27 @@ class DataStore {
       if (updatedLicense && updatedLicense.license_key) {
         const key = updatedLicense.license_key.trim().toUpperCase();
         const existing = vault[key] || {};
+        
+        const regAccounts = (updatedLicense.registered_accounts !== undefined)
+          ? updatedLicense.registered_accounts
+          : (updatedLicense.activations || []).map(a => ({
+              username: a.username || updatedLicense.user_name || 'user',
+              fullName: a.machine_name || 'PC-Workstation',
+              machineId: a.machine_id,
+              registeredAt: a.registered_at || new Date().toISOString(),
+              lastActive: a.last_checked_at || new Date().toISOString(),
+              status: a.status || 'Active',
+              app: a.app || 'Revit Tools'
+            }));
+
         vault[key] = {
           ...existing,
           allowed_modules: updatedLicense.allowed_modules || existing.allowed_modules || ['MEP-ALL'],
           plan_name: updatedLicense.plan_name || existing.plan_name,
           expiry_date: updatedLicense.expiry_date || existing.expiry_date,
-          max_accounts: updatedLicense.max_machines || existing.max_accounts || 5,
-          registered_accounts: existing.registered_accounts || [],
+          max_accounts: updatedLicense.max_machines || existing.max_accounts || 3,
+          max_machines: updatedLicense.max_machines || existing.max_machines || 3,
+          registered_accounts: regAccounts,
           updated_at: new Date().toISOString()
         };
       }
