@@ -424,6 +424,37 @@ export default {
           ? 'Toàn Bộ Công Cụ (VIP All-in-One)'
           : allowedModules.map(m => moduleNames[m] || m).join(', ');
 
+        let machines_used = 1;
+        let max_machines = 3;
+        if (env && env.LICENSES_KV) {
+          try {
+            let licObj = {};
+            const stored = await env.LICENSES_KV.get('lic:' + license_key);
+            if (stored) licObj = JSON.parse(stored);
+            if (!Array.isArray(licObj.registered_accounts)) licObj.registered_accounts = [];
+            max_machines = licObj.max_machines || licObj.max_accounts || 3;
+            
+            const existingIdx = licObj.registered_accounts.findIndex(a => (a.machineId || a.machine_id) === machine_id);
+            const nowIso = new Date().toISOString();
+            if (existingIdx >= 0) {
+              licObj.registered_accounts[existingIdx].lastActive = nowIso;
+            } else {
+              licObj.registered_accounts.push({
+                machineId: machine_id,
+                machine_id: machine_id,
+                fullName: machine_name,
+                machine_name: machine_name,
+                registeredAt: nowIso,
+                lastActive: nowIso,
+                status: 'Active'
+              });
+            }
+            licObj.allowed_modules = allowedModules;
+            await env.LICENSES_KV.put('lic:' + license_key, JSON.stringify(licObj));
+            machines_used = licObj.registered_accounts.length;
+          } catch(e) {}
+        }
+
         return new Response(JSON.stringify({
           valid: true,
           Success: true,
@@ -447,8 +478,8 @@ export default {
           CustomerName: machine_name,
           customer_name: machine_name,
           machine_name: machine_name,
-          machines_used: 1,
-          max_machines: 3,
+          machines_used: machines_used,
+          max_machines: max_machines,
           is_trial: isTrial,
           Message: `Bản quyền hợp lệ cho gói: ${modulesDisplay}.`,
           message: `Bản quyền hợp lệ cho gói: ${modulesDisplay}.`
