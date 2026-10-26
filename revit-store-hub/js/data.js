@@ -1283,11 +1283,13 @@ class DataStore {
     const userEmail = (user && user.email) ? user.email.toLowerCase().trim() : null;
     const userName = (user && user.username) ? user.username.toLowerCase().trim() : null;
 
-    // Trường hợp Admin Panel gọi không truyền userId để xem bảng tổng hợp toàn bộ giấy phép hệ thống
+    // Nếu là Admin (Chủ sở hữu hệ thống), trả về toàn bộ bản quyền hệ thống & Vault
+    // để Admin kiểm tra và quản lý mọi máy trạm / thiết bị kích hoạt từ các Tools
+    if (user && user.role === 'admin') {
+      return this.get('licenses') || [];
+    }
+
     if (!userId) {
-      if (user && user.role === 'admin') {
-        return this.get('licenses') || [];
-      }
       if (!user) return [];
       userId = user.id;
     }
