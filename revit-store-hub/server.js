@@ -297,6 +297,72 @@ const server = http.createServer(async (req, res) => {
           ? 'Toàn Bộ Công Cụ (VIP All-in-One)'
           : allowedModules.map(m => moduleNames[m] || m).join(', '));
 
+        // Cập nhật thông tin thiết bị (HWID) vào Kho bản quyền (licenses_vault)
+        if (!licVault[key]) {
+          licVault[key] = {
+            allowed_modules: allowedModules,
+            plan_name: modulesDisplay,
+            max_accounts: 3,
+            max_machines: 3,
+            registered_accounts: [],
+            updated_at: new Date().toISOString()
+          };
+        }
+        if (!Array.isArray(licVault[key].registered_accounts)) {
+          licVault[key].registered_accounts = [];
+        }
+
+        const maxMachines = licVault[key].max_machines || licVault[key].max_accounts || 3;
+        const nowIso = new Date().toISOString();
+
+        // Kiểm tra xem máy tính này đã đăng ký trước đó chưa
+        const existingAccIndex = licVault[key].registered_accounts.findIndex(a => 
+          (a.machineId && a.machineId === machineId) || 
+          (a.machine_id && a.machine_id === machineId)
+        );
+
+        if (existingAccIndex >= 0) {
+          licVault[key].registered_accounts[existingAccIndex].lastActive = nowIso;
+          licVault[key].registered_accounts[existingAccIndex].last_checked_at = nowIso;
+          if (data.machine_name) {
+            licVault[key].registered_accounts[existingAccIndex].fullName = data.machine_name;
+            licVault[key].registered_accounts[existingAccIndex].machine_name = data.machine_name;
+          }
+          if (data.revit_version) licVault[key].registered_accounts[existingAccIndex].revit_version = data.revit_version;
+          if (data.os_info) licVault[key].registered_accounts[existingAccIndex].os_info = data.os_info;
+        } else {
+          // Máy tính mới muốn kích hoạt -> Kiểm tra xem đã vượt hạn mức máy trạm chưa
+          if (licVault[key].registered_accounts.length >= maxMachines) {
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({
+              valid: false,
+              Success: false,
+              code: 'MAX_MACHINES_EXCEEDED',
+              message: `Đã vượt quá số lượng máy trạm cho phép (${licVault[key].registered_accounts.length}/${maxMachines} máy).\nVui lòng đăng nhập website https://doanson.com/revit-store-hub/ để gỡ bỏ máy tính cũ!`
+            }));
+            return;
+          }
+
+          licVault[key].registered_accounts.push({
+            username: customer,
+            fullName: data.machine_name || customer,
+            machineId: machineId,
+            machine_id: machineId,
+            machine_name: data.machine_name || customer,
+            revit_version: data.revit_version || '2025',
+            os_info: data.os_info || 'Windows',
+            app: data.app || 'Revit Add-in',
+            ip_address: req.socket.remoteAddress || '',
+            registeredAt: nowIso,
+            lastActive: nowIso,
+            status: 'Active'
+          });
+        }
+
+        licVault[key].updated_at = nowIso;
+        saveLicensesVault(licVault);
+        const machinesUsed = licVault[key].registered_accounts.length;
+
         const responseObj = {
           valid: true,
           Success: true,
@@ -318,8 +384,8 @@ const server = http.createServer(async (req, res) => {
           expires_at: expiryDate,
           days_remaining: durationDays,
           machine_name: data.machine_name || 'PC-Workstation',
-          machines_used: 1,
-          max_machines: 3,
+          machines_used: machinesUsed,
+          max_machines: maxMachines,
           is_trial: isTrial,
           Message: `Bản quyền hợp lệ cho gói: ${modulesDisplay}.`,
           message: `Bản quyền hợp lệ cho gói: ${modulesDisplay}.`
@@ -331,6 +397,37 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
         res.end(JSON.stringify({ valid: false, Success: false, message: err.message }));
       }
+    });
+    return;
+  }
+
+  // 3. ENDPOINT: GỠ LIÊN KẾT MÁY TRẠM (DEACTIVATE HWID)
+  if (req.method === 'POST' && req.url.startsWith('/api/v1/license/deactivate')) {
+    const chunks = [];
+    req.on('data', chunk => chunks.push(chunk));
+    req.on('end', () => {
+      try {
+        const bodyStr = Buffer.concat(chunks).toString('utf8');
+        const data = bodyStr ? JSON.parse(bodyStr) : {};
+        const key = (data.license_key || data.LicenseKey || '').trim().toUpperCase();
+        const machineId = (data.machine_id || data.MachineId || '').trim();
+
+        if (key && machineId) {
+          const licVault = getLicensesVault();
+          if (licVault[key] && Array.isArray(licVault[key].registered_accounts)) {
+            licVault[key].registered_accounts = licVault[key].registered_accounts.filter(a => 
+              (a.machineId || a.machine_id) !== machineId
+            );
+            licVault[key].updated_at = new Date().toISOString();
+            saveLicensesVault(licVault);
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ success: true, message: `Đã gỡ máy ${machineId} thành công!` }));
+            return;
+          }
+        }
+      } catch (e) {}
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ success: false, message: 'Thiếu key hoặc machine_id' }));
     });
     return;
   }
