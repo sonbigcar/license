@@ -93,15 +93,74 @@ class LicenseManager {
     };
 
     window.dataStore.addLicense(newLicense);
+    this.syncLicenseToRemote(newLicense).catch(() => {});
     return newLicense;
+  }
+
+  /**
+   * Đồng bộ toàn diện thông tin License sang Server Node local, Cloudflare Worker và GitHub Repository
+   */
+  async syncLicenseToRemote(lic) {
+    if (!lic || !lic.license_key) return;
+
+    const maxSlots = Number(lic.max_machines || lic.max_accounts || 3);
+    const regAccounts = (lic.registered_accounts !== undefined)
+      ? lic.registered_accounts
+      : (lic.activations || []).map(a => ({
+          username: a.username || lic.user_name || 'user',
+          fullName: a.machine_name || 'PC-Workstation',
+          machineId: a.machine_id,
+          registeredAt: a.registered_at || new Date().toISOString(),
+          lastActive: a.last_checked_at || new Date().toISOString(),
+          status: a.status || 'Active',
+          app: a.app || 'Revit Tools'
+        }));
+
+    const payload = {
+      license_key: lic.license_key,
+      allowed_modules: lic.allowed_modules || ['MEP-ALL'],
+      plan_name: lic.plan_name || 'Gói Bản Quyền DoanSon Hub',
+      expiry_date: lic.expiry_date,
+      max_machines: maxSlots,
+      max_accounts: maxSlots,
+      status: lic.status || 'active',
+      registered_accounts: regAccounts
+    };
+
+    // 1. Đồng bộ lên Node server local (nếu có dev server chạy)
+    try {
+      await fetch('/api/v1/license/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (e) {}
+
+    // 2. Đồng bộ lên Cloudflare Worker trung tâm (cho mọi máy tính khác & Revit Add-in từ xa)
+    try {
+      await fetch('https://revit-store-api.polydactyl-wormhole.workers.dev/api/v1/license/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (e) {}
+
+    // 3. Đồng bộ lên GitHub Repo data/licenses_vault.json
+    try {
+      if (window.dataStore && typeof window.dataStore.syncLicensesVaultToGitHub === 'function') {
+        await window.dataStore.syncLicensesVaultToGitHub(lic);
+      }
+    } catch (ghErr) {
+      console.warn('[Sync GitHub] Lỗi:', ghErr);
+    }
   }
 
   /**
    * Gia hạn thêm thời gian sử dụng cho License
    */
-  renewLicense(licenseId, addedDays = 365) {
+  async renewLicense(licenseId, addedDays = 365) {
     const licenses = window.dataStore.getLicenses();
-    const lic = licenses.find(l => l.id === licenseId);
+    const lic = licenses.find(l => l.id === licenseId || l.license_key === licenseId);
     if (!lic) return false;
 
     let currentExpiry = new Date(lic.expiry_date);
@@ -116,64 +175,85 @@ class LicenseManager {
     lic.expiry_date = currentExpiry.toISOString();
     lic.status = 'active'; // Tự động active lại nếu trước đó bị hết hạn
     window.dataStore.updateLicense(lic);
+
+    await this.syncLicenseToRemote(lic);
     return lic;
   }
 
   /**
    * Thay đổi số lượng máy tối đa (Nâng cấp gói team 3 máy, 5 máy, 10 máy)
+   * Đồng bộ tức thì lên Server, Worker và GitHub để mọi máy khác nhận diện ngay.
    */
-  adjustMaxMachines(licenseId, newMax) {
+  async adjustMaxMachines(licenseId, newMax) {
     const licenses = window.dataStore.getLicenses();
-    const lic = licenses.find(l => l.id === licenseId);
+    const lic = licenses.find(l => l.id === licenseId || l.license_key === licenseId);
     if (!lic) return false;
 
-    lic.max_machines = Number(newMax);
-    lic.plan_name = `Gói Team (${newMax} Máy)`;
+    const slotsNum = Number(newMax);
+    lic.max_machines = slotsNum;
+    lic.max_accounts = slotsNum;
+
+    // Cập nhật số máy trong plan_name nếu có định dạng (X Máy), bảo toàn tên gói gốc
+    if (lic.plan_name && lic.plan_name.includes('Máy')) {
+      lic.plan_name = lic.plan_name.replace(/\(\d+\s*Máy[^\)]*\)/i, `(${slotsNum} Máy)`);
+    } else if (lic.plan_name) {
+      lic.plan_name = `${lic.plan_name} (${slotsNum} Máy)`;
+    } else {
+      lic.plan_name = `Gói Team (${slotsNum} Máy)`;
+    }
+
     window.dataStore.updateLicense(lic);
+
+    // Đồng bộ tức thì sang tất cả hệ thống (Server, Worker, GitHub)
+    await this.syncLicenseToRemote(lic);
     return lic;
   }
 
   /**
    * Cập nhật danh sách các module được cấp phép cho License (Full VIP, Duct, Pipe, Sheet, Fire, Elec, AI)
    */
-  updateLicenseModules(licenseId, allowedModules, customPlanName = null) {
+  async updateLicenseModules(licenseId, allowedModules, customPlanName = null) {
     const licenses = window.dataStore.getLicenses();
-    const lic = licenses.find(l => l.id === licenseId);
+    const lic = licenses.find(l => l.id === licenseId || l.license_key === licenseId);
     if (!lic) return false;
 
     const isAll = allowedModules.includes('MEP-ALL');
     lic.allowed_modules = isAll ? ['MEP-ALL'] : allowedModules;
 
+    const slots = lic.max_machines || 3;
     if (customPlanName) {
       lic.plan_name = customPlanName;
     } else if (isAll) {
-      lic.plan_name = `Gói Full VIP (Tất Cả Tools - ${lic.max_machines} Máy)`;
+      lic.plan_name = `Gói Full VIP (Tất Cả Tools - ${slots} Máy)`;
     } else {
       const names = lic.allowed_modules.map(m => m.replace('MEP-', ''));
-      lic.plan_name = `Gói Combo (${names.join(' + ')} - ${lic.max_machines} Máy)`;
+      lic.plan_name = `Gói Combo (${names.join(' + ')} - ${slots} Máy)`;
     }
 
     window.dataStore.updateLicense(lic);
+    await this.syncLicenseToRemote(lic);
     return lic;
   }
 
   /**
    * Tạm dừng hoặc kích hoạt lại License
    */
-  toggleLicenseStatus(licenseId) {
+  async toggleLicenseStatus(licenseId) {
     const licenses = window.dataStore.getLicenses();
-    const lic = licenses.find(l => l.id === licenseId);
+    const lic = licenses.find(l => l.id === licenseId || l.license_key === licenseId);
     if (!lic) return false;
 
     lic.status = lic.status === 'active' ? 'suspended' : 'active';
     window.dataStore.updateLicense(lic);
+
+    await this.syncLicenseToRemote(lic);
     return lic;
   }
 
   /**
    * Reset toàn bộ máy tính kích hoạt (Dành cho hỗ trợ khẩn cấp)
    */
-  resetAllActivations(licenseId) {
+  async resetAllActivations(licenseId) {
     const licenses = window.dataStore.getLicenses();
     const lic = licenses.find(l => l.id === licenseId || l.license_key === licenseId);
     if (!lic) return false;
@@ -182,16 +262,14 @@ class LicenseManager {
     lic.registered_accounts = [];
     window.dataStore.updateLicense(lic);
 
-    if (window.dataStore && typeof window.dataStore.syncLicensesVaultToGitHub === 'function') {
-      window.dataStore.syncLicensesVaultToGitHub(lic).catch(e => console.warn('[Reset] Lỗi sync GitHub:', e));
-    }
+    await this.syncLicenseToRemote(lic);
     return true;
   }
 
   /**
    * Hủy 1 máy trạm đơn lẻ (Người dùng đổi máy mới)
    */
-  deactivateSingleMachine(licenseId, machineId) {
+  async deactivateSingleMachine(licenseId, machineId) {
     const licenses = window.dataStore.getLicenses();
     const lic = licenses.find(l => l.id === licenseId || l.license_key === licenseId);
     if (!lic) return false;
@@ -200,16 +278,14 @@ class LicenseManager {
     lic.registered_accounts = (lic.registered_accounts || []).filter(a => (a.machineId || a.machine_id) !== machineId);
     window.dataStore.updateLicense(lic);
 
-    if (window.dataStore && typeof window.dataStore.syncLicensesVaultToGitHub === 'function') {
-      window.dataStore.syncLicensesVaultToGitHub(lic).catch(e => console.warn('[Deactivate] Lỗi sync GitHub:', e));
-    }
+    await this.syncLicenseToRemote(lic);
     return true;
   }
 
   /**
    * Đổi tên gợi nhớ cho máy trạm (Ví dụ: Máy Bàn BIM 01, Laptop Sơn...)
    */
-  renameMachine(licenseId, machineId, newFriendlyName) {
+  async renameMachine(licenseId, machineId, newFriendlyName) {
     const licenses = window.dataStore.getLicenses();
     const lic = licenses.find(l => l.id === licenseId || l.license_key === licenseId);
     if (!lic) return false;
@@ -230,9 +306,7 @@ class LicenseManager {
 
     if (updated) {
       window.dataStore.updateLicense(lic);
-      if (window.dataStore && typeof window.dataStore.syncLicensesVaultToGitHub === 'function') {
-        window.dataStore.syncLicensesVaultToGitHub(lic).catch(e => console.warn('[Rename] Lỗi sync GitHub:', e));
-      }
+      await this.syncLicenseToRemote(lic);
       return true;
     }
     return false;

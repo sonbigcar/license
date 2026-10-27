@@ -974,11 +974,16 @@ class AdminPanel {
     }
   }
 
-  adminDeactivateDevice(licenseId, machineId) {
+  async adminDeactivateDevice(licenseId, machineId) {
     if (confirm('Bạn có chắc muốn gỡ bỏ máy tính trạm này? Khe kích hoạt sẽ được giải phóng để kỹ sư có thể kích hoạt trên máy mới.')) {
-      window.licenseManager.deactivateSingleMachine(licenseId, machineId);
+      await window.licenseManager.deactivateSingleMachine(licenseId, machineId);
       this.openLicenseDevicesModal(licenseId);
       this.render();
+      const selUser = document.getElementById('accLicSelectedUserId');
+      if (selUser && selUser.value) {
+        const acc = window.dataStore.getAccounts().find(a => a.id === selUser.value);
+        if (acc) this.renderAccountLicensesList(acc);
+      }
     }
   }
 
@@ -1117,37 +1122,14 @@ class AdminPanel {
       return;
     }
 
-    const updated = window.licenseManager.updateLicenseModules(licId, selected);
+    const updated = await window.licenseManager.updateLicenseModules(licId, selected);
     if (!updated) {
       alert('Không tìm thấy giấy phép để cập nhật!');
       return;
     }
 
-    // 1. Đồng bộ lên Server API nếu có máy chủ node cục bộ
-    try {
-      await fetch('/api/v1/license/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          license_key: updated.license_key,
-          allowed_modules: updated.allowed_modules,
-          plan_name: updated.plan_name,
-          expiry_date: updated.expiry_date
-        })
-      });
-    } catch (e) {}
-
-    // 2. Đồng bộ trực tiếp lên GitHub data/licenses_vault.json
-    try {
-      if (window.dataStore && typeof window.dataStore.syncLicensesVaultToGitHub === 'function') {
-        await window.dataStore.syncLicensesVaultToGitHub(updated);
-      }
-    } catch (ghErr) {
-      console.warn('Lỗi đồng bộ GitHub licenses vault:', ghErr);
-    }
-
     this.closeEditModulesModal();
-    alert(`🎉 ĐÃ CẬP NHẬT GÓI MODULE THÀNH CÔNG!\n\n• Key: ${updated.license_key}\n• Gói mới: ${updated.plan_name}\n• Các module được mở: ${updated.allowed_modules.join(', ')}`);
+    alert(`🎉 ĐÃ CẬP NHẬT GÓI MODULE THÀNH CÔNG!\n\n• Key: ${updated.license_key}\n• Gói mới: ${updated.plan_name}\n• Các module được mở: ${updated.allowed_modules.join(', ')}\n(Đã đồng bộ sang Máy Chủ & GitHub)`);
     this.render();
   }
 
@@ -1288,14 +1270,15 @@ class AdminPanel {
     this.render();
   }
 
-  toggleLicenseStatus(licenseId) {
-    const updated = window.licenseManager.toggleLicenseStatus(licenseId);
+  async toggleLicenseStatus(licenseId) {
+    const updated = await window.licenseManager.toggleLicenseStatus(licenseId);
     if (updated) {
+      alert(`Đã ${updated.status === 'suspended' ? 'TẠM KHÓA' : 'MỞ KHÓA'} giấy phép ${updated.license_key}!\n(Đã đồng bộ sang Máy Chủ & GitHub)`);
       this.render();
     }
   }
 
-  renewLicensePrompt(licenseId) {
+  async renewLicensePrompt(licenseId) {
     const daysStr = prompt('Nhập số ngày muốn gia hạn (Ví dụ: 365 = 1 năm, 30 = 1 tháng, 1095 = 3 năm):', '365');
     if (!daysStr) return;
     const days = Number(daysStr);
@@ -1303,14 +1286,19 @@ class AdminPanel {
       alert('Số ngày không hợp lệ!');
       return;
     }
-    const updated = window.licenseManager.renewLicense(licenseId, days);
+    const updated = await window.licenseManager.renewLicense(licenseId, days);
     if (updated) {
-      alert(`Đã gia hạn thành công thêm ${days} ngày! Hạn mới: ${new Date(updated.expiry_date).toLocaleDateString('vi-VN')}`);
+      alert(`Đã gia hạn thành công thêm ${days} ngày! Hạn mới: ${new Date(updated.expiry_date).toLocaleDateString('vi-VN')}\n(Đã đồng bộ sang Máy Chủ & GitHub để các máy khác nhận diện ngay)`);
       this.render();
+      const selUser = document.getElementById('accLicSelectedUserId');
+      if (selUser && selUser.value) {
+        const acc = window.dataStore.getAccounts().find(a => a.id === selUser.value);
+        if (acc) this.renderAccountLicensesList(acc);
+      }
     }
   }
 
-  adjustMaxMachinesPrompt(licenseId, currentMax) {
+  async adjustMaxMachinesPrompt(licenseId, currentMax) {
     const newMaxStr = prompt(`Hạn mức số máy hiện tại: ${currentMax} máy.\nNhập số lượng máy tối đa mới cho phép kích hoạt:`, currentMax);
     if (!newMaxStr) return;
     const newMax = Number(newMaxStr);
@@ -1318,19 +1306,29 @@ class AdminPanel {
       alert('Số lượng máy phải từ 1 trở lên!');
       return;
     }
-    const updated = window.licenseManager.adjustMaxMachines(licenseId, newMax);
+    const updated = await window.licenseManager.adjustMaxMachines(licenseId, newMax);
     if (updated) {
-      alert(`Đã cập nhật hạn mức thành công: ${newMax} máy!`);
+      alert(`🎉 ĐÃ CẬP NHẬT HẠN MỨC THÀNH CÔNG: ${newMax} MÁY!\n(Hệ thống đã đồng bộ lên Máy Chủ & GitHub để mọi máy tính và Revit add-in nhận diện ngay)`);
       this.render();
+      const selUser = document.getElementById('accLicSelectedUserId');
+      if (selUser && selUser.value) {
+        const acc = window.dataStore.getAccounts().find(a => a.id === selUser.value);
+        if (acc) this.renderAccountLicensesList(acc);
+      }
     }
   }
 
-  resetLicenseDevicesPrompt(licenseId) {
+  async resetLicenseDevicesPrompt(licenseId) {
     if (confirm('⚠️ BẠN CÓ CHẮC CHẮN MUỐN RESET TOÀN BỘ MÁY TRẠM?\n\nMọi máy tính đang liên kết với key này sẽ bị hủy kích hoạt. Khách hàng sẽ phải nhập lại key từ Revit để liên kết lại.')) {
-      window.licenseManager.resetAllActivations(licenseId);
+      await window.licenseManager.resetAllActivations(licenseId);
       this.closeLicenseDevicesModal();
-      alert('Đã reset toàn bộ máy trạm thành công!');
+      alert('Đã reset toàn bộ máy trạm thành công!\n(Đã đồng bộ lên Máy Chủ & GitHub để giải phóng slot ngay)');
       this.render();
+      const selUser = document.getElementById('accLicSelectedUserId');
+      if (selUser && selUser.value) {
+        const acc = window.dataStore.getAccounts().find(a => a.id === selUser.value);
+        if (acc) this.renderAccountLicensesList(acc);
+      }
     }
   }
 
@@ -1946,27 +1944,13 @@ class AdminPanel {
     if (!pkg) return;
 
     if (confirm(`Bạn có chắc muốn chuyển giấy phép này sang: "${pkg.name}"?\nCác module sẽ được cập nhật thành: ${pkg.modules.join(', ')}`)) {
-      const updated = window.licenseManager.updateLicenseModules(licenseId, pkg.modules, pkg.name);
-      
-      // Đồng bộ Server API
-      try {
-        await fetch('/api/v1/license/sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            license_key: updated.license_key,
-            allowed_modules: updated.allowed_modules,
-            plan_name: updated.plan_name,
-            expiry_date: updated.expiry_date
-          })
-        });
-      } catch (e) {}
+      const updated = await window.licenseManager.updateLicenseModules(licenseId, pkg.modules, pkg.name);
 
       const userId = document.getElementById('accLicSelectedUserId').value;
       const acc = window.dataStore.getAccounts().find(a => a.id === userId);
       if (acc) this.renderAccountLicensesList(acc);
       this.render();
-      alert(`🎉 ĐÃ ĐỔI GÓI THÀNH CÔNG!\n\n• Key: ${updated.license_key}\n• Gói mới: ${updated.plan_name}\n• Module: ${updated.allowed_modules.join(', ')}`);
+      alert(`🎉 ĐÃ ĐỔI GÓI THÀNH CÔNG!\n\n• Key: ${updated.license_key}\n• Gói mới: ${updated.plan_name}\n• Module: ${updated.allowed_modules.join(', ')}\n(Đã đồng bộ sang Máy Chủ & GitHub)`);
     }
   }
 
@@ -2007,25 +1991,13 @@ class AdminPanel {
       note: `Cấp trực tiếp từ Quản Lý Tài Khoản (Admin Portal)`
     });
 
-    // Đồng bộ lên Server API
-    try {
-      await fetch('/api/v1/license/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          license_key: newLic.license_key,
-          allowed_modules: newLic.allowed_modules,
-          plan_name: newLic.plan_name,
-          expiry_date: newLic.expiry_date
-        })
-      });
-    } catch (e) {}
+    await window.licenseManager.syncLicenseToRemote(newLic);
 
     // Cập nhật lại giao diện modal & admin table
     this.renderAccountLicensesList(acc);
     this.render();
 
-    alert(`🎉 ĐÃ CẤP GÓI BẢN QUYỀN MỚI THÀNH CÔNG CHO TÀI KHOẢN!\n\n• Tài khoản: ${acc.full_name} (${acc.email})\n• Gói: ${newLic.plan_name}\n• Key: ${newLic.license_key}\n• Module: ${newLic.allowed_modules.join(', ')}\n• Số máy: ${newLic.max_machines} máy\n• Hạn dùng: ${new Date(newLic.expiry_date).toLocaleDateString('vi-VN')}`);
+    alert(`🎉 ĐÃ CẤP GÓI BẢN QUYỀN MỚI THÀNH CÔNG CHO TÀI KHOẢN!\n\n• Tài khoản: ${acc.full_name} (${acc.email})\n• Gói: ${newLic.plan_name}\n• Key: ${newLic.license_key}\n• Module: ${newLic.allowed_modules.join(', ')}\n• Số máy: ${newLic.max_machines} máy\n• Hạn dùng: ${new Date(newLic.expiry_date).toLocaleDateString('vi-VN')}\n(Đã đồng bộ sang Máy Chủ & GitHub)`);
   }
 
   quickLoginAdmin() {

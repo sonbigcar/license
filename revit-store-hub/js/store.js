@@ -2233,9 +2233,9 @@ class StoreApp {
     }
   }
 
-  deactivateMachine(licenseId, machineId) {
+  async deactivateMachine(licenseId, machineId) {
     if (confirm('Bạn có chắc muốn gỡ liên kết máy tính này? Sau khi gỡ, bạn có thể nhập key trên máy tính mới.')) {
-      window.licenseManager.deactivateSingleMachine(licenseId, machineId);
+      await window.licenseManager.deactivateSingleMachine(licenseId, machineId);
       alert('Đã gỡ liên kết máy tính thành công. Slot kích hoạt đã được giải phóng!');
       this.renderUserLicenses();
     }

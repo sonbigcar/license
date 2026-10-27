@@ -80,7 +80,7 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // 0. ENDPOINT: ĐỒNG BỘ MODULE CỦA KEY TỪ ADMIN WEBSITE
+  // 0. ENDPOINT: ĐỒNG BỘ MODULE VÀ HẠN MỨC MÁY CỦA KEY TỪ ADMIN WEBSITE
   if (req.method === 'POST' && req.url.startsWith('/api/v1/license/sync')) {
     const chunks = [];
     req.on('data', chunk => chunks.push(chunk));
@@ -93,25 +93,36 @@ const server = http.createServer(async (req, res) => {
         if (key) {
           const licVault = getLicensesVault();
           const existing = licVault[key] || {};
+          const maxSlots = Number(data.max_machines || data.max_accounts || existing.max_machines || existing.max_accounts || 3);
           licVault[key] = {
             ...existing,
             allowed_modules: data.allowed_modules || existing.allowed_modules || ['MEP-ALL'],
             plan_name: data.plan_name || existing.plan_name || 'Gói Bản Quyền DoanSon Hub',
             expiry_date: data.expiry_date || existing.expiry_date,
-            max_accounts: data.max_accounts || existing.max_accounts || 5,
-            registered_accounts: data.registered_accounts || existing.registered_accounts || [],
+            max_accounts: maxSlots,
+            max_machines: maxSlots,
+            status: data.status || existing.status || 'active',
+            registered_accounts: data.registered_accounts !== undefined ? data.registered_accounts : (existing.registered_accounts || []),
             updated_at: new Date().toISOString()
           };
           saveLicensesVault(licVault);
-          console.log(`[LicenseSync] Đã cập nhật key ${key}: ${JSON.stringify(licVault[key].allowed_modules)}`);
+          console.log(`[LicenseSync] Đã cập nhật key ${key}: slots=${maxSlots}, modules=${JSON.stringify(licVault[key].allowed_modules)}`);
           res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-          res.end(JSON.stringify({ success: true, message: 'Đã đồng bộ module thành công!' }));
+          res.end(JSON.stringify({ success: true, message: 'Đã đồng bộ giấy phép thành công!', slots: maxSlots }));
           return;
         }
       } catch (err) {}
       res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({ success: false, message: 'Thiếu key' }));
     });
+    return;
+  }
+
+  // 0.1 ENDPOINT: LẤY TOÀN BỘ KHO GIẤY PHÉP (LICENSES VAULT) DÀNH CHO CLIENT
+  if (req.method === 'GET' && req.url.startsWith('/api/v1/license/vault')) {
+    const licVault = getLicensesVault();
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(licVault));
     return;
   }
 

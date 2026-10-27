@@ -1,4 +1,105 @@
 {
+  "REVIT-DEMO-TEST-KEY-01": {
+    "allowed_modules": [
+      "MEP-ALL",
+      "PHẦN MỀM QUẢN LÝ CÔNG VIỆC"
+    ],
+    "plan_name": "Gói Full VIP (Tất Cả Tools)",
+    "updated_at": "2026-10-26T14:32:13.478Z",
+    "expiry_date": "2027-10-26T13:00:01.525Z",
+    "max_accounts": 3,
+    "max_machines": 3,
+    "registered_accounts": []
+  },
+  "REVIT-TEST-PKG-MVMIKNZS": {
+    "allowed_modules": [
+      "MEP-DUCT",
+      "MEP-PIPE"
+    ],
+    "plan_name": "Combo Cơ Điện Lạnh (Duct + Pipe)",
+    "expiry_date": "2027-10-24T14:48:35.704Z",
+    "updated_at": "2026-10-26T14:32:13.478Z",
+    "max_accounts": 3,
+    "max_machines": 3,
+    "registered_accounts": []
+  },
+  "REVIT-TEST-PKG-MVMIKVSV": {
+    "allowed_modules": [
+      "MEP-ALL",
+      "PHẦN MỀM QUẢN LÝ CÔNG VIỆC"
+    ],
+    "plan_name": "Gói Full VIP & Quản Lý Công Việc (5 Máy/User)",
+    "expiry_date": "2027-10-24T14:48:45.834Z",
+    "updated_at": "2026-10-26T14:32:13.478Z",
+    "registered_accounts": [
+      {
+        "username": "doanson99",
+        "fullName": "Đoàn sơn",
+        "machineId": "HWID-1792920519377",
+        "registeredAt": "2026-10-25T09:28:39.377Z"
+      },
+      {
+        "username": "bb",
+        "fullName": "aaaa",
+        "machineId": "HWID-1792920818879",
+        "registeredAt": "2026-10-25T09:33:38.879Z"
+      },
+      {
+        "username": "doanson",
+        "fullName": "son",
+        "machineId": "HWID-1792943744297",
+        "registeredAt": "2026-10-25T15:55:44.297Z"
+      }
+    ],
+    "max_accounts": 3,
+    "max_machines": 3
+  },
+  "REVIT-5QWB-X35Y-9ZBN": {
+    "allowed_modules": [
+      "MEP-DUCT",
+      "MEP-PIPE",
+      "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+      "TASK-APP",
+      "MEP-TASK"
+    ],
+    "plan_name": "Combo Cơ Điện Lạnh (Duct + Pipe - 5 Máy)",
+    "expiry_date": "2027-10-25T00:00:00.000Z",
+    "updated_at": "2026-10-27T16:19:29.502Z",
+    "registered_accounts": [
+      {
+        "username": "doanson99",
+        "fullName": "ĐOÀN SƠN",
+        "machineId": "HWID-1792915704398",
+        "registeredAt": "2026-10-25T08:08:24.398Z"
+      },
+      {
+        "username": "doanson",
+        "fullName": "son",
+        "machineId": "HWID-1793019891827",
+        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+        "registeredAt": "2026-10-26T13:04:51.827Z",
+        "lastActive": "2026-10-26T13:04:51.827Z",
+        "status": "Active"
+      },
+      {
+        "username": "Kỹ Sư Doan Son",
+        "fullName": "ADMINISTRATOR",
+        "machineId": "DS-92CB-7F2D",
+        "machine_id": "DS-92CB-7F2D",
+        "machine_name": "ADMINISTRATOR",
+        "revit_version": "2025",
+        "os_info": "Windows",
+        "app": "Revit Add-in",
+        "ip_address": "127.0.0.1",
+        "registeredAt": "2026-10-26T17:35:41.065Z",
+        "lastActive": "2026-10-26T17:35:41.065Z",
+        "status": "Active"
+      }
+    ],
+    "max_accounts": 5,
+    "max_machines": 5,
+    "status": "active"
+  },
   "REVIT-TASK-VIP-2026": {
     "allowed_modules": [
       "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",

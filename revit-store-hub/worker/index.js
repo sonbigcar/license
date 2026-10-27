@@ -327,9 +327,24 @@ export default {
         const body = await request.json().catch(() => ({}));
         const key = (body.license_key || body.LicenseKey || '').trim().toUpperCase();
         if (key && env && env.LICENSES_KV) {
-          await env.LICENSES_KV.put('lic:' + key, JSON.stringify(body));
+          let existing = {};
+          try {
+            const raw = await env.LICENSES_KV.get('lic:' + key);
+            if (raw) existing = JSON.parse(raw);
+          } catch(e) {}
+          const maxSlots = Number(body.max_machines || body.max_accounts || existing.max_machines || existing.max_accounts || 3);
+          const merged = {
+            ...existing,
+            ...body,
+            license_key: key,
+            max_machines: maxSlots,
+            max_accounts: maxSlots,
+            status: body.status || existing.status || 'active',
+            updated_at: new Date().toISOString()
+          };
+          await env.LICENSES_KV.put('lic:' + key, JSON.stringify(merged));
         }
-        return new Response(JSON.stringify({ success: true, message: 'Đã đồng bộ module!' }), {
+        return new Response(JSON.stringify({ success: true, message: 'Đã đồng bộ giấy phép thành công!' }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });

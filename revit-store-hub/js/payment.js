@@ -224,17 +224,23 @@ class PaymentGateway {
         window.dataStore.addLicense(newLicense);
         generatedKeys.push({ name: item.name, key: licenseKey, plan_name: planName, allowed_modules: allowedModules });
 
-        // Đồng bộ tức thời lên Server API
-        fetch('/api/v1/license/sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            license_key: licenseKey,
-            allowed_modules: allowedModules,
-            plan_name: planName,
-            expiry_date: expiryDate.toISOString()
-          })
-        }).catch(() => {});
+        // Đồng bộ tức thời lên Server API, Worker và GitHub
+        if (window.licenseManager && typeof window.licenseManager.syncLicenseToRemote === 'function') {
+          window.licenseManager.syncLicenseToRemote(newLicense).catch(() => {});
+        } else {
+          fetch('/api/v1/license/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              license_key: licenseKey,
+              allowed_modules: allowedModules,
+              plan_name: planName,
+              expiry_date: expiryDate.toISOString(),
+              max_machines: item.max_machines || 2,
+              max_accounts: item.max_machines || 2
+            })
+          }).catch(() => {});
+        }
       }
     });
 

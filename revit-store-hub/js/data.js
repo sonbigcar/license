@@ -2282,8 +2282,13 @@ class DataStore {
         if (vData.allowed_modules) storedLicenses[existingIdx].allowed_modules = vData.allowed_modules;
         if (vData.plan_name) storedLicenses[existingIdx].plan_name = vData.plan_name;
         if (vData.expiry_date) storedLicenses[existingIdx].expiry_date = vData.expiry_date;
-        if (vData.max_accounts || vData.max_machines) {
-          storedLicenses[existingIdx].max_machines = vData.max_accounts || vData.max_machines;
+        const vSlots = Number(vData.max_machines || vData.max_accounts);
+        if (!isNaN(vSlots) && vSlots > 0) {
+          storedLicenses[existingIdx].max_machines = vSlots;
+          storedLicenses[existingIdx].max_accounts = vSlots;
+        }
+        if (vData.status) {
+          storedLicenses[existingIdx].status = vData.status;
         }
       } else {
         // Tạo mới license từ Vault
@@ -2297,6 +2302,7 @@ class DataStore {
           );
         }
 
+        const vSlots = Number(vData.max_machines || vData.max_accounts || 3);
         storedLicenses.push({
           id: 'lic-vault-' + upperKey.replace(/[^A-Z0-9]/g, '-'),
           license_key: upperKey,
@@ -2309,8 +2315,9 @@ class DataStore {
           plan_name: vData.plan_name || 'Gói Bản Quyền DoanSon Hub',
           allowed_modules: vData.allowed_modules || ['MEP-ALL'],
           subscription_type: 'yearly',
-          max_machines: vData.max_accounts || vData.max_machines || 3,
-          status: 'active',
+          max_machines: vSlots,
+          max_accounts: vSlots,
+          status: vData.status || 'active',
           start_date: vData.updated_at || new Date().toISOString(),
           expiry_date: vData.expiry_date || new Date(Date.now() + 365 * 86400000).toISOString(),
           download_url: 'downloads/MEP_Routing_Pro_v2.4.0_Setup.exe',
@@ -2386,13 +2393,15 @@ class DataStore {
               app: a.app || 'Revit Tools'
             }));
 
+        const licSlots = Number(lic.max_machines || lic.max_accounts || existing.max_machines || existing.max_accounts || 3);
         vault[key] = {
           ...existing,
           allowed_modules: lic.allowed_modules || existing.allowed_modules || ['MEP-ALL'],
           plan_name: lic.plan_name || existing.plan_name || 'Gói Bản Quyền DoanSon Hub',
           expiry_date: lic.expiry_date || existing.expiry_date,
-          max_accounts: lic.max_machines || existing.max_accounts || 3,
-          max_machines: lic.max_machines || existing.max_machines || 3,
+          max_accounts: licSlots,
+          max_machines: licSlots,
+          status: lic.status || existing.status || 'active',
           registered_accounts: regAccounts,
           updated_at: new Date().toISOString()
         };
@@ -2414,13 +2423,15 @@ class DataStore {
               app: a.app || 'Revit Tools'
             }));
 
+        const upSlots = Number(updatedLicense.max_machines || updatedLicense.max_accounts || existing.max_machines || existing.max_accounts || 3);
         vault[key] = {
           ...existing,
           allowed_modules: updatedLicense.allowed_modules || existing.allowed_modules || ['MEP-ALL'],
           plan_name: updatedLicense.plan_name || existing.plan_name,
           expiry_date: updatedLicense.expiry_date || existing.expiry_date,
-          max_accounts: updatedLicense.max_machines || existing.max_accounts || 3,
-          max_machines: updatedLicense.max_machines || existing.max_machines || 3,
+          max_accounts: upSlots,
+          max_machines: upSlots,
+          status: updatedLicense.status || existing.status || 'active',
           registered_accounts: regAccounts,
           updated_at: new Date().toISOString()
         };
