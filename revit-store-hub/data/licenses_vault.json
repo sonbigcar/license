@@ -51,7 +51,7 @@
       "MEP-TASK"
     ],
     "plan_name": "Combo Cơ Điện Lạnh (Duct + Pipe - 5 Máy)",
-    "expiry_date": "2027-10-25T00:00:00.000Z",
+    "expiry_date": "2027-10-25T00:00:00Z",
     "max_accounts": 5,
     "max_machines": 5,
     "status": "active",
@@ -105,7 +105,7 @@
       "MEP-ALL"
     ],
     "plan_name": "Gói Bản Quyền DoanSon Hub",
-    "expiry_date": "2027-10-20T17:05:45.610Z",
+    "expiry_date": "2027-10-20T17:05:45.61Z",
     "max_accounts": 2,
     "max_machines": 2,
     "status": "active",
@@ -151,8 +151,26 @@
     "max_accounts": 3,
     "max_machines": 3,
     "status": "active",
-    "registered_accounts": [],
-    "updated_at": "2026-10-29T15:48:59.205Z"
+    "registered_accounts": [
+      {
+        "machineId": "DS-92CB-7F2D",
+        "machine_id": "DS-92CB-7F2D",
+        "hwid": "DS-92CB-7F2D",
+        "machine_name": "ADMINISTRATOR",
+        "name": "ADMINISTRATOR",
+        "username": "ACER",
+        "user": "ACER",
+        "fullName": "ACER",
+        "revit_version": "2025",
+        "os_info": "Windows",
+        "app": "Revit Add-in",
+        "registeredAt": "2026-10-29T15:49:11.431Z",
+        "lastActive": "2026-10-29T15:49:11.431Z",
+        "last_checked_at": "2026-10-29T15:49:11.431Z",
+        "status": "Active"
+      }
+    ],
+    "updated_at": "2026-10-29T15:49:11.431Z"
   },
   "REVIT-TEST-PKG-MVMIKVSV": {
     "allowed_modules": [
@@ -192,7 +210,7 @@
       "MEP-ALL"
     ],
     "plan_name": "Gói Bản Quyền DoanSon - PHẦN MỀM QUẢN LÝ CÔNG VIỆC (10 Tài khoản)",
-    "expiry_date": "2028-10-25T00:00:00.000Z",
+    "expiry_date": "2028-10-25T00:00:00Z",
     "max_accounts": 10,
     "max_machines": 10,
     "status": "active",
@@ -202,7 +220,7 @@
         "fullName": "Đoàn Sơn",
         "machineId": "HWID-ADMIN-01",
         "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
-        "registeredAt": "2026-10-25T08:00:00.000Z",
+        "registeredAt": "2026-10-25T08:00:00Z",
         "lastActive": "2026-10-25T16:11:50.529Z",
         "status": "Active"
       },
