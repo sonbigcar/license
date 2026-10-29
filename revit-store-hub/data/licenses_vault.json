@@ -5,11 +5,29 @@
       "PHẦN MỀM QUẢN LÝ CÔNG VIỆC"
     ],
     "plan_name": "Gói Full VIP (Tất Cả Tools)",
-    "updated_at": "2026-10-29T01:28:15.585Z",
+    "updated_at": "2026-10-29T01:52:35.539Z",
     "expiry_date": "2027-10-26T13:00:01.525Z",
     "max_accounts": 3,
     "max_machines": 3,
-    "registered_accounts": [],
+    "registered_accounts": [
+      {
+        "machineId": "DS-E51C-2A82",
+        "machine_id": "DS-E51C-2A82",
+        "hwid": "DS-E51C-2A82",
+        "machine_name": "TK-09",
+        "name": "TK-09",
+        "username": "admin",
+        "user": "admin",
+        "fullName": "admin",
+        "revit_version": "2025",
+        "os_info": "Windows",
+        "app": "Revit Add-in",
+        "registeredAt": "2026-10-29T01:52:35.539Z",
+        "lastActive": "2026-10-29T01:52:35.539Z",
+        "last_checked_at": "2026-10-29T01:52:35.539Z",
+        "status": "Active"
+      }
+    ],
     "status": "active"
   },
   "REVIT-TEST-PKG-MVMIKNZS": {
