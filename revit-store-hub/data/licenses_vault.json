@@ -183,11 +183,15 @@
         "os_info": "Windows",
         "app": "Revit Add-in",
         "registeredAt": "2026-10-29T01:29:25.073Z",
-        "lastActive": "2026-10-29T01:29:25.073Z",
-        "status": "Active"
+        "lastActive": "2026-10-29T03:17:20.185Z",
+        "status": "Active",
+        "last_checked_at": "2026-10-29T03:17:20.185Z",
+        "name": "TK-09",
+        "user": "admin",
+        "hwid": "DS-58F0-DE7A"
       }
     ],
-    "updated_at": "2026-10-29T03:16:53.494Z"
+    "updated_at": "2026-10-29T03:17:20.185Z"
   },
   "DS-TASK-MYG3-KBNK": {
     "allowed_modules": [
