@@ -5,7 +5,7 @@
       "PHẦN MỀM QUẢN LÝ CÔNG VIỆC"
     ],
     "plan_name": "Gói Full VIP (Tất Cả Tools)",
-    "updated_at": "2026-10-29T02:43:10.485Z",
+    "updated_at": "2026-10-29T03:16:53.494Z",
     "expiry_date": "2027-10-26T13:00:01.525Z",
     "max_accounts": 3,
     "max_machines": 3,
@@ -19,7 +19,7 @@
     ],
     "plan_name": "Combo Cơ Điện Lạnh (Duct + Pipe)",
     "expiry_date": "2027-10-24T14:48:35.704Z",
-    "updated_at": "2026-10-29T02:43:10.485Z",
+    "updated_at": "2026-10-29T03:16:53.494Z",
     "max_accounts": 3,
     "max_machines": 3,
     "registered_accounts": [],
@@ -32,7 +32,7 @@
     ],
     "plan_name": "Gói Full VIP & Quản Lý Công Việc (5 Máy/User)",
     "expiry_date": "2027-10-24T14:48:45.834Z",
-    "updated_at": "2026-10-29T02:43:10.485Z",
+    "updated_at": "2026-10-29T03:16:53.494Z",
     "registered_accounts": [
       {
         "username": "doanson99",
@@ -67,7 +67,7 @@
     ],
     "plan_name": "Combo Cơ Điện Lạnh (Duct + Pipe - 5 Máy)",
     "expiry_date": "2027-10-25T00:00:00Z",
-    "updated_at": "2026-10-29T02:43:10.485Z",
+    "updated_at": "2026-10-29T03:16:53.494Z",
     "registered_accounts": [
       {
         "username": "doanson99",
@@ -111,7 +111,7 @@
     "plan_name": "Gói Bản Quyền DoanSon - PHẦN MỀM QUẢN LÝ CÔNG VIỆC (10 Tài khoản)",
     "max_accounts": 10,
     "expiry_date": "2028-10-25T00:00:00Z",
-    "updated_at": "2026-10-29T02:43:10.485Z",
+    "updated_at": "2026-10-29T03:16:53.494Z",
     "registered_accounts": [
       {
         "username": "doanson",
@@ -145,7 +145,7 @@
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-29T02:43:10.485Z"
+    "updated_at": "2026-10-29T03:16:53.494Z"
   },
   "DSMEP-981734-XF7O-PRO": {
     "allowed_modules": [
@@ -157,13 +157,17 @@
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-29T02:43:10.485Z"
+    "updated_at": "2026-10-29T03:16:53.494Z"
   },
   "REVIT-VUTU-TZ87-4UGL": {
     "allowed_modules": [
-      "MEP-ALL"
+      "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+      "TASK-APP",
+      "MEP-TASK",
+      "MEP-DUCT",
+      "MEP-PIPE"
     ],
-    "plan_name": "Gói Bản Quyền DoanSon Hub",
+    "plan_name": "Gói Combo (PHẦN MỀM QUẢN LÝ CÔNG VIỆC + TASK-APP + TASK + DUCT + PIPE - 2 Máy)",
     "expiry_date": "2027-10-24T02:32:00.605Z",
     "max_accounts": 2,
     "max_machines": 2,
@@ -183,7 +187,7 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-10-29T02:43:10.485Z"
+    "updated_at": "2026-10-29T03:16:53.494Z"
   },
   "DS-TASK-MYG3-KBNK": {
     "allowed_modules": [
@@ -217,7 +221,7 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-10-29T02:43:10.485Z"
+    "updated_at": "2026-10-29T03:16:53.494Z"
   },
   "REVIT-UCLW-7S2G-TJX8": {
     "allowed_modules": [
@@ -230,6 +234,6 @@
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-29T02:43:10.485Z"
+    "updated_at": "2026-10-29T03:16:53.494Z"
   }
 }
