@@ -5,7 +5,7 @@
       "PHẦN MỀM QUẢN LÝ CÔNG VIỆC"
     ],
     "plan_name": "Gói Full VIP (Tất Cả Tools)",
-    "updated_at": "2026-10-28T08:05:03.650Z",
+    "updated_at": "2026-10-28T08:05:03.65Z",
     "expiry_date": "2027-10-26T13:00:01.525Z",
     "max_accounts": 3,
     "max_machines": 3,
@@ -19,7 +19,7 @@
     ],
     "plan_name": "Combo Cơ Điện Lạnh (Duct + Pipe)",
     "expiry_date": "2027-10-24T14:48:35.704Z",
-    "updated_at": "2026-10-28T08:05:03.650Z",
+    "updated_at": "2026-10-28T08:05:03.65Z",
     "max_accounts": 3,
     "max_machines": 3,
     "registered_accounts": [],
@@ -32,7 +32,7 @@
     ],
     "plan_name": "Gói Full VIP & Quản Lý Công Việc (5 Máy/User)",
     "expiry_date": "2027-10-24T14:48:45.834Z",
-    "updated_at": "2026-10-28T08:05:03.650Z",
+    "updated_at": "2026-10-28T08:05:03.65Z",
     "registered_accounts": [
       {
         "username": "doanson99",
@@ -66,8 +66,8 @@
       "MEP-TASK"
     ],
     "plan_name": "Combo Cơ Điện Lạnh (Duct + Pipe - 5 Máy)",
-    "expiry_date": "2027-10-25T00:00:00.000Z",
-    "updated_at": "2026-10-28T08:05:03.650Z",
+    "expiry_date": "2027-10-25T00:00:00Z",
+    "updated_at": "2026-10-28T08:05:03.65Z",
     "registered_accounts": [
       {
         "username": "doanson99",
@@ -110,15 +110,15 @@
     ],
     "plan_name": "Gói Bản Quyền DoanSon - PHẦN MỀM QUẢN LÝ CÔNG VIỆC (10 Tài khoản)",
     "max_accounts": 10,
-    "expiry_date": "2028-10-25T00:00:00.000Z",
-    "updated_at": "2026-10-28T08:05:03.650Z",
+    "expiry_date": "2028-10-25T00:00:00Z",
+    "updated_at": "2026-10-28T08:05:03.65Z",
     "registered_accounts": [
       {
         "username": "doanson",
         "fullName": "Đoàn Sơn",
         "machineId": "HWID-ADMIN-01",
         "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
-        "registeredAt": "2026-10-25T08:00:00.000Z",
+        "registeredAt": "2026-10-25T08:00:00Z",
         "lastActive": "2026-10-25T16:11:50.529Z",
         "status": "Active"
       },
@@ -140,12 +140,12 @@
       "MEP-ALL"
     ],
     "plan_name": "Gói Bản Quyền DoanSon Hub",
-    "expiry_date": "2027-10-20T17:05:45.610Z",
+    "expiry_date": "2027-10-20T17:05:45.61Z",
     "max_accounts": 2,
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-28T08:05:03.650Z"
+    "updated_at": "2026-10-28T08:05:03.65Z"
   },
   "DSMEP-981734-XF7O-PRO": {
     "allowed_modules": [
@@ -157,7 +157,7 @@
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-28T08:05:03.650Z"
+    "updated_at": "2026-10-28T08:05:03.65Z"
   },
   "REVIT-VUTU-TZ87-4UGL": {
     "allowed_modules": [
@@ -168,8 +168,22 @@
     "max_accounts": 2,
     "max_machines": 2,
     "status": "active",
-    "registered_accounts": [],
-    "updated_at": "2026-10-28T08:05:03.650Z"
+    "registered_accounts": [
+      {
+        "machineId": "DS-58F0-DE7A",
+        "machine_id": "DS-58F0-DE7A",
+        "machine_name": "TK-09",
+        "username": "admin",
+        "fullName": "admin",
+        "revit_version": "2025",
+        "os_info": "Windows",
+        "app": "Revit Add-in",
+        "registeredAt": "2026-10-29T01:27:09.917Z",
+        "lastActive": "2026-10-29T01:27:09.917Z",
+        "status": "Active"
+      }
+    ],
+    "updated_at": "2026-10-29T01:27:09.917Z"
   },
   "DS-TASK-MYG3-KBNK": {
     "allowed_modules": [
@@ -179,7 +193,7 @@
       "MEP-ALL"
     ],
     "plan_name": "Gói phần mềm công việc (50 Máy)",
-    "expiry_date": "2027-10-25T00:00:00.000Z",
+    "expiry_date": "2027-10-25T00:00:00Z",
     "max_accounts": 50,
     "max_machines": 50,
     "status": "active",
@@ -203,7 +217,7 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-10-28T08:05:03.650Z"
+    "updated_at": "2026-10-28T08:05:03.65Z"
   },
   "REVIT-UCLW-7S2G-TJX8": {
     "allowed_modules": [
@@ -216,6 +230,6 @@
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-28T08:05:03.650Z"
+    "updated_at": "2026-10-28T08:05:03.65Z"
   }
 }
