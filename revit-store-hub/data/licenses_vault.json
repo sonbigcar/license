@@ -40,7 +40,7 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-10-30T07:00:41.304Z"
+    "updated_at": "2026-10-30T07:00:45.211Z"
   },
   "REVIT-VUTU-TZ87-4UGL": {
     "allowed_modules": [
@@ -52,7 +52,7 @@
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-30T07:00:41.304Z"
+    "updated_at": "2026-10-30T07:00:45.211Z"
   },
   "DSMEP-330247-XF8J-PRO": {
     "allowed_modules": [
@@ -64,7 +64,7 @@
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-30T07:00:41.304Z"
+    "updated_at": "2026-10-30T07:00:45.211Z"
   },
   "REVIT-DEMO-TEST-KEY-01": {
     "allowed_modules": [
@@ -77,7 +77,7 @@
     "max_machines": 3,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-30T07:00:41.304Z"
+    "updated_at": "2026-10-30T07:00:45.211Z"
   },
   "REVIT-TEST-PKG-MVMIKNZS": {
     "allowed_modules": [
@@ -111,39 +111,7 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-10-30T07:00:41.304Z"
-  },
-  "REVIT-TEST-PKG-MVMIKVSV": {
-    "allowed_modules": [
-      "MEP-ALL",
-      "PHẦN MỀM QUẢN LÝ CÔNG VIỆC"
-    ],
-    "plan_name": "Gói Full VIP & Quản Lý Công Việc (5 Máy/User)",
-    "expiry_date": "2027-10-24T14:48:45.834Z",
-    "max_accounts": 3,
-    "max_machines": 3,
-    "status": "active",
-    "registered_accounts": [
-      {
-        "username": "doanson99",
-        "fullName": "Đoàn sơn",
-        "machineId": "HWID-1792920519377",
-        "registeredAt": "2026-10-25T09:28:39.377Z"
-      },
-      {
-        "username": "bb",
-        "fullName": "aaaa",
-        "machineId": "HWID-1792920818879",
-        "registeredAt": "2026-10-25T09:33:38.879Z"
-      },
-      {
-        "username": "doanson",
-        "fullName": "son",
-        "machineId": "HWID-1792943744297",
-        "registeredAt": "2026-10-25T15:55:44.297Z"
-      }
-    ],
-    "updated_at": "2026-10-30T07:00:41.304Z"
+    "updated_at": "2026-10-30T07:00:45.211Z"
   },
   "DSMEP-981734-XF7O-PRO": {
     "allowed_modules": [
@@ -155,6 +123,6 @@
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-30T07:00:41.304Z"
+    "updated_at": "2026-10-30T07:00:45.211Z"
   }
 }
