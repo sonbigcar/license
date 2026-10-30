@@ -3,10 +3,9 @@
     "allowed_modules": [
       "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
       "TASK-APP",
-      "MEP-TASK",
-      "MEP-ALL"
+      "MEP-TASK"
     ],
-    "plan_name": "Gói phần mềm công việc (50 Máy)",
+    "plan_name": "Gói Combo (PHẦN MỀM QUẢN LÝ CÔNG VIỆC + TASK-APP + TASK - 50 Máy)",
     "expiry_date": "2027-10-25T00:00:00Z",
     "max_accounts": 50,
     "max_machines": 50,
@@ -40,7 +39,7 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-10-30T08:10:14.380Z"
+    "updated_at": "2026-10-30T08:10:39.773Z"
   },
   "REVIT-TEST-PKG-MVMIKNZS": {
     "allowed_modules": [
@@ -75,6 +74,6 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-10-30T08:10:14.380Z"
+    "updated_at": "2026-10-30T08:10:39.773Z"
   }
 }
