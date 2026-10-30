@@ -4,10 +4,10 @@
     "name": "Phần mềm quản lý công việc",
     "slug": "ph-n-m-m-qu-n-l--c-ng-vi-c",
     "product_type": "tool",
-    "package_id": "pkg_vip",
-    "package_name": "Gói Full VIP (Tất Cả Tools)",
+    "package_id": "pkg_mvmlnst0",
+    "package_name": "Gói phần mềm công việc",
     "allowed_modules": [
-      "MEP-ALL"
+      "MEP-TASK"
     ],
     "category": "wedsite task",
     "price": 5000000,
