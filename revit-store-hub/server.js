@@ -5,9 +5,13 @@ const path = require('path');
 const PORT = 3000;
 const PUBLIC_DIR = __dirname;
 const DOWNLOADS_DIR = path.join(PUBLIC_DIR, 'downloads');
+const ASSETS_UPLOADS_DIR = path.join(PUBLIC_DIR, 'assets', 'uploads');
 
 if (!fs.existsSync(DOWNLOADS_DIR)) {
   fs.mkdirSync(DOWNLOADS_DIR, { recursive: true });
+}
+if (!fs.existsSync(ASSETS_UPLOADS_DIR)) {
+  fs.mkdirSync(ASSETS_UPLOADS_DIR, { recursive: true });
 }
 
 const MIME_TYPES = {
@@ -17,6 +21,9 @@ const MIME_TYPES = {
   '.json': 'application/json',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
   '.zip': 'application/zip',
@@ -109,6 +116,34 @@ const server = http.createServer(async (req, res) => {
           console.log(`[LicenseSync] Đã cập nhật key ${key}: slots=${maxSlots}, modules=${JSON.stringify(licVault[key].allowed_modules)}`);
           res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
           res.end(JSON.stringify({ success: true, message: 'Đã đồng bộ giấy phép thành công!', slots: maxSlots }));
+          return;
+        }
+      } catch (err) {}
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ success: false, message: 'Thiếu key' }));
+    });
+    return;
+  }
+
+  // 0.05 ENDPOINT: XÓA GIẤY PHÉP KHỎI VAULT TỪ WEBSITE
+  if ((req.method === 'POST' || req.method === 'DELETE') && req.url.startsWith('/api/v1/license/delete')) {
+    const chunks = [];
+    req.on('data', chunk => chunks.push(chunk));
+    req.on('end', () => {
+      try {
+        const bodyStr = Buffer.concat(chunks).toString('utf8');
+        const data = bodyStr ? JSON.parse(bodyStr) : {};
+        const key = (data.license_key || data.LicenseKey || '').trim().toUpperCase();
+
+        if (key) {
+          const licVault = getLicensesVault();
+          if (licVault[key]) {
+            delete licVault[key];
+            saveLicensesVault(licVault);
+            console.log(`[LicenseDelete] Đã xóa key ${key} khỏi kho Vault`);
+          }
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ success: true, message: 'Đã xóa giấy phép thành công!' }));
           return;
         }
       } catch (err) {}
@@ -264,6 +299,9 @@ const server = http.createServer(async (req, res) => {
             allowedModules = ['MEP-ALL'];
           } else {
             const detected = [];
+            if (key.includes('HVAC')) {
+              detected.push('MEP-DUCT', 'MEP-PIPE');
+            }
             if (key.includes('DUCT') || key.includes('-DP-') || key.includes('-DE-')) detected.push('MEP-DUCT');
             if (key.includes('PIPE') || key.includes('-DP-')) detected.push('MEP-PIPE');
             if (key.includes('SHEET') || key.includes('SHT')) detected.push('MEP-SHEET');
@@ -272,7 +310,7 @@ const server = http.createServer(async (req, res) => {
             if (key.includes('AI')) detected.push('MEP-AI');
 
             if (detected.length > 0) {
-              allowedModules = detected;
+              allowedModules = Array.from(new Set(detected));
             }
           }
         }
@@ -560,6 +598,44 @@ const server = http.createServer(async (req, res) => {
       return;
     } catch (err) {
       console.error('[Upload] Lỗi xử lý:', err);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, message: err.message }));
+      return;
+    }
+  }
+
+  // UPLOAD HÌNH ẢNH DƯỚI MÁY (THUMBNAIL / MEDIA URL)
+  if (req.method === 'POST' && req.url.startsWith('/api/upload-image')) {
+    try {
+      const urlObj = new URL(req.url, `http://${req.headers.host || '127.0.0.1'}`);
+      const rawName = urlObj.searchParams.get('name') || req.headers['x-file-name'] || ('img_' + Date.now() + '.jpg');
+      const safeName = decodeURIComponent(rawName).replace(/[^a-zA-Z0-9._-]/g, '_');
+
+      const chunks = [];
+      req.on('data', chunk => chunks.push(chunk));
+      req.on('end', () => {
+        const buffer = Buffer.concat(chunks);
+        if (!buffer || buffer.length === 0) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, message: 'Dữ liệu ảnh rỗng' }));
+          return;
+        }
+
+        const localPath = path.join(ASSETS_UPLOADS_DIR, safeName);
+        fs.writeFileSync(localPath, buffer);
+        console.log(`[UploadImage] Đã lưu ảnh cục bộ: ${localPath} (${(buffer.length / 1024).toFixed(1)} KB)`);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          url: `assets/uploads/${safeName}`,
+          fileName: safeName,
+          sizeBytes: buffer.length
+        }));
+      });
+      return;
+    } catch (err) {
+      console.error('[UploadImage] Lỗi xử lý:', err);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, message: err.message }));
       return;
