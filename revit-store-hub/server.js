@@ -153,6 +153,38 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // 0.06 ENDPOINT: XÓA HÀNG LOẠT NHIỀU GIẤY PHÉP KHỎI VAULT
+  if ((req.method === 'POST' || req.method === 'DELETE') && req.url.startsWith('/api/v1/license/batch-delete')) {
+    const chunks = [];
+    req.on('data', chunk => chunks.push(chunk));
+    req.on('end', () => {
+      try {
+        const bodyStr = Buffer.concat(chunks).toString('utf8');
+        const data = bodyStr ? JSON.parse(bodyStr) : {};
+        const keys = Array.isArray(data.license_keys) ? data.license_keys : (data.keys || []);
+        const licVault = getLicensesVault();
+        let count = 0;
+        keys.forEach(k => {
+          const upper = String(k).trim().toUpperCase();
+          if (licVault[upper]) {
+            delete licVault[upper];
+            count++;
+          }
+        });
+        if (count > 0) {
+          saveLicensesVault(licVault);
+          console.log(`[BatchLicenseDelete] Đã xóa hàng loạt ${count} keys khỏi kho Vault`);
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: true, count, message: `Đã xóa ${count} giấy phép thành công!` }));
+        return;
+      } catch (err) {}
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ success: false, message: 'Lỗi định dạng dữ liệu' }));
+    });
+    return;
+  }
+
   // 0.1 ENDPOINT: LẤY TOÀN BỘ KHO GIẤY PHÉP (LICENSES VAULT) DÀNH CHO CLIENT
   if (req.method === 'GET' && req.url.startsWith('/api/v1/license/vault')) {
     const licVault = getLicensesVault();
