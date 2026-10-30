@@ -605,6 +605,36 @@ class StoreApp {
     `;
   }
 
+  /**
+   * XỬ LÝ CHỌN HÌNH ẢNH NỀN CHO THẺ TRỤ CỘT (PILLAR) TỪ DƯỚI MÁY CÁ NHÂN
+   */
+  async handleLocalPillarMediaSelect(file) {
+    if (!file) return;
+
+    if (!file.type.startsWith('image/') && !file.name.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i)) {
+      alert('Vui lòng chọn một tệp hình ảnh (.jpg, .png, .webp, .svg)!');
+      return;
+    }
+
+    const mediaInput = document.getElementById('editPillarMedia');
+
+    try {
+      const res = await window.dataStore.uploadImageFile(file, 'assets/uploads');
+      if (res && res.url) {
+        if (mediaInput) mediaInput.value = res.url;
+        this.updatePillarLivePreview();
+      }
+    } catch (err) {
+      console.error('Lỗi upload ảnh nền pillar:', err);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (mediaInput) mediaInput.value = e.target.result;
+        this.updatePillarLivePreview();
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
   async handlePillarEditorSubmit(e) {
     e.preventDefault();
     const key = document.getElementById('editPillarId').value;
@@ -1108,6 +1138,7 @@ class StoreApp {
       document.getElementById('prodEditSalePrice').value = prod.sale_price || prod.price;
       document.getElementById('prodEditCycle').value = prod.billing_cycle;
       document.getElementById('prodEditThumb').value = prod.thumbnail_url;
+      this.updateProductThumbPreview(prod.thumbnail_url);
       document.getElementById('prodEditVideo').value = prod.video_url || '';
       document.getElementById('prodEditDesc').value = prod.description;
 
@@ -1125,6 +1156,8 @@ class StoreApp {
       titleEl.textContent = 'Thêm Sản Phẩm Mới & Niêm Yết Giá';
       form.reset();
       document.getElementById('prodEditId').value = '';
+      document.getElementById('prodEditThumb').value = 'assets/card_family.jpg';
+      this.updateProductThumbPreview('assets/card_family.jpg');
       if (document.getElementById('prodEditSecurityMode')) {
         document.getElementById('prodEditSecurityMode').value = 'cloudflare_r2';
       }
@@ -1162,6 +1195,82 @@ class StoreApp {
     }
 
     modal.classList.add('active');
+  }
+
+  /**
+   * XỬ LÝ CHỌN HÌNH ẢNH THUMBNAIL CHO SẢN PHẨM TỪ DƯỚI MÁY CÁ NHÂN
+   */
+  async handleLocalThumbnailSelect(file) {
+    if (!file) return;
+
+    if (!file.type.startsWith('image/') && !file.name.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i)) {
+      alert('Vui lòng chọn một tệp hình ảnh (.jpg, .png, .webp, .svg)!');
+      return;
+    }
+
+    const nameDisplay = document.getElementById('prodThumbFileName');
+    const sizeDisplay = document.getElementById('prodThumbFileSize');
+    const previewImg = document.getElementById('prodThumbPreviewImg');
+    const inputVal = document.getElementById('prodEditThumb');
+
+    if (nameDisplay) nameDisplay.textContent = `⏳ Đang đọc & xử lý ảnh: ${file.name}...`;
+    if (sizeDisplay) sizeDisplay.textContent = `Dung lượng gốc: ${(file.size / 1024).toFixed(1)} KB`;
+
+    try {
+      const res = await window.dataStore.uploadImageFile(file, 'assets/uploads');
+      if (res && res.url) {
+        if (inputVal) inputVal.value = res.url;
+        this.updateProductThumbPreview(res.url, file.name, file.size);
+      }
+    } catch (err) {
+      console.error('Lỗi upload thumbnail:', err);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        if (inputVal) inputVal.value = dataUrl;
+        this.updateProductThumbPreview(dataUrl, file.name, file.size);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  updateProductThumbPreview(url, fileName = null, fileSizeBytes = null) {
+    const previewImg = document.getElementById('prodThumbPreviewImg');
+    const nameDisplay = document.getElementById('prodThumbFileName');
+    const sizeDisplay = document.getElementById('prodThumbFileSize');
+
+    const cleanUrl = (url || '').trim() || 'assets/card_family.jpg';
+    if (previewImg) {
+      previewImg.src = cleanUrl;
+    }
+    if (nameDisplay) {
+      if (fileName) {
+        nameDisplay.textContent = fileName;
+      } else if (cleanUrl.startsWith('data:image')) {
+        nameDisplay.textContent = '🖼️ Ảnh tải lên từ máy tính cá nhân';
+      } else {
+        const parts = cleanUrl.split('/');
+        nameDisplay.textContent = parts[parts.length - 1] || cleanUrl;
+      }
+    }
+    if (sizeDisplay) {
+      if (fileSizeBytes) {
+        const sz = fileSizeBytes >= 1024 * 1024 
+          ? (fileSizeBytes / (1024 * 1024)).toFixed(2) + ' MB'
+          : (fileSizeBytes / 1024).toFixed(1) + ' KB';
+        sizeDisplay.textContent = `Đã nạp thành công (${sz}) • Sẵn sàng lưu`;
+      } else if (cleanUrl.startsWith('data:image')) {
+        sizeDisplay.textContent = 'Đã nén tối ưu • Sẵn sàng lưu';
+      } else {
+        sizeDisplay.textContent = cleanUrl.includes('http') ? 'Liên kết ảnh trực tuyến' : 'Tệp ảnh hệ thống';
+      }
+    }
+  }
+
+  clearProductThumb() {
+    const inputVal = document.getElementById('prodEditThumb');
+    if (inputVal) inputVal.value = 'assets/card_family.jpg';
+    this.updateProductThumbPreview('assets/card_family.jpg', 'assets/card_family.jpg', null);
   }
 
   populateProductEditorPackages(selectedId = 'pkg-full-vip') {
@@ -2022,7 +2131,7 @@ class StoreApp {
 
       const isExpired = remainingDays <= 0;
       const isNearExpiry = remainingDays > 0 && remainingDays <= 15;
-      const activations = lic.activations || [];
+      const activations = (lic.activations && lic.activations.length > 0) ? lic.activations : (lic.registered_accounts || []);
 
       let statusBadge = `<span class="badge badge-family">Đang Hoạt Động</span>`;
       let statusColor = 'var(--success)';
