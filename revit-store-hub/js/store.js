@@ -44,6 +44,10 @@ class StoreApp {
 
     // Tự động kiểm tra và đồng bộ đơn hàng / bản quyền / thư viện từ máy chủ đám mây định kỳ mỗi 15 giây
     setInterval(async () => {
+      // Tạm dừng polling nền khi đang gom các thao tác trong 15s hoặc đang thực hiện đồng bộ
+      if (window.dataStore && typeof window.dataStore.hasPendingSync === 'function' && window.dataStore.hasPendingSync()) {
+        return;
+      }
       if (window.dataStore && typeof window.dataStore.fetchRemoteOrders === 'function') {
         await window.dataStore.fetchRemoteOrders();
       }
