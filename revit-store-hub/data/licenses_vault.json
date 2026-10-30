@@ -39,7 +39,7 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-10-30T14:49:33.323Z"
+    "updated_at": "2026-10-30T14:49:40.901Z"
   },
   "REVIT-TEST-PKG-MVMIKNZS": {
     "allowed_modules": [
@@ -74,7 +74,7 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-10-30T14:49:33.323Z"
+    "updated_at": "2026-10-30T14:49:40.901Z"
   },
   "REVIT-5QWB-X35Y-9ZBN": {
     "allowed_modules": [
@@ -120,7 +120,7 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-10-30T14:49:33.323Z"
+    "updated_at": "2026-10-30T14:49:40.901Z"
   },
   "REVIT-VUTU-TZ87-4UGL": {
     "allowed_modules": [
@@ -132,7 +132,7 @@
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-30T14:49:33.323Z"
+    "updated_at": "2026-10-30T14:49:40.901Z"
   },
   "DSMEP-330247-XF8J-PRO": {
     "allowed_modules": [
@@ -144,7 +144,7 @@
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-30T14:49:33.323Z"
+    "updated_at": "2026-10-30T14:49:40.901Z"
   },
   "REVIT-UCLW-7S2G-TJX8": {
     "allowed_modules": [
@@ -157,7 +157,7 @@
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-30T14:49:33.323Z"
+    "updated_at": "2026-10-30T14:49:40.901Z"
   },
   "REVIT-DEMO-TEST-KEY-01": {
     "allowed_modules": [
@@ -170,6 +170,6 @@
     "max_machines": 3,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-30T14:49:33.323Z"
+    "updated_at": "2026-10-30T14:49:40.901Z"
   }
 }
