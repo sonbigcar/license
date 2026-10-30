@@ -859,7 +859,7 @@ class StoreApp {
       return `
         <div class="product-card">
           <div class="card-media">
-            <img src="${product.thumbnail_url}" alt="${product.name}" loading="lazy">
+            <img src="${product.thumbnail_url}" alt="${product.name}" loading="lazy" onerror="if (!this.dataset.fallbackGh) { this.dataset.fallbackGh='1'; this.src='https://raw.githubusercontent.com/sonbigcar/license/main/revit-store-hub/' + (this.getAttribute('src')||'').replace(/^\.?\//, ''); } else { this.src='assets/card_family.jpg'; }">
             <div class="media-badges">
               <span class="badge ${badgeClass}">${badgeText}</span>
               ${isPurchased ? `<span class="badge" style="background: #10B981; color: #fff;">✓ Đã Sở Hữu</span>` : ''}
@@ -948,7 +948,7 @@ class StoreApp {
           </div>
         ` : `
           <div style="margin-bottom: 20px;">
-            <img src="${product.thumbnail_url}" alt="${product.name}" style="width: 100%; border-radius: var(--radius-lg); aspect-ratio: 16/9; object-fit: cover;">
+            <img src="${product.thumbnail_url}" alt="${product.name}" style="width: 100%; border-radius: var(--radius-lg); aspect-ratio: 16/9; object-fit: cover;" onerror="if (!this.dataset.fallbackGh) { this.dataset.fallbackGh='1'; this.src='https://raw.githubusercontent.com/sonbigcar/license/main/revit-store-hub/' + (this.getAttribute('src')||'').replace(/^\.?\//, ''); } else { this.src='assets/card_family.jpg'; }">
           </div>
         `}
 
@@ -1245,6 +1245,15 @@ class StoreApp {
 
     const cleanUrl = (url || '').trim() || 'assets/card_family.jpg';
     if (previewImg) {
+      delete previewImg.dataset.fallbackGh;
+      previewImg.onerror = function() {
+        if (!this.dataset.fallbackGh && this.getAttribute('src') && !this.getAttribute('src').startsWith('http') && !this.getAttribute('src').startsWith('data:')) {
+          this.dataset.fallbackGh = '1';
+          this.src = 'https://raw.githubusercontent.com/sonbigcar/license/main/revit-store-hub/' + this.getAttribute('src').replace(/^\.?\//, '');
+        } else {
+          this.src = 'assets/card_family.jpg';
+        }
+      };
       previewImg.src = cleanUrl;
     }
     if (nameDisplay) {
@@ -1593,7 +1602,7 @@ class StoreApp {
 
     container.innerHTML = this.cart.map(item => `
       <div class="cart-item">
-        <img class="cart-item-thumb" src="${item.thumbnail_url}" alt="${item.name}">
+        <img class="cart-item-thumb" src="${item.thumbnail_url}" alt="${item.name}" onerror="if (!this.dataset.fallbackGh) { this.dataset.fallbackGh='1'; this.src='https://raw.githubusercontent.com/sonbigcar/license/main/revit-store-hub/' + (this.getAttribute('src')||'').replace(/^\.?\//, ''); } else { this.src='assets/card_family.jpg'; }">
         <div class="cart-item-info">
           <div class="cart-item-name">${item.name}</div>
           ${item.package_name ? `
@@ -1964,7 +1973,7 @@ class StoreApp {
       return `
         <div class="library-card">
           <div class="library-card-header">
-            <img class="library-thumb" src="${product.thumbnail_url || 'assets/card_family.jpg'}" alt="${product.name}">
+            <img class="library-thumb" src="${product.thumbnail_url || 'assets/card_family.jpg'}" alt="${product.name}" onerror="if (!this.dataset.fallbackGh) { this.dataset.fallbackGh='1'; this.src='https://raw.githubusercontent.com/sonbigcar/license/main/revit-store-hub/' + (this.getAttribute('src')||'').replace(/^\.?\//, ''); } else { this.src='assets/card_family.jpg'; }">
             <div class="library-info">
               <h4>${product.name}</h4>
               ${badgeHtml}
