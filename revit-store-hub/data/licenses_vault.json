@@ -40,19 +40,7 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-10-30T07:01:33.272Z"
-  },
-  "REVIT-VUTU-TZ87-4UGL": {
-    "allowed_modules": [
-      "MEP-ALL"
-    ],
-    "plan_name": "Gói Bản Quyền DoanSon Hub",
-    "expiry_date": "2027-10-24T02:32:00.604Z",
-    "max_accounts": 2,
-    "max_machines": 2,
-    "status": "active",
-    "registered_accounts": [],
-    "updated_at": "2026-10-30T07:01:33.272Z"
+    "updated_at": "2026-10-30T08:09:15.884Z"
   },
   "REVIT-TEST-PKG-MVMIKNZS": {
     "allowed_modules": [
@@ -86,18 +74,6 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-10-30T07:01:33.272Z"
-  },
-  "DSMEP-981734-XF7O-PRO": {
-    "allowed_modules": [
-      "MEP-ALL"
-    ],
-    "plan_name": "Gói Bản Quyền DoanSon Hub",
-    "expiry_date": "2027-10-22T16:04:42.666Z",
-    "max_accounts": 2,
-    "max_machines": 2,
-    "status": "active",
-    "registered_accounts": [],
-    "updated_at": "2026-10-30T07:01:33.272Z"
+    "updated_at": "2026-10-30T08:09:15.884Z"
   }
 }
