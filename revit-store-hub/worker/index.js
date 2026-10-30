@@ -368,6 +368,26 @@ export default {
       }
 
       // ------------------------------------------------------------------------
+      // 4.65 ENDPOINT: XÓA HÀNG LOẠT NHIỀU GIẤY PHÉP (BATCH DELETE)
+      // ------------------------------------------------------------------------
+      if (path === '/api/v1/license/batch-delete' && (request.method === 'POST' || request.method === 'DELETE')) {
+        const body = await request.json().catch(() => ({}));
+        const keys = Array.isArray(body.license_keys) ? body.license_keys : (body.keys || []);
+        if (env && env.LICENSES_KV && keys.length > 0) {
+          for (const k of keys) {
+            const upper = String(k).trim().toUpperCase();
+            try {
+              await env.LICENSES_KV.delete('lic:' + upper);
+            } catch(e) {}
+          }
+        }
+        return new Response(JSON.stringify({ success: true, count: keys.length, message: `Đã xóa ${keys.length} giấy phép!` }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // ------------------------------------------------------------------------
       // 5. ENDPOINT: XÁC MINH & KÍCH HOẠT BẢN QUYỀN (HỖ TRỢ COMBO TÙY CHỌN NHIỀU MODULES)
       // ------------------------------------------------------------------------
       const isVerifyOrActivate = (path === '/api/v1/license/verify' || path === '/api/v1/license/activate' || path === '/api/activate' || path === '/api/validate') && request.method === 'POST';
