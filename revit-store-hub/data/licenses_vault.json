@@ -40,7 +40,7 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-10-30T04:24:48.929Z"
+    "updated_at": "2026-10-30T04:25:10.875Z"
   },
   "REVIT-5QWB-X35Y-9ZBN": {
     "allowed_modules": [
@@ -86,7 +86,7 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-10-30T04:24:48.929Z"
+    "updated_at": "2026-10-30T04:25:10.875Z"
   },
   "REVIT-VUTU-TZ87-4UGL": {
     "allowed_modules": [
@@ -98,7 +98,7 @@
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-30T04:24:48.929Z"
+    "updated_at": "2026-10-30T04:25:10.875Z"
   },
   "DSMEP-330247-XF8J-PRO": {
     "allowed_modules": [
@@ -110,7 +110,7 @@
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-30T04:24:48.929Z"
+    "updated_at": "2026-10-30T04:25:10.875Z"
   },
   "REVIT-DEMO-TEST-KEY-01": {
     "allowed_modules": [
@@ -123,7 +123,7 @@
     "max_machines": 3,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-30T04:24:48.929Z"
+    "updated_at": "2026-10-30T04:25:10.875Z"
   },
   "REVIT-TEST-PKG-MVMIKNZS": {
     "allowed_modules": [
@@ -157,7 +157,7 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-10-30T04:24:48.929Z"
+    "updated_at": "2026-10-30T04:25:10.875Z"
   },
   "REVIT-TEST-PKG-MVMIKVSV": {
     "allowed_modules": [
@@ -189,39 +189,7 @@
         "registeredAt": "2026-10-25T15:55:44.297Z"
       }
     ],
-    "updated_at": "2026-10-30T04:24:48.929Z"
-  },
-  "REVIT-TASK-VIP-2026": {
-    "allowed_modules": [
-      "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
-      "MEP-ALL"
-    ],
-    "plan_name": "Gói Bản Quyền DoanSon - PHẦN MỀM QUẢN LÝ CÔNG VIỆC (10 Tài khoản)",
-    "expiry_date": "2028-10-25T00:00:00Z",
-    "max_accounts": 10,
-    "max_machines": 10,
-    "status": "active",
-    "registered_accounts": [
-      {
-        "username": "doanson",
-        "fullName": "Đoàn Sơn",
-        "machineId": "HWID-ADMIN-01",
-        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
-        "registeredAt": "2026-10-25T08:00:00Z",
-        "lastActive": "2026-10-25T16:11:50.529Z",
-        "status": "Active"
-      },
-      {
-        "username": "nghiango99",
-        "fullName": "Ngô Trọng Nghĩa",
-        "machineId": "HWID-1793064226782",
-        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
-        "registeredAt": "2026-10-27T01:23:46.782Z",
-        "lastActive": "2026-10-27T01:23:46.782Z",
-        "status": "Active"
-      }
-    ],
-    "updated_at": "2026-10-30T04:24:48.929Z"
+    "updated_at": "2026-10-30T04:25:10.875Z"
   },
   "DSMEP-981734-XF7O-PRO": {
     "allowed_modules": [
@@ -233,6 +201,6 @@
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-30T04:24:48.929Z"
+    "updated_at": "2026-10-30T04:25:10.875Z"
   }
 }
