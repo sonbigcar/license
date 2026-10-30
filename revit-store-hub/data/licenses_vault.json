@@ -155,9 +155,26 @@
         "lastActive": "2026-10-29T15:49:11.431Z",
         "last_checked_at": "2026-10-29T15:49:11.431Z",
         "status": "Active"
+      },
+      {
+        "machineId": "DS-58F0-DE7A",
+        "machine_id": "DS-58F0-DE7A",
+        "hwid": "DS-58F0-DE7A",
+        "machine_name": "TK-09",
+        "name": "TK-09",
+        "username": "admin",
+        "user": "admin",
+        "fullName": "admin",
+        "revit_version": "2025",
+        "os_info": "Windows",
+        "app": "Revit Add-in",
+        "registeredAt": "2026-10-30T04:26:51.971Z",
+        "lastActive": "2026-10-30T04:26:51.971Z",
+        "last_checked_at": "2026-10-30T04:26:51.971Z",
+        "status": "Active"
       }
     ],
-    "updated_at": "2026-10-30T04:25:10.875Z"
+    "updated_at": "2026-10-30T04:26:51.971Z"
   },
   "REVIT-TEST-PKG-MVMIKVSV": {
     "allowed_modules": [
