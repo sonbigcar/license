@@ -40,32 +40,19 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-10-30T07:01:03.900Z"
+    "updated_at": "2026-10-30T07:01:33.272Z"
   },
   "REVIT-VUTU-TZ87-4UGL": {
     "allowed_modules": [
       "MEP-ALL"
     ],
     "plan_name": "Gói Bản Quyền DoanSon Hub",
-    "expiry_date": "2027-10-24T02:32:00.605Z",
+    "expiry_date": "2027-10-24T02:32:00.604Z",
     "max_accounts": 2,
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-30T07:00:45.211Z"
-  },
-  "REVIT-DEMO-TEST-KEY-01": {
-    "allowed_modules": [
-      "MEP-ALL",
-      "PHẦN MỀM QUẢN LÝ CÔNG VIỆC"
-    ],
-    "plan_name": "Gói Full VIP (Tất Cả Tools)",
-    "expiry_date": "2027-10-26T13:00:01.525Z",
-    "max_accounts": 3,
-    "max_machines": 3,
-    "status": "active",
-    "registered_accounts": [],
-    "updated_at": "2026-10-30T07:01:03.900Z"
+    "updated_at": "2026-10-30T07:01:33.272Z"
   },
   "REVIT-TEST-PKG-MVMIKNZS": {
     "allowed_modules": [
@@ -99,7 +86,7 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-10-30T07:01:03.900Z"
+    "updated_at": "2026-10-30T07:01:33.272Z"
   },
   "DSMEP-981734-XF7O-PRO": {
     "allowed_modules": [
@@ -111,6 +98,6 @@
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-30T07:00:45.211Z"
+    "updated_at": "2026-10-30T07:01:33.272Z"
   }
 }
