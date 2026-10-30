@@ -506,3 +506,99 @@
   margin-bottom: 14px;
 }
 
+/* ==============================================================================
+   BATCH SYNC & ANTI-CONGESTION QUEUE FLOATING BANNER
+   ============================================================================== */
+.batch-sync-banner {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 99999;
+  background: rgba(23, 23, 31, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 107, 0, 0.25);
+  border-radius: 16px;
+  padding: 14px 20px;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 490px;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: slideUpFade 0.4s ease-out;
+}
+
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.batch-sync-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.batch-sync-icon.pulse {
+  animation: pulseScale 1.4s infinite ease-in-out;
+}
+
+@keyframes pulseScale {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.batch-sync-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.batch-sync-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1.3;
+}
+
+.batch-sync-sub {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.3;
+}
+
+.batch-sync-btn {
+  background: linear-gradient(135deg, #FF6B00 0%, #FF8800 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+}
+
+.batch-sync-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(255, 107, 0, 0.45);
+}
+
+.batch-sync-btn:active {
+  transform: translateY(0);
+}
+
+
