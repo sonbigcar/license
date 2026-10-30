@@ -40,53 +40,7 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-10-30T04:25:10.875Z"
-  },
-  "REVIT-5QWB-X35Y-9ZBN": {
-    "allowed_modules": [
-      "MEP-DUCT",
-      "MEP-PIPE",
-      "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
-      "TASK-APP",
-      "MEP-TASK"
-    ],
-    "plan_name": "Combo Cơ Điện Lạnh (Duct + Pipe - 5 Máy)",
-    "expiry_date": "2027-10-25T00:00:00Z",
-    "max_accounts": 5,
-    "max_machines": 5,
-    "status": "active",
-    "registered_accounts": [
-      {
-        "username": "doanson99",
-        "fullName": "ĐOÀN SƠN",
-        "machineId": "HWID-1792915704398",
-        "registeredAt": "2026-10-25T08:08:24.398Z"
-      },
-      {
-        "username": "doanson",
-        "fullName": "son",
-        "machineId": "HWID-1793019891827",
-        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
-        "registeredAt": "2026-10-26T13:04:51.827Z",
-        "lastActive": "2026-10-26T13:04:51.827Z",
-        "status": "Active"
-      },
-      {
-        "username": "Kỹ Sư Doan Son",
-        "fullName": "ADMINISTRATOR",
-        "machineId": "DS-92CB-7F2D",
-        "machine_id": "DS-92CB-7F2D",
-        "machine_name": "ADMINISTRATOR",
-        "revit_version": "2025",
-        "os_info": "Windows",
-        "app": "Revit Add-in",
-        "ip_address": "127.0.0.1",
-        "registeredAt": "2026-10-26T17:35:41.065Z",
-        "lastActive": "2026-10-26T17:35:41.065Z",
-        "status": "Active"
-      }
-    ],
-    "updated_at": "2026-10-30T04:25:10.875Z"
+    "updated_at": "2026-10-30T07:00:41.304Z"
   },
   "REVIT-VUTU-TZ87-4UGL": {
     "allowed_modules": [
@@ -98,7 +52,7 @@
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-30T04:25:10.875Z"
+    "updated_at": "2026-10-30T07:00:41.304Z"
   },
   "DSMEP-330247-XF8J-PRO": {
     "allowed_modules": [
@@ -110,7 +64,7 @@
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-30T04:25:10.875Z"
+    "updated_at": "2026-10-30T07:00:41.304Z"
   },
   "REVIT-DEMO-TEST-KEY-01": {
     "allowed_modules": [
@@ -123,7 +77,7 @@
     "max_machines": 3,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-30T04:25:10.875Z"
+    "updated_at": "2026-10-30T07:00:41.304Z"
   },
   "REVIT-TEST-PKG-MVMIKNZS": {
     "allowed_modules": [
@@ -155,26 +109,9 @@
         "lastActive": "2026-10-29T15:49:11.431Z",
         "last_checked_at": "2026-10-29T15:49:11.431Z",
         "status": "Active"
-      },
-      {
-        "machineId": "DS-58F0-DE7A",
-        "machine_id": "DS-58F0-DE7A",
-        "hwid": "DS-58F0-DE7A",
-        "machine_name": "TK-09",
-        "name": "TK-09",
-        "username": "admin",
-        "user": "admin",
-        "fullName": "admin",
-        "revit_version": "2025",
-        "os_info": "Windows",
-        "app": "Revit Add-in",
-        "registeredAt": "2026-10-30T04:26:51.971Z",
-        "lastActive": "2026-10-30T04:26:51.971Z",
-        "last_checked_at": "2026-10-30T04:26:51.971Z",
-        "status": "Active"
       }
     ],
-    "updated_at": "2026-10-30T04:26:51.971Z"
+    "updated_at": "2026-10-30T07:00:41.304Z"
   },
   "REVIT-TEST-PKG-MVMIKVSV": {
     "allowed_modules": [
@@ -206,7 +143,7 @@
         "registeredAt": "2026-10-25T15:55:44.297Z"
       }
     ],
-    "updated_at": "2026-10-30T04:25:10.875Z"
+    "updated_at": "2026-10-30T07:00:41.304Z"
   },
   "DSMEP-981734-XF7O-PRO": {
     "allowed_modules": [
@@ -218,6 +155,6 @@
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-10-30T04:25:10.875Z"
+    "updated_at": "2026-10-30T07:00:41.304Z"
   }
 }
