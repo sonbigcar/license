@@ -251,6 +251,28 @@ class LicenseManager {
   }
 
   /**
+   * Xóa vĩnh viễn License khỏi toàn bộ hệ thống
+   */
+  async deleteLicense(licenseId) {
+    const licenses = window.dataStore.getLicenses();
+    const lic = licenses.find(l => l.id === licenseId || l.license_key === licenseId);
+    const licKey = lic ? lic.license_key : licenseId;
+
+    // 1. Xóa khỏi DataStore cục bộ
+    window.dataStore.deleteLicense(licenseId);
+
+    // 2. Xóa khỏi Máy Chủ, Cloudflare Worker và GitHub repository
+    if (licKey && typeof window.dataStore.deleteLicenseFromRemote === 'function') {
+      try {
+        await window.dataStore.deleteLicenseFromRemote(licKey);
+      } catch (e) {
+        console.warn('Lỗi đồng bộ xóa license từ xa:', e);
+      }
+    }
+    return true;
+  }
+
+  /**
    * Reset toàn bộ máy tính kích hoạt (Dành cho hỗ trợ khẩn cấp)
    */
   async resetAllActivations(licenseId) {
