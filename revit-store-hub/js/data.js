@@ -1420,6 +1420,54 @@ class DataStore {
   }
 
   /**
+   * Xóa vĩnh viễn License khỏi danh sách lưu trữ DataStore
+   */
+  deleteLicense(licenseId) {
+    let licenses = this.get('licenses') || [];
+    const idOrKey = String(licenseId).trim().toUpperCase();
+    const initialLen = licenses.length;
+    licenses = licenses.filter(l => {
+      const matchId = l.id && String(l.id).trim().toUpperCase() === idOrKey;
+      const matchKey = l.license_key && String(l.license_key).trim().toUpperCase() === idOrKey;
+      return !matchId && !matchKey;
+    });
+    this.save('licenses', licenses);
+    return licenses.length !== initialLen;
+  }
+
+  /**
+   * Đồng bộ xóa License khỏi Node server, Cloudflare Worker và GitHub repository
+   */
+  async deleteLicenseFromRemote(licOrKey) {
+    const key = typeof licOrKey === 'string' ? licOrKey : (licOrKey.license_key || '');
+    if (!key) return;
+    const upperKey = key.trim().toUpperCase();
+
+    // 1. Đồng bộ lên Node server local (nếu dev server chạy)
+    try {
+      await fetch('/api/v1/license/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ license_key: upperKey })
+      });
+    } catch(e) {}
+
+    // 2. Đồng bộ lên Cloudflare Worker trung tâm
+    try {
+      await fetch('https://revit-store-api.polydactyl-wormhole.workers.dev/api/v1/license/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ license_key: upperKey })
+      });
+    } catch(e) {}
+
+    // 3. Đồng bộ xóa khỏi GitHub Repo data/licenses_vault.json
+    try {
+      await this.syncLicensesVaultToGitHub(null, upperKey);
+    } catch(e) {}
+  }
+
+  /**
    * Lấy danh sách tất cả các License thuộc về một tài khoản cụ thể
    */
   getLicensesByAccount(account) {
@@ -2015,6 +2063,138 @@ class DataStore {
     };
   }
 
+  /**
+   * TỐI ƯU HÓA HÌNH ẢNH (CANVAS COMPRESSION)
+   * Nén ảnh kích thước lớn về kích thước chuẩn và dung lượng nhẹ để lưu trữ hoặc upload mượt mà
+   */
+  async optimizeImage(file, maxWidth = 1600, maxHeight = 1600, quality = 0.88) {
+    if (!file) return null;
+    if (file.type === 'image/svg+xml' || file.type === 'image/gif') {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve({ dataUrl: e.target.result, file, width: null, height: null });
+        reader.readAsDataURL(file);
+      });
+    }
+
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width;
+          let h = img.height;
+          if (w > maxWidth || h > maxHeight) {
+            const ratio = Math.min(maxWidth / w, maxHeight / h);
+            w = Math.round(w * ratio);
+            h = Math.round(h * ratio);
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          const outType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+          const dataUrl = canvas.toDataURL(outType, quality);
+          canvas.toBlob((blob) => {
+            const optimizedFile = new File([blob || file], file.name, { type: outType });
+            resolve({ dataUrl, file: optimizedFile, width: w, height: h });
+          }, outType, quality);
+        };
+        img.onerror = () => {
+          resolve({ dataUrl: e.target.result, file, width: null, height: null });
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /**
+   * UPLOAD HÌNH ẢNH DƯỚI MÁY CÁ NHÂN (THUMBNAIL / MEDIA NỀN)
+   * Tự động:
+   * 1. Nén ảnh qua Canvas để tốc độ tải siêu tốc
+   * 2. Thử đẩy lên server local /api/upload-image nếu đang chạy node
+   * 3. Thử đẩy lên GitHub repository revit-store-hub/assets/uploads/ nếu có token
+   * 4. Tự động dự phòng Base64 Data URL hoạt động hoàn hảo 100% trong mọi môi trường
+   */
+  async uploadImageFile(file, folder = 'assets/uploads') {
+    if (!file) throw new Error('Chưa chọn ảnh để tải lên.');
+    const safeName = 'img_' + Date.now().toString(36) + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    
+    // Nén ảnh trước
+    const optimized = await this.optimizeImage(file, 1600, 1600, 0.88);
+    const fileToUpload = (optimized && optimized.file) || file;
+    const dataUrl = (optimized && optimized.dataUrl) || '';
+
+    // 1. Thử gửi lên server Node local /api/upload-image (nếu dev server chạy)
+    try {
+      const isLocalOrNode = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port === '3000';
+      if (isLocalOrNode) {
+        const res = await fetch(`/api/upload-image?name=${encodeURIComponent(safeName)}`, {
+          method: 'POST',
+          headers: { 'x-file-name': encodeURIComponent(safeName) },
+          body: fileToUpload
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json && json.success && json.url) {
+            return {
+              success: true,
+              url: json.url,
+              dataUrl: dataUrl,
+              fileName: safeName
+            };
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[UploadImage] Local server upload không sẵn sàng:', e);
+    }
+
+    // 2. Thử đẩy lên GitHub Repository nếu có token
+    try {
+      const { owner, repo, token } = this.GITHUB_CONFIG;
+      if (token && dataUrl && dataUrl.includes(',')) {
+        const base64Data = dataUrl.split(',')[1];
+        const filePath = `revit-store-hub/assets/uploads/${safeName}`;
+        const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
+        
+        const ghRes = await fetch(apiUrl, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: `Upload image asset: ${safeName}`,
+            content: base64Data
+          })
+        });
+
+        if (ghRes.ok) {
+          return {
+            success: true,
+            url: `assets/uploads/${safeName}`,
+            dataUrl: dataUrl,
+            fileName: safeName
+          };
+        }
+      }
+    } catch (ghErr) {
+      console.warn('[UploadImage] GitHub upload không thành công:', ghErr);
+    }
+
+    // 3. Fallback: Data URL an toàn tuyệt đối, hiển thị và lưu trực tiếp
+    return {
+      success: true,
+      url: dataUrl,
+      dataUrl: dataUrl,
+      fileName: file.name
+    };
+  }
+
   // =========================================================================
   // QUẢN LÝ DANH MỤC MODULE BẢN QUYỀN (MEP-DUCT, MEP-PIPE, MEP-ELEC...)
   // =========================================================================
@@ -2178,18 +2358,23 @@ class DataStore {
     const pathInRepo = 'revit-store-hub/data/licenses_vault.json';
     let vault = null;
 
-    // 1. Ưu tiên cao: Lấy trực tiếp từ GitHub Contents API (0s cache với GitHub Token)
+    // 1. Ưu tiên cao: Lấy trực tiếp từ GitHub Contents API (0s cache với GitHub Token, tránh lỗi 302 redirect của raw header)
     if (token) {
       try {
         const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${pathInRepo}?ref=main&t=${Date.now()}`, {
           headers: {
             'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3.raw'
+            'Accept': 'application/vnd.github.v3+json'
           },
           cache: 'no-store'
         });
         if (res.ok) {
-          vault = await res.json();
+          const fileData = await res.json();
+          if (fileData && fileData.content) {
+            const cleanB64 = fileData.content.replace(/\s/g, '');
+            const decodedStr = new TextDecoder('utf-8').decode(Uint8Array.from(atob(cleanB64), c => c.charCodeAt(0)));
+            vault = JSON.parse(decodedStr);
+          }
         }
       } catch (e) {
         console.warn('Lỗi fetch GitHub Contents licenses_vault:', e.message);
@@ -2234,14 +2419,16 @@ class DataStore {
       const combinedDevicesMap = new Map();
 
       regAccounts.forEach(reg => {
-        const mId = (reg.machineId || reg.machine_id || '').trim();
+        const mId = (reg.machineId || reg.machine_id || reg.hwid || '').trim();
         if (!mId) return;
+        const mName = reg.fullName || reg.machine_name || reg.name || reg.username || 'PC-Workstation';
+        const uName = reg.username || reg.user || reg.fullName || '';
         combinedDevicesMap.set(mId, {
           machine_id: mId,
-          machine_name: reg.fullName || reg.machine_name || reg.username || 'PC-Workstation',
-          username: reg.username || '',
-          app: reg.app || 'Revit Add-in / Task App',
-          os_info: reg.os_info || 'Windows 11',
+          machine_name: mName,
+          username: uName,
+          app: reg.app || (reg.revit_version ? `Revit ${reg.revit_version}` : 'Revit Add-in'),
+          os_info: reg.os_info || 'Windows',
           revit_version: reg.revit_version || '2025',
           ip_address: reg.ip_address || '',
           last_checked_at: reg.lastActive || reg.last_checked_at || reg.registeredAt || new Date().toISOString(),
@@ -2344,7 +2531,7 @@ class DataStore {
 /**
    * ĐỒNG BỘ LICENSES VAULT LÊN GITHUB VÀ LOCALHOST ĐỂ APP TASK VÀ REVIT ADDIN NHẬN DIỆN
    */
-  async syncLicensesVaultToGitHub(updatedLicense = null) {
+  async syncLicensesVaultToGitHub(updatedLicense = null, deletedLicenseKey = null) {
     const { owner, repo, token } = this.GITHUB_CONFIG;
     if (!token) return { success: false, message: 'Chưa cấu hình GitHub Token' };
 
@@ -2373,11 +2560,18 @@ class DataStore {
         console.warn('Could not fetch existing licenses_vault from GitHub:', e);
       }
 
+      // Xóa key khỏi vault nếu có yêu cầu xóa
+      if (deletedLicenseKey) {
+        const delUpper = deletedLicenseKey.trim().toUpperCase();
+        delete vault[delUpper];
+      }
+
       // Merge current licenses from local DataStore
       const allLicenses = this.getLicenses();
       allLicenses.forEach(lic => {
         if (!lic || !lic.license_key) return;
         const key = lic.license_key.trim().toUpperCase();
+        if (deletedLicenseKey && key === deletedLicenseKey.trim().toUpperCase()) return;
         const existing = vault[key] || {};
         
         // Chuẩn hóa danh sách registered_accounts
