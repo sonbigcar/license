@@ -351,6 +351,23 @@ export default {
       }
 
       // ------------------------------------------------------------------------
+      // 4.6 ENDPOINT: XÓA GIẤY PHÉP TỪ ADMIN WEBSITE
+      // ------------------------------------------------------------------------
+      if (path === '/api/v1/license/delete' && (request.method === 'POST' || request.method === 'DELETE')) {
+        const body = await request.json().catch(() => ({}));
+        const key = (body.license_key || body.LicenseKey || '').trim().toUpperCase();
+        if (key && env && env.LICENSES_KV) {
+          try {
+            await env.LICENSES_KV.delete('lic:' + key);
+          } catch(e) {}
+        }
+        return new Response(JSON.stringify({ success: true, message: 'Đã xóa giấy phép thành công!' }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // ------------------------------------------------------------------------
       // 5. ENDPOINT: XÁC MINH & KÍCH HOẠT BẢN QUYỀN (HỖ TRỢ COMBO TÙY CHỌN NHIỀU MODULES)
       // ------------------------------------------------------------------------
       const isVerifyOrActivate = (path === '/api/v1/license/verify' || path === '/api/v1/license/activate' || path === '/api/activate' || path === '/api/validate') && request.method === 'POST';
@@ -407,6 +424,9 @@ export default {
             allowedModules = ['MEP-ALL'];
           } else {
             const detected = [];
+            if (license_key.includes('HVAC')) {
+              detected.push('MEP-DUCT', 'MEP-PIPE');
+            }
             if (license_key.includes('DUCT') || license_key.includes('-DP-') || license_key.includes('-DE-')) detected.push('MEP-DUCT');
             if (license_key.includes('PIPE') || license_key.includes('-DP-')) detected.push('MEP-PIPE');
             if (license_key.includes('SHEET') || license_key.includes('SHT')) detected.push('MEP-SHEET');
@@ -415,7 +435,7 @@ export default {
             if (license_key.includes('AI')) detected.push('MEP-AI');
 
             if (detected.length > 0) {
-              allowedModules = detected;
+              allowedModules = Array.from(new Set(detected));
             }
           }
         }
