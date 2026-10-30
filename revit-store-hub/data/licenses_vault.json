@@ -40,7 +40,7 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-10-30T08:09:15.884Z"
+    "updated_at": "2026-10-30T08:10:14.380Z"
   },
   "REVIT-TEST-PKG-MVMIKNZS": {
     "allowed_modules": [
@@ -48,12 +48,13 @@
       "MEP-PIPE",
       "MEP-SHEET",
       "MEP-FIRE",
-      "MEP-ELEC"
+      "MEP-ELEC",
+      "MEP-AI"
     ],
-    "plan_name": "Gói Combo (DUCT + PIPE + SHEET + FIRE + ELEC - 3 Máy)",
+    "plan_name": "Gói Combo (DUCT + PIPE + SHEET + FIRE + ELEC + AI - 50 Máy)",
     "expiry_date": "2027-10-24T14:48:35.704Z",
-    "max_accounts": 3,
-    "max_machines": 3,
+    "max_accounts": 50,
+    "max_machines": 50,
     "status": "active",
     "registered_accounts": [
       {
@@ -74,6 +75,6 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-10-30T08:09:15.884Z"
+    "updated_at": "2026-10-30T08:10:14.380Z"
   }
 }
