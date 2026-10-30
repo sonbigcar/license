@@ -120,35 +120,6 @@
     }
   },
   {
-    "id": "fam-001",
-    "name": "Bơm Chữa Cháy Trục Đứng Đa Tầng Cánh (Multistage Fire Pump)",
-    "slug": "bom-chua-chay-truc-dung-da-tang-canh",
-    "product_type": "family",
-    "category": "MEP - Phòng Cháy Chữa Cháy",
-    "description": "Family Revit chuẩn MEP đầy đủ connector PCCC (Suction/Discharge) và Cấp điện. Tham số đầy đủ theo Catalogue Grundfos/Ebara, tích hợp 2D Symbol TCVN hiển thị sắc nét trên mặt bằng mà không làm nặng mô hình.",
-    "short_description": "Family chuẩn MEP đầy đủ Connector nước & điện, chuẩn TCVN.",
-    "revit_versions": [
-      "2021",
-      "2022",
-      "2023",
-      "2024",
-      "2025"
-    ],
-    "thumbnail_url": "assets/card_family.jpg",
-    "video_url": "https://www.youtube.com/embed/5qap5aO4i9A",
-    "price": 350000,
-    "sale_price": 250000,
-    "billing_cycle": "one_time",
-    "is_active": true,
-    "metadata": {
-      "lod": "LOD 350",
-      "category": "Mechanical Equipment",
-      "file_name": "AHC_Vertical_FirePump_v2024.rfa",
-      "file_size": "4.8 MB",
-      "omniclass": "23.35.10.11"
-    }
-  },
-  {
     "id": "fam-002",
     "name": "Van Bướm Tín Hiệu Điện Kèm Công Tắc Giám Sát",
     "slug": "van-buom-tin-hieu-dien-kem-cong-tac",
