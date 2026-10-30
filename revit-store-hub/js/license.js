@@ -145,13 +145,17 @@ class LicenseManager {
       });
     } catch (e) {}
 
-    // 3. Đồng bộ lên GitHub Repo data/licenses_vault.json
-    try {
-      if (window.dataStore && typeof window.dataStore.syncLicensesVaultToGitHub === 'function') {
-        await window.dataStore.syncLicensesVaultToGitHub(lic);
+    // 3. Đưa vào hàng đợi gom 15s để đồng bộ atomic chống xung đột SHA và Rate Limit
+    if (window.dataStore && typeof window.dataStore.queueLicenseUpdate === 'function') {
+      window.dataStore.queueLicenseUpdate(lic);
+    } else {
+      try {
+        if (window.dataStore && typeof window.dataStore.syncLicensesVaultToGitHub === 'function') {
+          await window.dataStore.syncLicensesVaultToGitHub(lic);
+        }
+      } catch (ghErr) {
+        console.warn('[Sync GitHub] Lỗi:', ghErr);
       }
-    } catch (ghErr) {
-      console.warn('[Sync GitHub] Lỗi:', ghErr);
     }
   }
 
@@ -261,7 +265,13 @@ class LicenseManager {
     // 1. Xóa khỏi DataStore cục bộ
     window.dataStore.deleteLicense(licenseId);
 
-    // 2. Xóa khỏi Máy Chủ, Cloudflare Worker và GitHub repository
+    // 2. Gom thao tác xóa vào hàng đợi chống nghẽn 15s
+    if (licKey && window.dataStore && typeof window.dataStore.queueLicenseBatchDeletion === 'function') {
+      window.dataStore.queueLicenseBatchDeletion([licKey]);
+      return true;
+    }
+
+    // 3. Xóa khỏi Máy Chủ, Cloudflare Worker và GitHub repository (Fallback)
     if (licKey && typeof window.dataStore.deleteLicenseFromRemote === 'function') {
       try {
         await window.dataStore.deleteLicenseFromRemote(licKey);
