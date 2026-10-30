@@ -16,10 +16,10 @@
   </script>
   
   <!-- CSS Stylesheets -->
-  <link rel="stylesheet" href="css/theme.css?v=20261030_v3">
-  <link rel="stylesheet" href="css/store.css?v=20261030_v3">
-  <link rel="stylesheet" href="css/checkout.css?v=20261030_v3">
-  <link rel="stylesheet" href="css/portal.css?v=20261030_v3">
+  <link rel="stylesheet" href="css/theme.css?v=20261030_v4">
+  <link rel="stylesheet" href="css/store.css?v=20261030_v4">
+  <link rel="stylesheet" href="css/checkout.css?v=20261030_v4">
+  <link rel="stylesheet" href="css/portal.css?v=20261030_v4">
   <style>
     .hidden { display: none !important; }
     #navItemAdmin:not(.admin-authorized) { display: none !important; }
@@ -1364,13 +1364,25 @@
     </div>
   </div>
 
-  <!-- Javascript Modules (Anti-cache v20261030_v3) -->
-  <script src="js/data.js?v=20261030_v3"></script>
-  <script src="js/auth.js?v=20261030_v3"></script>
-  <script src="js/payment.js?v=20261030_v3"></script>
-  <script src="js/download.js?v=20261030_v3"></script>
-  <script src="js/license.js?v=20261030_v3"></script>
-  <script src="js/admin.js?v=20261030_v3"></script>
-  <script src="js/store.js?v=20261030_v3"></script>
+  <!-- FLOATING BATCH SYNC & ANTI-CONGESTION STATUS BANNER -->
+  <div id="batchSyncBanner" class="batch-sync-banner hidden">
+    <div class="batch-sync-icon" id="batchSyncIcon">⏳</div>
+    <div class="batch-sync-text">
+      <div class="batch-sync-title" id="batchSyncTitle">Đang gom thao tác cập nhật...</div>
+      <div class="batch-sync-sub" id="batchSyncSubtitle">Sẽ đồng bộ lên máy chủ sau 15s</div>
+    </div>
+    <div class="batch-sync-actions">
+      <button type="button" id="batchSyncNowBtn" class="batch-sync-btn" onclick="window.dataStore.flushBatchNow()">Đồng bộ ngay</button>
+    </div>
+  </div>
+
+  <!-- Javascript Modules (Anti-cache v20261030_v4) -->
+  <script src="js/data.js?v=20261030_v4"></script>
+  <script src="js/auth.js?v=20261030_v4"></script>
+  <script src="js/payment.js?v=20261030_v4"></script>
+  <script src="js/download.js?v=20261030_v4"></script>
+  <script src="js/license.js?v=20261030_v4"></script>
+  <script src="js/admin.js?v=20261030_v4"></script>
+  <script src="js/store.js?v=20261030_v4"></script>
 </body>
 </html>
