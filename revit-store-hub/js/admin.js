@@ -597,6 +597,9 @@ class AdminPanel {
           <button class="btn btn-primary" onclick="window.adminPanel.openManualLicenseModal()" style="display: inline-flex; align-items: center; gap: 6px;">
             <span>✨</span> + Cấp Giấy Phép Thủ Công Mới
           </button>
+          <button class="btn btn-secondary" onclick="window.adminPanel.openQuickDeleteLicenseModal()" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.5); background: #FFF1F2; font-weight: 800; font-size: 0.92rem; padding: 10px 18px; display: inline-flex; align-items: center; gap: 6px;" title="Xóa giấy phép khỏi hệ thống">
+            <span>🗑️</span> Xóa Giấy Phép
+          </button>
         </div>
       </div>
 
@@ -623,6 +626,9 @@ class AdminPanel {
           </button>
           <button class="btn btn-primary btn-sm" onclick="window.adminPanel.openManualLicenseModal()">
             ✨ + Cấp Key Thủ Công
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.openQuickDeleteLicenseModal()" style="color: var(--danger); font-weight: 700; border-color: rgba(239, 68, 68, 0.4); background: #FFF1F2;" title="Mở danh sách xóa nhanh giấy phép">
+            🗑️ Xóa Giấy Phép
           </button>
           <button class="btn btn-secondary btn-sm" onclick="window.licenseManager.exportLicensesCsv()">
             📥 Xuất CSV (Excel)
@@ -754,6 +760,9 @@ class AdminPanel {
                       </button>
                       <button class="btn btn-secondary btn-sm" onclick="window.licenseManager.exportOfflineLicenseFile('${l.id}')" title="Tải file .LIC cho máy Offline">
                         📄 .LIC
+                      </button>
+                      <button class="btn btn-secondary btn-sm" style="color: var(--danger); font-weight: 700; border-color: rgba(239, 68, 68, 0.4); background: #FEF2F2;" onclick="window.adminPanel.deleteLicensePrompt('${l.id}')" title="Xóa vĩnh viễn giấy phép này">
+                        🗑️ Xóa
                       </button>
                     </div>
                   </td>
@@ -1316,6 +1325,185 @@ class AdminPanel {
         if (acc) this.renderAccountLicensesList(acc);
       }
     }
+  }
+
+  /**
+   * XÓA GIẤY PHÉP BẢN QUYỀN
+   */
+  async deleteLicensePrompt(licenseId) {
+    const licenses = window.dataStore.getLicenses();
+    const lic = licenses.find(l => l.id === licenseId || l.license_key === licenseId);
+    if (!lic) {
+      alert('Không tìm thấy giấy phép để xóa!');
+      return;
+    }
+
+    const confirmMsg = `⚠️ CẢNH BÁO XÓA GIẤY PHÉP BẢN QUYỀN:\n\n` +
+      `• Mã Key: ${lic.license_key}\n` +
+      `• Khách hàng: ${lic.user_name || 'Khách Vãng Lai'} (${lic.user_email || 'Chưa có email'})\n` +
+      `• Sản phẩm: ${lic.product_name || 'Revit Tools'}\n` +
+      `• Gói module: ${lic.plan_name || 'Bản quyền'}\n\n` +
+      `Bạn có chắc chắn muốn XÓA VĨNH VIỄN giấy phép này khỏi hệ thống?\n` +
+      `(Key sẽ bị hủy trên Website, Máy Chủ, Cloudflare và GitHub Repository!)`;
+
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      await window.licenseManager.deleteLicense(licenseId);
+      alert(`🎉 ĐÃ XÓA GIẤY PHÉP THÀNH CÔNG!\n\nGiấy phép ${lic.license_key} đã được gỡ bỏ hoàn toàn khỏi hệ thống.`);
+      this.render();
+      const selUser = document.getElementById('accLicSelectedUserId');
+      if (selUser && selUser.value) {
+        const acc = window.dataStore.getAccounts().find(a => a.id === selUser.value);
+        if (acc) this.renderAccountLicensesList(acc);
+      }
+      this.renderQuickDeleteLicenseList();
+    } catch (err) {
+      console.error('Lỗi khi xóa giấy phép:', err);
+      alert('Có lỗi xảy ra khi xóa giấy phép: ' + err.message);
+    }
+  }
+
+  openQuickDeleteLicenseModal() {
+    const modal = document.getElementById('quickDeleteLicenseModalOverlay');
+    if (!modal) return;
+    this.selectedDeleteLicenseKeys = new Set();
+    const searchInput = document.getElementById('quickDeleteSearchInput');
+    if (searchInput) searchInput.value = '';
+    this.renderQuickDeleteLicenseList();
+    modal.classList.add('active');
+  }
+
+  closeQuickDeleteLicenseModal() {
+    const modal = document.getElementById('quickDeleteLicenseModalOverlay');
+    if (modal) modal.classList.remove('active');
+  }
+
+  renderQuickDeleteLicenseList() {
+    const container = document.getElementById('quickDeleteLicenseListContainer');
+    const countDisplay = document.getElementById('quickDeleteSelectedCount');
+    if (!container) return;
+
+    const licenses = window.dataStore.getLicenses() || [];
+    const query = (document.getElementById('quickDeleteSearchInput')?.value || '').toLowerCase().trim();
+
+    const filtered = licenses.filter(l => {
+      if (!query) return true;
+      const k = (l.license_key || '').toLowerCase();
+      const u = (l.user_name || '').toLowerCase();
+      const e = (l.user_email || '').toLowerCase();
+      const p = (l.product_name || '').toLowerCase();
+      return k.includes(query) || u.includes(query) || e.includes(query) || p.includes(query);
+    });
+
+    if (!this.selectedDeleteLicenseKeys) {
+      this.selectedDeleteLicenseKeys = new Set();
+    }
+
+    if (countDisplay) {
+      countDisplay.textContent = this.selectedDeleteLicenseKeys.size;
+    }
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">📭</div>
+          <div style="font-weight: 700; color: var(--text-pure);">Không tìm thấy giấy phép nào!</div>
+          <p style="font-size: 0.85rem; margin-top: 4px;">Tất cả giấy phép đã được xóa hoặc không khớp từ khóa tìm kiếm.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = `
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        ${filtered.map(l => {
+          const isChecked = this.selectedDeleteLicenseKeys.has(l.id);
+          const exp = new Date(l.expiry_date);
+          const isSuspended = l.status === 'suspended';
+          const usedMachines = (l.activations || []).length || (l.registered_accounts || []).length;
+
+          return `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: ${isChecked ? '#FFF5F5' : '#FFFFFF'}; border: 1.5px solid ${isChecked ? '#FCA5A5' : '#E2E8F0'}; border-radius: 10px; transition: all 0.2s ease;">
+              <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+                <input type="checkbox" style="width: 18px; height: 18px; cursor: pointer; accent-color: #DC2626;" ${isChecked ? 'checked' : ''} onchange="window.adminPanel.handleToggleDeleteLicenseItem('${l.id}', this.checked)">
+                <div style="flex: 1; min-width: 0;">
+                  <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span style="font-family: var(--font-mono); font-weight: 800; color: #1E293B; font-size: 0.95rem;">${l.license_key}</span>
+                    <span class="badge ${isSuspended ? 'badge-admin' : 'badge-family'}" style="font-size: 0.7rem; padding: 2px 6px;">
+                      ${isSuspended ? '⏸️ Tạm Khóa' : '🟢 Hoạt Động'}
+                    </span>
+                    <span style="font-size: 0.78rem; color: var(--text-muted);">
+                      • Hạn: <strong>${exp.toLocaleDateString('vi-VN')}</strong> • Máy: ${usedMachines}/${l.max_machines}
+                    </span>
+                  </div>
+                  <div style="font-size: 0.82rem; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    Khách hàng: <strong>${l.user_name || 'Khách'}</strong> (${l.user_email || 'N/A'}) • Sản phẩm: ${l.product_name}
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" style="color: #DC2626; border-color: #FECDD3; background: #FFF1F2; font-weight: 700; white-space: nowrap; margin-left: 10px;" onclick="window.adminPanel.deleteLicensePrompt('${l.id}')" title="Xóa giấy phép này">
+                🗑️ Xóa Key
+              </button>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  handleToggleDeleteLicenseItem(licenseId, isChecked) {
+    if (!this.selectedDeleteLicenseKeys) this.selectedDeleteLicenseKeys = new Set();
+    if (isChecked) {
+      this.selectedDeleteLicenseKeys.add(licenseId);
+    } else {
+      this.selectedDeleteLicenseKeys.delete(licenseId);
+    }
+    const countDisplay = document.getElementById('quickDeleteSelectedCount');
+    if (countDisplay) countDisplay.textContent = this.selectedDeleteLicenseKeys.size;
+    this.renderQuickDeleteLicenseList();
+  }
+
+  toggleSelectAllDeleteLicenses(selectAll) {
+    const licenses = window.dataStore.getLicenses() || [];
+    const query = (document.getElementById('quickDeleteSearchInput')?.value || '').toLowerCase().trim();
+    const filtered = licenses.filter(l => {
+      if (!query) return true;
+      const k = (l.license_key || '').toLowerCase();
+      const u = (l.user_name || '').toLowerCase();
+      const e = (l.user_email || '').toLowerCase();
+      return k.includes(query) || u.includes(query) || e.includes(query);
+    });
+
+    if (!this.selectedDeleteLicenseKeys) this.selectedDeleteLicenseKeys = new Set();
+    if (selectAll) {
+      filtered.forEach(l => this.selectedDeleteLicenseKeys.add(l.id));
+    } else {
+      this.selectedDeleteLicenseKeys.clear();
+    }
+    this.renderQuickDeleteLicenseList();
+  }
+
+  async executeBatchDeleteLicenses() {
+    if (!this.selectedDeleteLicenseKeys || this.selectedDeleteLicenseKeys.size === 0) {
+      alert('Vui lòng tích chọn ít nhất 1 giấy phép để xóa!');
+      return;
+    }
+
+    const count = this.selectedDeleteLicenseKeys.size;
+    if (!confirm(`⚠️ CẢNH BÁO: Bạn có chắc chắn muốn XÓA HÀNG LOẠT ${count} GIẤY PHÉP đã chọn?\n\nToàn bộ các key này sẽ bị hủy vĩnh viễn trên hệ thống và không thể phục hồi!`)) {
+      return;
+    }
+
+    const idsToDelete = Array.from(this.selectedDeleteLicenseKeys);
+    for (const id of idsToDelete) {
+      await window.licenseManager.deleteLicense(id);
+    }
+
+    this.selectedDeleteLicenseKeys.clear();
+    alert(`🎉 Đã xóa thành công ${count} giấy phép khỏi hệ thống!`);
+    this.render();
+    this.renderQuickDeleteLicenseList();
   }
 
   async resetLicenseDevicesPrompt(licenseId) {
@@ -1920,6 +2108,9 @@ class AdminPanel {
               </button>
               <button type="button" class="btn btn-secondary btn-sm" onclick="window.adminPanel.openLicenseDevicesModal('${lic.id}')" title="Xem danh sách HWID máy trạm">
                 🖥️ Xem Máy
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" style="color: var(--danger); font-weight: 700; border-color: rgba(239, 68, 68, 0.4); background: #FEF2F2;" onclick="window.adminPanel.deleteLicensePrompt('${lic.id}')" title="Xóa vĩnh viễn giấy phép này">
+                🗑️ Xóa
               </button>
             </div>
           </div>
