@@ -10,7 +10,15 @@ class AdminPanel {
     this.currentTab = 'accounts'; // Mặc định mở Tab Quản lý tài khoản
     this.licenseSearchQuery = '';
     this.licenseStatusFilter = 'all';
+    this.selectedDeleteAccountIds = new Set();
     this._hasFetchedInitialOrders = false;
+
+    if (window.dataStore && window.dataStore.batchSync) {
+      window.dataStore.batchSync.onSyncChange(() => {
+        const badge = document.getElementById('adminHeaderSyncBadge');
+        if (badge) badge.innerHTML = this.getHeaderSyncBadgeHtml();
+      });
+    }
   }
 
   render() {
@@ -68,7 +76,10 @@ class AdminPanel {
               <span class="badge badge-admin">Master Administrator Portal</span>
               <h2 class="portal-title">Bảng Điều Khiển & Quản Lý Tài Khoản</h2>
             </div>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+              <div id="adminHeaderSyncBadge" onclick="window.dataStore.flushBatchNow()" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" title="Bấm để kích hoạt đồng bộ ngay lập tức">
+                ${this.getHeaderSyncBadgeHtml()}
+              </div>
               <button class="btn btn-secondary btn-sm" onclick="window.storeApp.openPillarEditorModal()" style="font-weight: 700; border-color: var(--primary); color: var(--primary); display: inline-flex; align-items: center; gap: 6px;">
                 <span>✏️</span> Sửa 3 Thẻ Trụ Cột Trang Chủ
               </button>
@@ -177,7 +188,10 @@ class AdminPanel {
         <p style="color: var(--text-muted); font-size: 0.92rem; margin: 0;">
           Danh sách tài khoản hệ thống (Chỉ cần 1 tài khoản Admin chính chủ <strong>sonbigcar</strong>).
         </p>
-        <div style="display: flex; gap: 8px;">
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <button class="btn btn-secondary btn-sm" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.4); background: #FFF1F2; font-weight: 700;" onclick="window.adminPanel.executeBatchDeleteAccounts()" title="Xóa tất cả các tài khoản đang được chọn">
+            🗑️ Xóa Hàng Loạt (${this.selectedDeleteAccountIds ? this.selectedDeleteAccountIds.size : 0})
+          </button>
           <button class="btn btn-primary btn-sm" onclick="window.adminPanel.addNewAccountPrompt()">
             + Tạo Tài Khoản Mới
           </button>
@@ -191,6 +205,9 @@ class AdminPanel {
         <table class="data-table">
           <thead>
             <tr>
+              <th style="width: 36px; text-align: center;">
+                <input type="checkbox" onchange="window.adminPanel.toggleSelectAllAccounts(this.checked)" title="Chọn tất cả">
+              </th>
               <th style="min-width: 130px;">Họ và Tên</th>
               <th style="min-width: 160px;">Email</th>
               <th style="min-width: 95px;">Số ĐT</th>
@@ -203,6 +220,7 @@ class AdminPanel {
           </thead>
           <tbody>
             ${accounts.map(acc => {
+              const isChecked = this.selectedDeleteAccountIds && this.selectedDeleteAccountIds.has(acc.id);
               const userLics = window.dataStore.getLicensesByAccount ? window.dataStore.getLicensesByAccount(acc) : [];
               let licSummaryHtml = '';
               if (!userLics || userLics.length === 0) {
@@ -231,6 +249,9 @@ class AdminPanel {
 
               return `
                 <tr>
+                  <td style="text-align: center;">
+                    <input type="checkbox" style="width: 16px; height: 16px; cursor: pointer; accent-color: #DC2626;" ${isChecked ? 'checked' : ''} onchange="window.adminPanel.handleToggleAccountItem('${acc.id}', this.checked)">
+                  </td>
                   <td style="white-space: nowrap;">
                     <strong style="color: var(--text-pure); display: block;">${acc.full_name}</strong>
                     <small style="color: var(--text-dim); font-size: 0.74rem;">@${acc.username || acc.id}</small>
@@ -1496,12 +1517,16 @@ class AdminPanel {
     }
 
     const idsToDelete = Array.from(this.selectedDeleteLicenseKeys);
-    for (const id of idsToDelete) {
-      await window.licenseManager.deleteLicense(id);
+    if (window.dataStore && typeof window.dataStore.queueLicenseBatchDeletion === 'function') {
+      window.dataStore.queueLicenseBatchDeletion(idsToDelete);
+    } else {
+      for (const id of idsToDelete) {
+        await window.licenseManager.deleteLicense(id);
+      }
     }
 
     this.selectedDeleteLicenseKeys.clear();
-    alert(`🎉 Đã xóa thành công ${count} giấy phép khỏi hệ thống!`);
+    alert(`🎉 Đã xóa thành công ${count} giấy phép khỏi hệ thống!\n(Thao tác đã được gom vào hàng đợi đệm và sẽ tự động đồng bộ lên máy chủ sau 15 giây chống nghẽn)`);
     this.render();
     this.renderQuickDeleteLicenseList();
   }
@@ -1558,9 +1583,70 @@ class AdminPanel {
     }
     if (confirm(`⚠️ Bạn có chắc chắn muốn xóa tài khoản "${accName}"?\nHành động này không thể hoàn tác.`)) {
       await window.dataStore.deleteAccount(accId);
-      alert(`Đã xóa tài khoản "${accName}" thành công!`);
+      alert(`Đã xóa tài khoản "${accName}" thành công!\n(Thao tác đã được gom vào hàng đợi đệm và sẽ tự động đồng bộ lên máy chủ sau 15 giây chống nghẽn)`);
       this.render();
     }
+  }
+
+  handleToggleAccountItem(accId, isChecked) {
+    if (!this.selectedDeleteAccountIds) this.selectedDeleteAccountIds = new Set();
+    if (isChecked) {
+      this.selectedDeleteAccountIds.add(accId);
+    } else {
+      this.selectedDeleteAccountIds.delete(accId);
+    }
+    this.render();
+  }
+
+  toggleSelectAllAccounts(selectAll) {
+    if (!this.selectedDeleteAccountIds) this.selectedDeleteAccountIds = new Set();
+    const accounts = window.dataStore.getAccounts();
+    const currentUser = window.authManager.getCurrentUser();
+    if (selectAll) {
+      accounts.forEach(a => {
+        if (!currentUser || currentUser.id !== a.id) {
+          this.selectedDeleteAccountIds.add(a.id);
+        }
+      });
+    } else {
+      this.selectedDeleteAccountIds.clear();
+    }
+    this.render();
+  }
+
+  async executeBatchDeleteAccounts() {
+    if (!this.selectedDeleteAccountIds || this.selectedDeleteAccountIds.size === 0) {
+      alert('Vui lòng tích chọn ít nhất 1 tài khoản để xóa!');
+      return;
+    }
+    const count = this.selectedDeleteAccountIds.size;
+    if (!confirm(`⚠️ CẢNH BÁO: Bạn có chắc chắn muốn XÓA HÀNG LOẠT ${count} TÀI KHOẢN đã chọn?\n\nToàn bộ các tài khoản này sẽ bị xóa khỏi hệ thống và đóng issue tương ứng!`)) {
+      return;
+    }
+
+    const ids = Array.from(this.selectedDeleteAccountIds);
+    for (const accId of ids) {
+      await window.dataStore.deleteAccount(accId);
+    }
+    this.selectedDeleteAccountIds.clear();
+    alert(`🎉 Đã xóa thành công ${count} tài khoản!\n(Các thao tác đã được gom vào hàng đợi đệm và sẽ tự động đồng bộ tuần tự chống nghẽn lên máy chủ sau 15 giây)`);
+    this.render();
+  }
+
+  getHeaderSyncBadgeHtml() {
+    if (!window.dataStore || !window.dataStore.batchSync) {
+      return `<span>🟢</span> Đã đồng bộ máy chủ`;
+    }
+    const bs = window.dataStore.batchSync;
+    if (bs.isSyncing) {
+      return `<span class="pulse">🔄</span> Đang đồng bộ máy chủ...`;
+    }
+    const count = bs.getPendingCount();
+    if (count > 0) {
+      const rem = Math.max(0, Math.ceil((bs.flushDeadline - Date.now()) / 1000));
+      return `<span>⏳</span> Đang gom ${count} thay đổi (${rem}s) <button type="button" style="background:none;border:none;color:#059669;font-weight:800;text-decoration:underline;cursor:pointer;padding:0 4px;" onclick="event.stopPropagation();window.dataStore.flushBatchNow()">[Đồng bộ ngay]</button>`;
+    }
+    return `<span>🟢</span> Đã đồng bộ máy chủ`;
   }
 
   deleteRequestPrompt(reqId) {
