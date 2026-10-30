@@ -520,7 +520,7 @@
             
             <!-- KHUNG PREVIEW ẢNH THUMBNAIL ĐÃ CHỌN -->
             <div id="prodThumbPreviewBox" style="margin-top: 10px; display: flex; align-items: center; gap: 14px; padding: 10px 14px; background: #FAF3EE; border: 1.5px dashed #CBD5E1; border-radius: 10px;">
-              <img id="prodThumbPreviewImg" src="assets/card_family.jpg" alt="Preview Thumbnail" style="width: 72px; height: 50px; object-fit: cover; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); border: 1px solid #E2E8F0;" onerror="if (!this.dataset.fallbackGh && this.getAttribute('src') && !this.getAttribute('src').startsWith('http') && !this.getAttribute('src').startsWith('data:')) { this.dataset.fallbackGh='1'; this.src='https://raw.githubusercontent.com/sonbigcar/license/main/revit-store-hub/' + this.getAttribute('src').replace(/^\.?\//, ''); } else { this.src='assets/card_family.jpg'; }">
+              <img id="prodThumbPreviewImg" src="assets/card_family.jpg" alt="Preview Thumbnail" style="width: 72px; height: 50px; object-fit: cover; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); border: 1px solid #E2E8F0;" onerror="window.handleImgError(this)">
               <div style="flex: 1; min-width: 0;">
                 <div id="prodThumbFileName" style="font-size: 0.82rem; font-weight: 700; color: var(--text-pure); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">assets/card_family.jpg</div>
                 <div id="prodThumbFileSize" style="font-size: 0.75rem; color: var(--text-dim); margin-top: 2px;">Ảnh mẫu mặc định</div>
