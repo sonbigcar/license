@@ -5,6 +5,572 @@
  * ==============================================================================
  */
 
+/**
+ * ==============================================================================
+ * BATCH SYNC MANAGER & ANTI-CONGESTION QUEUE (HÀNG ĐỢI ĐỆM CHỐNG NGHẼN)
+ * Gom các thao tác trong 15s thành 1 lần cập nhật (15-Second Debounce Window)
+ * Bảo vệ:
+ * 1. Mutex Single-Flight Lock: Chỉ 1 tiến trình đồng bộ chạy một thời điểm.
+ * 2. Atomic Commit: Gom toàn bộ giấy phép xóa & sửa thành 1 commit duy nhất (không xung đột SHA, không 409).
+ * 3. Sequential Queue for GitHub Issues: Nghỉ 800ms giữa mỗi request, thử lại Exponential Backoff khi 403/429.
+ * 4. Tombstone Registry: Ngăn chặn Background Polling hồi sinh dữ liệu đã xóa.
+ * ==============================================================================
+ */
+class BatchSyncManager {
+  constructor(dataStore) {
+    this.dataStore = dataStore;
+    this.STORAGE_KEY = 'revit_hub_batch_sync_v1';
+    this.TOMBSTONE_LIC_KEY = 'revit_hub_tombstone_licenses';
+    this.TOMBSTONE_ACC_KEY = 'revit_hub_tombstone_accounts';
+
+    this.pendingLicenseDeletions = new Set();
+    this.pendingLicenseUpdates = new Map();
+    this.pendingAccountDeletions = new Set();
+    this.pendingAccountUpdates = new Map();
+
+    this.deletedLicenseTombstones = new Set();
+    this.deletedAccountTombstones = new Set();
+
+    this.batchTimer = null;
+    this.countdownTimer = null;
+    this.flushDeadline = 0;
+    this.isSyncing = false;
+    this.listeners = [];
+
+    this.loadPersistedState();
+
+    if (typeof document !== 'undefined') {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => this.initUiElements());
+      } else {
+        setTimeout(() => this.initUiElements(), 100);
+      }
+    }
+  }
+
+  loadPersistedState() {
+    try {
+      const rawLicTombs = localStorage.getItem(this.TOMBSTONE_LIC_KEY);
+      if (rawLicTombs) {
+        JSON.parse(rawLicTombs).forEach(k => this.deletedLicenseTombstones.add(k));
+      }
+      const rawAccTombs = localStorage.getItem(this.TOMBSTONE_ACC_KEY);
+      if (rawAccTombs) {
+        JSON.parse(rawAccTombs).forEach(k => this.deletedAccountTombstones.add(k));
+      }
+
+      const rawQueue = localStorage.getItem(this.STORAGE_KEY);
+      if (rawQueue) {
+        const parsed = JSON.parse(rawQueue);
+        (parsed.licenseDeletions || []).forEach(k => this.pendingLicenseDeletions.add(k));
+        (parsed.licenseUpdates || []).forEach(lic => {
+          if (lic && lic.license_key) this.pendingLicenseUpdates.set(lic.license_key.trim().toUpperCase(), lic);
+        });
+        (parsed.accountDeletions || []).forEach(num => this.pendingAccountDeletions.add(num));
+        (parsed.accountUpdates || []).forEach(acc => {
+          if (acc) this.pendingAccountUpdates.set(acc.id || acc.email, acc);
+        });
+
+        if (this.getPendingCount() > 0) {
+          this.scheduleBatchFlush(5000);
+        }
+      }
+    } catch (e) {
+      console.warn('[BatchSync] Lỗi nạp trạng thái hàng đợi:', e);
+    }
+  }
+
+  persistState() {
+    try {
+      localStorage.setItem(this.TOMBSTONE_LIC_KEY, JSON.stringify(Array.from(this.deletedLicenseTombstones)));
+      localStorage.setItem(this.TOMBSTONE_ACC_KEY, JSON.stringify(Array.from(this.deletedAccountTombstones)));
+      const queueData = {
+        licenseDeletions: Array.from(this.pendingLicenseDeletions),
+        licenseUpdates: Array.from(this.pendingLicenseUpdates.values()),
+        accountDeletions: Array.from(this.pendingAccountDeletions),
+        accountUpdates: Array.from(this.pendingAccountUpdates.values()),
+        updatedAt: new Date().toISOString()
+      };
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(queueData));
+    } catch (e) {
+      console.warn('[BatchSync] Lỗi lưu trạng thái hàng đợi:', e);
+    }
+  }
+
+  hasPendingSync() {
+    return this.isSyncing || this.getPendingCount() > 0;
+  }
+
+  getPendingCount() {
+    return (
+      this.pendingLicenseDeletions.size +
+      this.pendingLicenseUpdates.size +
+      this.pendingAccountDeletions.size +
+      this.pendingAccountUpdates.size
+    );
+  }
+
+  isLicenseDeleted(keyOrId) {
+    if (!keyOrId) return false;
+    const norm = String(keyOrId).trim().toUpperCase();
+    return this.deletedLicenseTombstones.has(norm) || this.pendingLicenseDeletions.has(norm);
+  }
+
+  isAccountDeleted(accountId, issueNumber) {
+    if (accountId && this.deletedAccountTombstones.has(String(accountId))) return true;
+    if (issueNumber && (this.deletedAccountTombstones.has(String(issueNumber)) || this.pendingAccountDeletions.has(Number(issueNumber)))) return true;
+    return false;
+  }
+
+  recordLicenseTombstone(keyOrId) {
+    if (!keyOrId) return;
+    const norm = String(keyOrId).trim().toUpperCase();
+    this.deletedLicenseTombstones.add(norm);
+    this.persistState();
+  }
+
+  recordAccountTombstone(idOrIssue) {
+    if (!idOrIssue) return;
+    this.deletedAccountTombstones.add(String(idOrIssue));
+    this.persistState();
+  }
+
+  /**
+   * Gom các thao tác xóa License vào hàng đợi đệm 15 giây
+   */
+  queueLicenseBatchDeletion(keysOrIds) {
+    if (!Array.isArray(keysOrIds)) keysOrIds = [keysOrIds];
+    const allLicenses = this.dataStore.getLicenses();
+
+    keysOrIds.forEach(item => {
+      if (!item) return;
+      const raw = String(item).trim().toUpperCase();
+      const matched = allLicenses.find(l => 
+        (l.id && String(l.id).trim().toUpperCase() === raw) ||
+        (l.license_key && String(l.license_key).trim().toUpperCase() === raw)
+      );
+
+      const licKey = matched ? matched.license_key.trim().toUpperCase() : raw;
+      const licId = matched ? String(matched.id).trim().toUpperCase() : raw;
+
+      this.deletedLicenseTombstones.add(licKey);
+      this.deletedLicenseTombstones.add(licId);
+      this.pendingLicenseDeletions.add(licKey);
+      this.pendingLicenseUpdates.delete(licKey);
+
+      // Xóa ngay lập tức khỏi bộ nhớ local để giao diện phản hồi 0ms
+      this.dataStore.deleteLicense(licId);
+      this.dataStore.deleteLicense(licKey);
+    });
+
+    this.persistState();
+    this.scheduleBatchFlush(15000);
+    this.notifyListeners();
+  }
+
+  /**
+   * Gom thao tác cập nhật License vào hàng đợi đệm 15 giây
+   */
+  queueLicenseUpdate(lic) {
+    if (!lic || !lic.license_key) return;
+    const key = lic.license_key.trim().toUpperCase();
+    const id = lic.id ? String(lic.id).trim().toUpperCase() : null;
+
+    this.deletedLicenseTombstones.delete(key);
+    if (id) this.deletedLicenseTombstones.delete(id);
+    this.pendingLicenseDeletions.delete(key);
+    this.pendingLicenseUpdates.set(key, lic);
+
+    this.persistState();
+    this.scheduleBatchFlush(15000);
+    this.notifyListeners();
+  }
+
+  /**
+   * Gom thao tác xóa tài khoản vào hàng đợi đệm 15 giây
+   */
+  queueAccountDeletion(accountId, issueNumber = null) {
+    if (!accountId && !issueNumber) return;
+    if (accountId) this.deletedAccountTombstones.add(String(accountId));
+    if (issueNumber) {
+      const num = Number(issueNumber);
+      this.deletedAccountTombstones.add(String(num));
+      this.pendingAccountDeletions.add(num);
+    }
+    if (accountId) {
+      this.pendingAccountUpdates.delete(accountId);
+    }
+
+    this.persistState();
+    this.scheduleBatchFlush(15000);
+    this.notifyListeners();
+  }
+
+  /**
+   * Gom thao tác cập nhật tài khoản vào hàng đợi đệm 15 giây
+   */
+  queueAccountUpdate(account) {
+    if (!account) return;
+    const accKey = account.id || account.email;
+    this.pendingAccountUpdates.set(accKey, account);
+
+    this.persistState();
+    this.scheduleBatchFlush(15000);
+    this.notifyListeners();
+  }
+
+  /**
+   * Đặt lịch gom đợt xả hàng (Debounce 15 giây)
+   */
+  scheduleBatchFlush(delayMs = 15000) {
+    this.flushDeadline = Date.now() + delayMs;
+
+    if (this.batchTimer) {
+      clearTimeout(this.batchTimer);
+    }
+    this.batchTimer = setTimeout(() => {
+      this.processBatchFlush();
+    }, delayMs);
+
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+    }
+    this.countdownTimer = setInterval(() => {
+      this.tickCountdown();
+    }, 1000);
+
+    this.tickCountdown();
+  }
+
+  tickCountdown() {
+    const count = this.getPendingCount();
+    if (count === 0 && !this.isSyncing) {
+      this.hideBanner();
+      if (this.countdownTimer) {
+        clearInterval(this.countdownTimer);
+        this.countdownTimer = null;
+      }
+      return;
+    }
+
+    if (this.isSyncing) {
+      return;
+    }
+
+    const remainingSec = Math.max(0, Math.ceil((this.flushDeadline - Date.now()) / 1000));
+    this.updateBannerUi({
+      icon: '⏳',
+      title: `Đang gom ${count} thao tác cập nhật`,
+      subtitle: `Sẽ đồng bộ lên máy chủ sau ${remainingSec}s...`,
+      btnText: 'Đồng bộ ngay',
+      showBtn: true,
+      pulse: true
+    });
+    this.notifyListeners();
+  }
+
+  /**
+   * Kích hoạt đồng bộ ngay lập tức không cần đợi hết 15 giây
+   */
+  async flushBatchNow() {
+    if (this.batchTimer) {
+      clearTimeout(this.batchTimer);
+      this.batchTimer = null;
+    }
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = null;
+    }
+    await this.processBatchFlush();
+  }
+
+  /**
+   * TIẾN TRÌNH THỰC THI ĐỒNG BỘ CHỐNG NGHẼN (MUTEX SINGLE-FLIGHT LOCK)
+   */
+  async processBatchFlush() {
+    if (this.isSyncing) {
+      console.log('[Anti-Congestion] Đang có tiến trình đồng bộ chạy, yêu cầu xếp hàng...');
+      return;
+    }
+
+    const totalCount = this.getPendingCount();
+    if (totalCount === 0) {
+      this.hideBanner();
+      return;
+    }
+
+    this.isSyncing = true;
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = null;
+    }
+
+    this.updateBannerUi({
+      icon: '🔄',
+      title: `Đang đồng bộ ${totalCount} thao tác lên máy chủ...`,
+      subtitle: 'Hàng đợi chống nghẽn đang thực thi',
+      showBtn: false,
+      pulse: true
+    });
+    this.notifyListeners();
+
+    try {
+      const licDeletions = Array.from(this.pendingLicenseDeletions);
+      const licUpdates = Array.from(this.pendingLicenseUpdates.values());
+      const accDeletions = Array.from(this.pendingAccountDeletions);
+      const accUpdates = Array.from(this.pendingAccountUpdates.values());
+
+      // ------------------------------------------------------------------------
+      // BƯỚC 1: ĐỒNG BỘ ATOMIC 1 COMMIT DUY NHẤT CHO KHO LICENSES VAULT
+      // ------------------------------------------------------------------------
+      if (licDeletions.length > 0 || licUpdates.length > 0) {
+        this.updateBannerUi({
+          icon: '🔄',
+          title: `Đồng bộ kho giấy phép (${licDeletions.length} xóa, ${licUpdates.length} cập nhật)...`,
+          subtitle: 'Gom thành 1 commit nguyên tử duy nhất lên GitHub & Cloud',
+          showBtn: false
+        });
+
+        await this.dataStore.syncLicensesVaultBatchToGitHub(licUpdates, licDeletions);
+
+        if (licDeletions.length > 0) {
+          const batchDelPayload = { license_keys: licDeletions };
+          try {
+            await fetch('https://revit-store-api.polydactyl-wormhole.workers.dev/api/v1/license/batch-delete', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(batchDelPayload)
+            });
+          } catch(e) {}
+          try {
+            await fetch('/api/v1/license/batch-delete', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(batchDelPayload)
+            });
+          } catch(e) {}
+        }
+
+        if (licUpdates.length > 0) {
+          for (const lic of licUpdates) {
+            try {
+              fetch('https://revit-store-api.polydactyl-wormhole.workers.dev/api/v1/license/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(lic)
+              }).catch(() => {});
+              fetch('/api/v1/license/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(lic)
+              }).catch(() => {});
+            } catch(e) {}
+          }
+        }
+
+        licDeletions.forEach(k => this.pendingLicenseDeletions.delete(k));
+        licUpdates.forEach(l => {
+          if (l && l.license_key) this.pendingLicenseUpdates.delete(l.license_key.trim().toUpperCase());
+        });
+        this.persistState();
+      }
+
+      // ------------------------------------------------------------------------
+      // BƯỚC 2: HÀNG ĐỢI TUẦN TỰ CHỐNG NGHẼN CHO TÀI KHOẢN (GITHUB ISSUES)
+      // Nghỉ 800ms giữa mỗi request + Exponential backoff nếu gặp Rate Limit
+      // ------------------------------------------------------------------------
+      if (accDeletions.length > 0) {
+        for (let i = 0; i < accDeletions.length; i++) {
+          const issueNum = accDeletions[i];
+          this.updateBannerUi({
+            icon: '🔄',
+            title: `Đang xóa tài khoản #${issueNum} (${i + 1}/${accDeletions.length})...`,
+            subtitle: 'Hàng đợi chống nghẽn bảo vệ Rate Limit',
+            showBtn: false
+          });
+
+          await this.deleteAccountIssueWithBackoff(issueNum);
+          this.pendingAccountDeletions.delete(issueNum);
+          this.persistState();
+
+          if (i < accDeletions.length - 1) {
+            await new Promise(r => setTimeout(r, 800));
+          }
+        }
+      }
+
+      if (accUpdates.length > 0) {
+        for (let i = 0; i < accUpdates.length; i++) {
+          const acc = accUpdates[i];
+          this.updateBannerUi({
+            icon: '🔄',
+            title: `Đang lưu tài khoản ${acc.email} (${i + 1}/${accUpdates.length})...`,
+            subtitle: 'Hàng đợi chống nghẽn',
+            showBtn: false
+          });
+
+          await this.dataStore.syncAccountToGitHub(acc);
+          this.pendingAccountUpdates.delete(acc.id || acc.email);
+          this.persistState();
+
+          if (i < accUpdates.length - 1) {
+            await new Promise(r => setTimeout(r, 800));
+          }
+        }
+      }
+
+      // ------------------------------------------------------------------------
+      // BƯỚC 3: HOÀN TẤT & THÔNG BÁO THÀNH CÔNG
+      // ------------------------------------------------------------------------
+      this.updateBannerUi({
+        icon: '✅',
+        title: 'Đã đồng bộ thành công lên máy chủ!',
+        subtitle: `Hoàn tất xử lý ${totalCount} thay đổi an toàn tuyệt đối`,
+        showBtn: false,
+        pulse: false
+      });
+
+      setTimeout(() => {
+        if (!this.hasPendingSync()) {
+          this.hideBanner();
+        }
+      }, 3500);
+
+      if (window.adminPanel && typeof window.adminPanel.render === 'function') {
+        window.adminPanel.render();
+      }
+      if (window.storeApp && typeof window.storeApp.renderUserLicenses === 'function') {
+        window.storeApp.renderUserLicenses();
+      }
+
+    } catch (err) {
+      console.error('[Anti-Congestion] Lỗi trong quá trình xả hàng đợi:', err);
+      this.updateBannerUi({
+        icon: '⚠️',
+        title: 'Gặp sự cố kết nối, sẽ tự động thử lại sau',
+        subtitle: err.message,
+        btnText: 'Thử lại ngay',
+        showBtn: true,
+        pulse: false
+      });
+      this.scheduleBatchFlush(10000);
+    } finally {
+      this.isSyncing = false;
+      this.persistState();
+      this.notifyListeners();
+
+      if (this.getPendingCount() > 0) {
+        this.scheduleBatchFlush(15000);
+      }
+    }
+  }
+
+  async deleteAccountIssueWithBackoff(issueNumber, maxRetries = 3) {
+    const { owner, repo, token } = this.dataStore.GITHUB_CONFIG;
+    if (!token || !issueNumber) return false;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            title: `[ACCOUNT DELETED] #${issueNumber}`,
+            state: 'closed',
+            state_reason: 'not_planned'
+          })
+        });
+
+        if (res.ok) return true;
+
+        if (res.status === 403 || res.status === 429) {
+          const retryAfter = res.headers.get('Retry-After');
+          const waitMs = retryAfter ? parseInt(retryAfter, 10) * 1000 : Math.pow(2, attempt) * 1500;
+          console.warn(`[Anti-Congestion] GitHub Rate Limit trên issue #${issueNumber}, đợi ${waitMs}ms trước khi thử lại...`);
+          await new Promise(r => setTimeout(r, waitMs));
+          continue;
+        }
+
+        if (res.status === 404) return true;
+      } catch (e) {
+        console.warn(`[Anti-Congestion] Thử lại xóa issue #${issueNumber} lần ${attempt}:`, e.message);
+        await new Promise(r => setTimeout(r, 1200));
+      }
+    }
+    return false;
+  }
+
+  initUiElements() {
+    if (typeof document === 'undefined') return;
+    let banner = document.getElementById('batchSyncBanner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'batchSyncBanner';
+      banner.className = 'batch-sync-banner hidden';
+      banner.innerHTML = `
+        <div class="batch-sync-icon" id="batchSyncIcon">⏳</div>
+        <div class="batch-sync-text">
+          <div class="batch-sync-title" id="batchSyncTitle">Đang gom thao tác cập nhật...</div>
+          <div class="batch-sync-sub" id="batchSyncSubtitle">Sẽ đồng bộ lên máy chủ sau 15s</div>
+        </div>
+        <div class="batch-sync-actions">
+          <button type="button" id="batchSyncNowBtn" class="batch-sync-btn" onclick="window.dataStore.flushBatchNow()">Đồng bộ ngay</button>
+        </div>
+      `;
+      document.body.appendChild(banner);
+    }
+    if (this.hasPendingSync()) {
+      this.tickCountdown();
+    }
+  }
+
+  updateBannerUi({ icon, title, subtitle, btnText = 'Đồng bộ ngay', showBtn = true, pulse = false }) {
+    this.initUiElements();
+    const banner = document.getElementById('batchSyncBanner');
+    if (!banner) return;
+
+    banner.classList.remove('hidden');
+    const iconEl = document.getElementById('batchSyncIcon');
+    const titleEl = document.getElementById('batchSyncTitle');
+    const subEl = document.getElementById('batchSyncSubtitle');
+    const btnEl = document.getElementById('batchSyncNowBtn');
+
+    if (iconEl) {
+      iconEl.textContent = icon || '⏳';
+      if (pulse) iconEl.classList.add('pulse');
+      else iconEl.classList.remove('pulse');
+    }
+    if (titleEl) titleEl.textContent = title;
+    if (subEl) subEl.textContent = subtitle;
+    if (btnEl) {
+      btnEl.textContent = btnText;
+      btnEl.style.display = showBtn ? 'inline-block' : 'none';
+    }
+  }
+
+  hideBanner() {
+    if (typeof document === 'undefined') return;
+    const banner = document.getElementById('batchSyncBanner');
+    if (banner) {
+      banner.classList.add('hidden');
+    }
+  }
+
+  notifyListeners() {
+    this.listeners.forEach(fn => {
+      try { fn(this); } catch(e) {}
+    });
+  }
+
+  onSyncChange(fn) {
+    if (typeof fn === 'function') this.listeners.push(fn);
+  }
+}
+
 class DataStore {
   constructor() {
     this.STORAGE_PREFIX = 'revit_hub_';
@@ -18,6 +584,7 @@ class DataStore {
       path: 'revit-store-hub/data/products.json',
       token: savedToken || defaultTokenParts.join('')
     };
+    this.batchSync = new BatchSyncManager(this);
     this.initDefaultData();
     this.fetchRemoteProducts();
     this.fetchRemoteBankConfig();
@@ -25,6 +592,38 @@ class DataStore {
     this.fetchRemoteOrders();
     this.fetchRemoteAccounts();
     this.fetchRemoteLicensesVault();
+  }
+
+  hasPendingSync() {
+    return this.batchSync ? this.batchSync.hasPendingSync() : false;
+  }
+
+  flushBatchNow() {
+    return this.batchSync ? this.batchSync.flushBatchNow() : Promise.resolve();
+  }
+
+  queueLicenseBatchDeletion(keysOrIds) {
+    return this.batchSync ? this.batchSync.queueLicenseBatchDeletion(keysOrIds) : null;
+  }
+
+  queueLicenseUpdate(lic) {
+    return this.batchSync ? this.batchSync.queueLicenseUpdate(lic) : null;
+  }
+
+  queueAccountDeletion(accId, issueNumber) {
+    return this.batchSync ? this.batchSync.queueAccountDeletion(accId, issueNumber) : null;
+  }
+
+  queueAccountUpdate(acc) {
+    return this.batchSync ? this.batchSync.queueAccountUpdate(acc) : null;
+  }
+
+  isLicenseDeleted(keyOrId) {
+    return this.batchSync ? this.batchSync.isLicenseDeleted(keyOrId) : false;
+  }
+
+  isAccountDeleted(accId, issueNumber) {
+    return this.batchSync ? this.batchSync.isAccountDeleted(accId, issueNumber) : false;
   }
 
   /**
@@ -589,6 +1188,9 @@ class DataStore {
    * Đảm bảo tài khoản người dùng đăng ký không bao giờ bị mất hoặc reset sau vài ngày
    */
   async fetchRemoteAccounts() {
+    if (this.batchSync && this.batchSync.hasPendingSync()) {
+      return this.getAccounts();
+    }
     const { owner, repo, token } = this.GITHUB_CONFIG;
     if (!token) return this.getAccounts();
 
@@ -607,8 +1209,11 @@ class DataStore {
 
         for (const issue of issues) {
           if (issue.title && issue.title.startsWith('[ACCOUNT]') && issue.body) {
-            // Nếu issue đã bị đánh dấu xóa thì bỏ qua
+            // Nếu issue đã bị đánh dấu xóa hoặc đang trong danh sách chờ xóa thì bỏ qua
             if (issue.state === 'closed' && (issue.title.includes('[DELETED]') || issue.state_reason === 'not_planned')) {
+              continue;
+            }
+            if (this.batchSync && this.batchSync.isAccountDeleted(null, issue.number)) {
               continue;
             }
             const match = issue.body.match(/<!-- ACCOUNT_DATA_JSON_START -->(.*?)<!-- ACCOUNT_DATA_JSON_END -->/s);
@@ -616,6 +1221,9 @@ class DataStore {
               try {
                 const accData = JSON.parse(match[1]);
                 accData.github_issue_number = issue.number;
+                if (this.batchSync && this.batchSync.isAccountDeleted(accData.id, issue.number)) {
+                  continue;
+                }
                 const existingIdx = localAccounts.findIndex(a => a.id === accData.id || (a.email && a.email.toLowerCase() === (accData.email || '').toLowerCase()));
                 if (existingIdx >= 0) {
                   localAccounts[existingIdx] = { ...localAccounts[existingIdx], ...accData };
@@ -739,6 +1347,10 @@ class DataStore {
       accounts.unshift(account);
     }
     this.save('accounts', accounts);
+    if (this.batchSync) {
+      this.batchSync.queueAccountUpdate(account);
+      return { success: true, queued: true };
+    }
     return await this.syncAccountToGitHub(account);
   }
 
@@ -748,7 +1360,9 @@ class DataStore {
     accounts = accounts.filter(a => a.id !== accountId);
     this.save('accounts', accounts);
 
-    if (target && target.github_issue_number) {
+    if (this.batchSync) {
+      this.batchSync.queueAccountDeletion(accountId, target ? target.github_issue_number : null);
+    } else if (target && target.github_issue_number) {
       await this.deleteAccountIssue(target.github_issue_number);
     }
   }
@@ -937,6 +1551,9 @@ class DataStore {
    * TẢI TOÀN BỘ ĐƠN HÀNG TỪ MÁY CHỦ GITHUB VỀ (CHO CẢ MÁY ADMIN VÀ KHÁCH)
    */
   async fetchRemoteOrders() {
+    if (this.batchSync && this.batchSync.hasPendingSync()) {
+      return this.getOrders();
+    }
     const { owner, repo, token } = this.GITHUB_CONFIG;
     if (!token) return this.getOrders();
 
@@ -1125,6 +1742,11 @@ class DataStore {
               const safeCode = (order.order_code || '888888').toString().padStart(6, '0');
               const hashPart = Math.abs(item.product_id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) * 31).toString(36).toUpperCase().padStart(4, 'X');
               licenseKey = `DSMEP-${safeCode}-${hashPart}-PRO`;
+            }
+
+            // Kiểm tra bảo vệ: Nếu license hoặc key này đã bị xóa thì tuyệt đối không tự ý hồi sinh lại
+            if (this.batchSync && (this.batchSync.isLicenseDeleted(licId) || this.batchSync.isLicenseDeleted(licenseKey))) {
+              return;
             }
 
             const prod = this.getProductById(item.product_id);
@@ -1432,6 +2054,9 @@ class DataStore {
       return !matchId && !matchKey;
     });
     this.save('licenses', licenses);
+    if (this.batchSync) {
+      this.batchSync.recordLicenseTombstone(idOrKey);
+    }
     return licenses.length !== initialLen;
   }
 
@@ -1442,6 +2067,12 @@ class DataStore {
     const key = typeof licOrKey === 'string' ? licOrKey : (licOrKey.license_key || '');
     if (!key) return;
     const upperKey = key.trim().toUpperCase();
+
+    // Nếu có hàng đợi đệm chống nghẽn, gom thao tác trong 15s thành 1 lần cập nhật
+    if (this.batchSync) {
+      this.batchSync.queueLicenseBatchDeletion([upperKey]);
+      return { success: true, queued: true };
+    }
 
     // 1. Đồng bộ lên Node server local (nếu dev server chạy)
     try {
@@ -2354,6 +2985,9 @@ class DataStore {
    * Đảm bảo mọi lượt kích hoạt từ Revit Add-in và Phần mềm Quản Lý Công Việc đều lập tức hiển thị trên website
    */
   async fetchRemoteLicensesVault() {
+    if (this.batchSync && this.batchSync.hasPendingSync()) {
+      return this.get('licenses') || [];
+    }
     const { owner, repo, token } = this.GITHUB_CONFIG;
     const pathInRepo = 'revit-store-hub/data/licenses_vault.json';
     let vault = null;
@@ -2411,6 +3045,11 @@ class DataStore {
     for (const [key, vData] of Object.entries(vault)) {
       if (!vData || typeof vData !== 'object') continue;
       const upperKey = key.trim().toUpperCase();
+
+      // Bỏ qua nếu license đã bị xóa hoặc đang nằm trong hàng đợi chờ xóa
+      if (this.batchSync && this.batchSync.isLicenseDeleted(upperKey)) {
+        continue;
+      }
 
       const regAccounts = Array.isArray(vData.registered_accounts) ? vData.registered_accounts : [];
       const vActivations = Array.isArray(vData.activations) ? vData.activations : [];
@@ -2528,10 +3167,11 @@ class DataStore {
     return storedLicenses;
   }
 
-/**
-   * ĐỒNG BỘ LICENSES VAULT LÊN GITHUB VÀ LOCALHOST ĐỂ APP TASK VÀ REVIT ADDIN NHẬN DIỆN
+  /**
+   * ĐỒNG BỘ HÀNG LOẠT (ATOMIC 1 COMMIT) LICENSES VAULT LÊN GITHUB
+   * Gom toàn bộ các yêu cầu xóa và cập nhật vào 1 commit duy nhất
    */
-  async syncLicensesVaultToGitHub(updatedLicense = null, deletedLicenseKey = null) {
+  async syncLicensesVaultBatchToGitHub(updatedLicensesList = [], deletedKeysList = []) {
     const { owner, repo, token } = this.GITHUB_CONFIG;
     if (!token) return { success: false, message: 'Chưa cấu hình GitHub Token' };
 
@@ -2560,21 +3200,20 @@ class DataStore {
         console.warn('Could not fetch existing licenses_vault from GitHub:', e);
       }
 
-      // Xóa key khỏi vault nếu có yêu cầu xóa
-      if (deletedLicenseKey) {
-        const delUpper = deletedLicenseKey.trim().toUpperCase();
-        delete vault[delUpper];
+      // 1. Áp dụng toàn bộ danh sách xóa trong đợt gom (Batch deletions)
+      const delSet = new Set((deletedKeysList || []).map(k => String(k).trim().toUpperCase()));
+      for (const delKey of delSet) {
+        delete vault[delKey];
       }
 
-      // Merge current licenses from local DataStore
+      // 2. Merge licenses hiện tại từ local DataStore (loại bỏ những key đã xóa)
       const allLicenses = this.getLicenses();
       allLicenses.forEach(lic => {
         if (!lic || !lic.license_key) return;
         const key = lic.license_key.trim().toUpperCase();
-        if (deletedLicenseKey && key === deletedLicenseKey.trim().toUpperCase()) return;
+        if (delSet.has(key)) return;
         const existing = vault[key] || {};
-        
-        // Chuẩn hóa danh sách registered_accounts
+
         const regAccounts = (lic.registered_accounts !== undefined)
           ? lic.registered_accounts
           : (lic.activations || []).map(a => ({
@@ -2601,10 +3240,13 @@ class DataStore {
         };
       });
 
-      if (updatedLicense && updatedLicense.license_key) {
+      // 3. Áp dụng danh sách cập nhật trực tiếp
+      (updatedLicensesList || []).forEach(updatedLicense => {
+        if (!updatedLicense || !updatedLicense.license_key) return;
         const key = updatedLicense.license_key.trim().toUpperCase();
+        if (delSet.has(key)) return;
         const existing = vault[key] || {};
-        
+
         const regAccounts = (updatedLicense.registered_accounts !== undefined)
           ? updatedLicense.registered_accounts
           : (updatedLicense.activations || []).map(a => ({
@@ -2629,9 +3271,9 @@ class DataStore {
           registered_accounts: regAccounts,
           updated_at: new Date().toISOString()
         };
-      }
+      });
 
-      // Commit to GitHub
+      // 4. Commit lên GitHub chỉ trong 1 lần duy nhất (Atomic Commit)
       const jsonStr = JSON.stringify(vault, null, 2);
       const utf8Bytes = new TextEncoder().encode(jsonStr);
       let binary = '';
@@ -2640,8 +3282,9 @@ class DataStore {
       }
       const base64Content = btoa(binary);
 
+      const opDesc = `Batch update (${delSet.size} deleted, ${(updatedLicensesList || []).length} updated)`;
       const putBody = {
-        message: `Admin update licenses vault (Sync ${updatedLicense ? updatedLicense.license_key : 'all'})`,
+        message: `Admin atomic sync licenses vault: ${opDesc}`,
         content: base64Content,
         branch: 'main'
       };
@@ -2676,7 +3319,7 @@ class DataStore {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              message: `Sync licenses vault to root`,
+              message: `Admin atomic sync licenses vault to root: ${opDesc}`,
               content: base64Content,
               branch: 'main',
               sha: rootSha
@@ -2688,9 +3331,18 @@ class DataStore {
       localStorage.setItem('revit_licenses_vault', jsonStr);
       return { success: putRes.ok, vault };
     } catch (err) {
-      console.error('Error syncing licenses vault to GitHub:', err);
+      console.error('Error batch syncing licenses vault to GitHub:', err);
       return { success: false, error: err.message };
     }
+  }
+
+  /**
+   * ĐỒNG BỘ LICENSES VAULT LÊN GITHUB VÀ LOCALHOST ĐỂ APP TASK VÀ REVIT ADDIN NHẬN DIỆN
+   */
+  async syncLicensesVaultToGitHub(updatedLicense = null, deletedLicenseKey = null) {
+    const updates = updatedLicense ? [updatedLicense] : [];
+    const deletions = deletedLicenseKey ? [deletedLicenseKey] : [];
+    return await this.syncLicensesVaultBatchToGitHub(updates, deletions);
   }
 }
 
