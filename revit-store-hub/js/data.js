@@ -750,27 +750,53 @@ class DataStore {
   async fetchRemoteProducts() {
     const { owner, repo, path, token } = this.GITHUB_CONFIG;
 
-    // 1. Ưu tiên cao nhất: Lấy trực tiếp từ GitHub Contents API (0 giây delay, không dính cache CDN)
+    // 1. Ưu tiên cao nhất: raw.githubusercontent.com (0 giây delay, CORS mở toàn cầu, không lỗi preflight)
+    try {
+      const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}?t=${Date.now()}`;
+      const res = await fetch(rawUrl, { cache: 'no-store' });
+      if (res.ok) {
+        const remoteProducts = await res.json();
+        if (Array.isArray(remoteProducts) && remoteProducts.length > 0) {
+          this.save('products', remoteProducts);
+          if (window.storeApp && typeof window.storeApp.renderProducts === 'function') {
+            window.storeApp.renderProducts();
+          }
+          if (window.adminPanel && document.getElementById('adminView') && !document.getElementById('adminView').classList.contains('hidden')) {
+            window.adminPanel.render();
+          }
+          return remoteProducts;
+        }
+      }
+    } catch (err) {
+      console.warn('[Fetch Products] Raw GitHub fallback:', err.message);
+    }
+
+    // 2. Dự phòng: GitHub Contents API với Accept tiêu chuẩn vnd.github.v3+json
     if (token) {
       try {
         const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=main&t=${Date.now()}`, {
           headers: {
             'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3.raw'
+            'Accept': 'application/vnd.github.v3+json'
           },
           cache: 'no-store'
         });
         if (res.ok) {
-          const remoteProducts = await res.json();
-          if (Array.isArray(remoteProducts) && remoteProducts.length > 0) {
-            this.save('products', remoteProducts);
-            if (window.storeApp && typeof window.storeApp.renderProducts === 'function') {
-              window.storeApp.renderProducts();
+          const fileData = await res.json();
+          if (fileData && fileData.content) {
+            const cleanB64 = fileData.content.replace(/\s/g, '');
+            const decodedStr = new TextDecoder('utf-8').decode(Uint8Array.from(atob(cleanB64), c => c.charCodeAt(0)));
+            const remoteProducts = JSON.parse(decodedStr);
+            if (Array.isArray(remoteProducts) && remoteProducts.length > 0) {
+              this.save('products', remoteProducts);
+              if (window.storeApp && typeof window.storeApp.renderProducts === 'function') {
+                window.storeApp.renderProducts();
+              }
+              if (window.adminPanel && document.getElementById('adminView') && !document.getElementById('adminView').classList.contains('hidden')) {
+                window.adminPanel.render();
+              }
+              return remoteProducts;
             }
-            if (window.adminPanel && document.getElementById('adminView') && !document.getElementById('adminView').classList.contains('hidden')) {
-              window.adminPanel.render();
-            }
-            return remoteProducts;
           }
         }
       } catch (e) {
@@ -778,32 +804,20 @@ class DataStore {
       }
     }
 
-    // 2. Dự phòng: raw.githubusercontent.com và file tĩnh data/products.json
-    const candidateUrls = [
-      `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}?t=${Date.now()}`,
-      `data/products.json?t=${Date.now()}`
-    ];
-
-    for (const url of candidateUrls) {
-      try {
-        const res = await fetch(url, { cache: 'no-store' });
-        if (res.ok) {
-          const remoteProducts = await res.json();
-          if (Array.isArray(remoteProducts) && remoteProducts.length > 0) {
-            this.save('products', remoteProducts);
-            if (window.storeApp && typeof window.storeApp.renderProducts === 'function') {
-              window.storeApp.renderProducts();
-            }
-            if (window.adminPanel && document.getElementById('adminView') && !document.getElementById('adminView').classList.contains('hidden')) {
-              window.adminPanel.render();
-            }
-            return remoteProducts;
+    // 3. Dự phòng cuối: file tĩnh local data/products.json
+    try {
+      const res = await fetch(`data/products.json?t=${Date.now()}`, { cache: 'no-store' });
+      if (res.ok) {
+        const remoteProducts = await res.json();
+        if (Array.isArray(remoteProducts) && remoteProducts.length > 0) {
+          this.save('products', remoteProducts);
+          if (window.storeApp && typeof window.storeApp.renderProducts === 'function') {
+            window.storeApp.renderProducts();
           }
+          return remoteProducts;
         }
-      } catch (err) {
-        // Tiếp tục thử URL dự phòng
       }
-    }
+    } catch (err) {}
   }
 
   /**
