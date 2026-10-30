@@ -8,14 +8,32 @@
 // Global resilience handler for product images
 window.handleImgError = function(img) {
   if (!img) return;
-  const src = img.getAttribute('src') || '';
-  if (!img.dataset.fallbackGh && !src.startsWith('http') && !src.startsWith('data:') && !src.startsWith('//')) {
-    img.dataset.fallbackGh = '1';
-    img.src = 'https://raw.githubusercontent.com/sonbigcar/license/main/revit-store-hub/' + src.replace(/^\.?\//, '');
-  } else {
-    img.onerror = null;
-    img.src = 'assets/card_family.jpg';
+  const rawSrc = img.getAttribute('src') || img.src || '';
+  
+  // 1. Nếu là ảnh trong thư mục uploads (ảnh do người dùng tải lên)
+  if (rawSrc.includes('assets/uploads/')) {
+    if (!img.dataset.fallbackGh) {
+      img.dataset.fallbackGh = '1';
+      const parts = rawSrc.split('assets/uploads/');
+      const fileName = parts[parts.length - 1].split('?')[0];
+      img.src = `https://raw.githubusercontent.com/sonbigcar/license/main/revit-store-hub/assets/uploads/${fileName}`;
+      return;
+    }
   }
+
+  // 2. Nếu là ảnh assets hệ thống nội bộ (card_family, card_tools, logo...) bị lỗi
+  if (rawSrc.includes('assets/') && !rawSrc.includes('raw.githubusercontent.com')) {
+    if (!img.dataset.fallbackGhAssets) {
+      img.dataset.fallbackGhAssets = '1';
+      const assetPath = rawSrc.substring(rawSrc.indexOf('assets/')).split('?')[0];
+      img.src = `https://raw.githubusercontent.com/sonbigcar/license/main/revit-store-hub/${assetPath}`;
+      return;
+    }
+  }
+
+  // 3. Fallback cuối cùng: Ảnh mặc định an toàn tuyệt đối từ GitHub CDN
+  img.onerror = null;
+  img.src = 'https://raw.githubusercontent.com/sonbigcar/license/main/revit-store-hub/assets/card_family.jpg';
 };
 
 class StoreApp {
@@ -517,7 +535,7 @@ class StoreApp {
             </button>
           ` : ''}
           <div class="pillar-media">
-            <img src="${p.media}" alt="${p.title}" loading="lazy" onerror="this.src='assets/card_tools.jpg'">
+            <img src="${p.media}" alt="${p.title}" loading="lazy" onerror="window.handleImgError(this)">
             <div class="pillar-overlay"></div>
             <span class="badge ${p.badge_class || (key === 'tools' ? 'badge-tool' : (key === 'family_template' ? 'badge-family' : 'badge-custom'))} pillar-badge-float">${p.badge}</span>
             <div class="pillar-icon-box">${p.icon}</div>
@@ -1237,7 +1255,7 @@ class StoreApp {
       const res = await window.dataStore.uploadImageFile(file, 'assets/uploads');
       if (res && res.url) {
         if (inputVal) inputVal.value = res.url;
-        this.updateProductThumbPreview(res.url, file.name, file.size);
+        this.updateProductThumbPreview(res.dataUrl || res.url, file.name, file.size);
       }
     } catch (err) {
       console.error('Lỗi upload thumbnail:', err);
