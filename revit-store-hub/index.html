@@ -504,8 +504,31 @@
           </div>
 
           <div class="form-group">
-            <label>Link Ảnh Xem Trước (Thumbnail URL)</label>
-            <input type="text" id="prodEditThumb" class="form-control" placeholder="assets/card_family.jpg">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+              <label style="margin: 0; font-weight: 700;">Link Ảnh Xem Trước (Thumbnail URL)</label>
+              <label for="prodEditThumbFileInput" class="btn btn-secondary btn-sm" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--primary); border-color: var(--primary); padding: 4px 12px; margin: 0; font-size: 0.8rem; background: #FFF5F2;" title="Chọn hình ảnh từ máy tính cá nhân của bạn">
+                <span>💻</span> Chọn Ảnh Dưới Máy Cá Nhân...
+              </label>
+              <input type="file" id="prodEditThumbFileInput" accept="image/*" style="display: none;" onchange="if(this.files && this.files[0]){ window.storeApp.handleLocalThumbnailSelect(this.files[0]); }">
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <input type="text" id="prodEditThumb" class="form-control" placeholder="assets/card_family.jpg hoặc dán link ảnh web" oninput="window.storeApp.updateProductThumbPreview(this.value)">
+              <button type="button" class="btn btn-secondary" onclick="document.getElementById('prodEditThumbFileInput').click()" style="white-space: nowrap; font-weight: 700; padding: 10px 14px; font-size: 0.85rem;" title="Tải ảnh từ máy tính">
+                📂 Tải Lên
+              </button>
+            </div>
+            
+            <!-- KHUNG PREVIEW ẢNH THUMBNAIL ĐÃ CHỌN -->
+            <div id="prodThumbPreviewBox" style="margin-top: 10px; display: flex; align-items: center; gap: 14px; padding: 10px 14px; background: #FAF3EE; border: 1.5px dashed #CBD5E1; border-radius: 10px;">
+              <img id="prodThumbPreviewImg" src="assets/card_family.jpg" alt="Preview Thumbnail" style="width: 72px; height: 50px; object-fit: cover; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); border: 1px solid #E2E8F0;" onerror="this.src='assets/card_family.jpg'">
+              <div style="flex: 1; min-width: 0;">
+                <div id="prodThumbFileName" style="font-size: 0.82rem; font-weight: 700; color: var(--text-pure); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">assets/card_family.jpg</div>
+                <div id="prodThumbFileSize" style="font-size: 0.75rem; color: var(--text-dim); margin-top: 2px;">Ảnh mẫu mặc định</div>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.storeApp.clearProductThumb()" style="padding: 4px 10px; font-size: 0.75rem; color: var(--text-muted);" title="Đặt lại ảnh mặc định">
+                🔄 Mặc định
+              </button>
+            </div>
           </div>
 
           <div class="form-group">
@@ -708,8 +731,22 @@
             <!-- LINK ẢNH NỀN & NÚT CTA -->
             <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 14px;">
               <div class="form-group">
-                <label>Đường dẫn hình ảnh nền (Media URL)</label>
-                <input type="text" id="editPillarMedia" class="form-control" placeholder="assets/card_tools.jpg" oninput="window.storeApp.updatePillarLivePreview()">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+                  <label style="margin: 0; font-weight: 700;">Đường dẫn hình ảnh nền (Media URL)</label>
+                  <label for="editPillarMediaFileInput" class="btn btn-secondary btn-sm" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--primary); border-color: var(--primary); padding: 3px 10px; margin: 0; font-size: 0.78rem; background: #FFF5F2;" title="Chọn hình ảnh nền từ máy tính cá nhân">
+                    <span>💻</span> Chọn Ảnh Dưới Máy...
+                  </label>
+                  <input type="file" id="editPillarMediaFileInput" accept="image/*" style="display: none;" onchange="if(this.files && this.files[0]){ window.storeApp.handleLocalPillarMediaSelect(this.files[0]); }">
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <input type="text" id="editPillarMedia" class="form-control" placeholder="assets/card_tools.jpg hoặc dán link ảnh" oninput="window.storeApp.updatePillarLivePreview()">
+                  <button type="button" class="btn btn-secondary" onclick="document.getElementById('editPillarMediaFileInput').click()" style="white-space: nowrap; font-weight: 700; padding: 8px 12px; font-size: 0.82rem;" title="Chọn ảnh từ máy cá nhân">
+                    📂 Tải Lên
+                  </button>
+                </div>
+                <small style="color: var(--text-dim); font-size: 0.76rem; margin-top: 4px; display: block;">
+                  💡 Bạn có thể bấm nút "Chọn Ảnh Dưới Máy" để chọn ảnh từ ổ đĩa hoặc dán link ảnh web.
+                </small>
               </div>
               <div class="form-group">
                 <label>Chữ nút bấm (CTA)</label>
@@ -841,6 +878,60 @@
             🔑 Sinh Mã Key & Cấp Bản Quyền Ngay
           </button>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL ADMIN: QUẢN LÝ & XÓA GIẤY PHÉP BẢN QUYỀN
+       ==================================================================== -->
+  <div id="quickDeleteLicenseModalOverlay" class="modal-overlay">
+    <div class="modal-content" style="max-width: 860px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="border-bottom: 1.5px solid #FEE2E2; background: #FFF5F5;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 38px; height: 38px; border-radius: 10px; background: #FEE2E2; color: #DC2626; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+            🗑️
+          </div>
+          <div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.2rem; color: #991B1B; margin: 0;">
+              Xóa Giấy Phép Bản Quyền Khỏi Hệ Thống
+            </h3>
+            <p style="font-size: 0.78rem; color: #B91C1C; margin: 2px 0 0 0;">
+              Chọn giấy phép cần xóa hoặc xóa hàng loạt. Key sẽ được hủy đồng bộ sang Máy Chủ & GitHub.
+            </p>
+          </div>
+        </div>
+        <button class="modal-close" onclick="window.adminPanel.closeQuickDeleteLicenseModal()">✕</button>
+      </div>
+
+      <div style="padding: 18px 24px 12px 24px; border-bottom: 1px solid var(--border-color); background: #FAF9F8; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; gap: 10px; align-items: center; flex: 1; min-width: 260px;">
+          <input type="text" id="quickDeleteSearchInput" class="form-control" placeholder="🔍 Tìm theo Key, Email, Khách Hàng..." oninput="window.adminPanel.renderQuickDeleteLicenseList()" style="background: #FFFFFF;">
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="window.adminPanel.toggleSelectAllDeleteLicenses(true)">
+            Chọn Tất Cả
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="window.adminPanel.toggleSelectAllDeleteLicenses(false)">
+            Bỏ Chọn
+          </button>
+          <button type="button" id="btnConfirmBatchDelete" class="btn btn-primary btn-sm" onclick="window.adminPanel.executeBatchDeleteLicenses()" style="background: #DC2626; border-color: #DC2626; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+            <span>🗑️</span> Xóa Đã Chọn (<span id="quickDeleteSelectedCount">0</span>)
+          </button>
+        </div>
+      </div>
+
+      <div id="quickDeleteLicenseListContainer" style="padding: 16px 24px; overflow-y: auto; flex: 1; min-height: 280px; max-height: 55vh;">
+        <!-- Danh sách giấy phép sẽ render động qua renderQuickDeleteLicenseList -->
+      </div>
+
+      <div style="padding: 14px 24px; background: #FAF9F8; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.82rem; color: var(--text-muted);">
+          ⚠️ Lưu ý: Giấy phép bị xóa sẽ không thể kích hoạt lại trên Revit.
+        </span>
+        <button type="button" class="btn btn-secondary" onclick="window.adminPanel.closeQuickDeleteLicenseModal()">
+          Đóng
+        </button>
       </div>
     </div>
   </div>
