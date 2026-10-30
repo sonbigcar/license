@@ -2758,7 +2758,10 @@ class DataStore {
     const fileToUpload = (optimized && optimized.file) || file;
     const dataUrl = (optimized && optimized.dataUrl) || '';
 
-    // 1. Thử gửi lên server Node local /api/upload-image (nếu dev server chạy)
+    let uploadedLocal = false;
+    let uploadedGh = false;
+
+    // 1. Thử gửi lên server Node/PowerShell local /api/upload-image (nếu dev server chạy)
     try {
       const isLocalOrNode = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port === '3000';
       if (isLocalOrNode) {
@@ -2768,22 +2771,15 @@ class DataStore {
           body: fileToUpload
         });
         if (res.ok) {
-          const json = await res.json();
-          if (json && json.success && json.url) {
-            return {
-              success: true,
-              url: json.url,
-              dataUrl: dataUrl,
-              fileName: safeName
-            };
-          }
+          uploadedLocal = true;
+          console.log('[UploadImage] Đã lưu vào server nội bộ thành công:', safeName);
         }
       }
     } catch (e) {
       console.warn('[UploadImage] Local server upload không sẵn sàng:', e);
     }
 
-    // 2. Thử đẩy lên GitHub Repository nếu có token
+    // 2. Đồng bộ lên GitHub Repository (để live server và GitHub Pages luôn có ảnh)
     try {
       const { owner, repo, token } = this.GITHUB_CONFIG;
       if (token && dataUrl && dataUrl.includes(',')) {
@@ -2805,16 +2801,21 @@ class DataStore {
         });
 
         if (ghRes.ok) {
-          return {
-            success: true,
-            url: `assets/uploads/${safeName}`,
-            dataUrl: dataUrl,
-            fileName: safeName
-          };
+          uploadedGh = true;
+          console.log('[UploadImage] Đã đồng bộ lên GitHub thành công:', safeName);
         }
       }
     } catch (ghErr) {
       console.warn('[UploadImage] GitHub upload không thành công:', ghErr);
+    }
+
+    if (uploadedLocal || uploadedGh) {
+      return {
+        success: true,
+        url: `assets/uploads/${safeName}`,
+        dataUrl: dataUrl,
+        fileName: safeName
+      };
     }
 
     // 3. Fallback: Data URL an toàn tuyệt đối, hiển thị và lưu trực tiếp
