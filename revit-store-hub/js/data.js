@@ -475,7 +475,6 @@ class BatchSyncManager {
           method: 'PATCH',
           headers: {
             'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
@@ -627,6 +626,22 @@ class DataStore {
   }
 
   /**
+   * GIẢI MÃ NỘI DUNG TỪ GITHUB CONTENTS API AN TOÀN UTF-8
+   * Không phụ thuộc vào header Accept: raw (tránh bị trình duyệt chặn CORS)
+   */
+  decodeGitHubContent(fileData) {
+    if (!fileData || !fileData.content) return null;
+    try {
+      const cleanB64 = fileData.content.replace(/\s/g, '');
+      const decodedStr = new TextDecoder('utf-8').decode(Uint8Array.from(atob(cleanB64), c => c.charCodeAt(0)));
+      return JSON.parse(decodedStr);
+    } catch (e) {
+      console.warn('[DecodeGitHubContent] Lỗi giải mã Base64 UTF-8:', e);
+      return null;
+    }
+  }
+
+  /**
    * TỰ ĐỘNG ĐỒNG BỘ CẤU HÌNH TÀI KHOẢN NHẬN TIỀN TỪ MÁY CHỦ TRUNG TÂM
    * Đảm bảo mọi máy tính / điện thoại của khách hàng đều nhận tiền vào đúng 1 STK của Admin
    */
@@ -639,13 +654,13 @@ class DataStore {
       try {
         const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=main&t=${Date.now()}`, {
           headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3.raw'
+            'Authorization': `token ${token}`
           },
           cache: 'no-store'
         });
         if (res.ok) {
-          const remoteBankCfg = await res.json();
+          const fileData = await res.json();
+          const remoteBankCfg = this.decodeGitHubContent(fileData);
           if (remoteBankCfg && remoteBankCfg.accountNo) {
             this.save('bank_config', remoteBankCfg);
             if (window.adminPanel && window.adminPanel.currentTab === 'settings') {
@@ -694,10 +709,9 @@ class DataStore {
       const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
       let sha = null;
       try {
-        const getRes = await fetch(apiUrl, {
+        const getRes = await fetch(apiUrl + `?ref=main&t=${Date.now()}`, {
           headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json'
+            'Authorization': `token ${token}`
           }
         });
         if (getRes.ok) {
@@ -725,7 +739,6 @@ class DataStore {
         method: 'PUT',
         headers: {
           'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(putBody)
@@ -750,7 +763,35 @@ class DataStore {
   async fetchRemoteProducts() {
     const { owner, repo, path, token } = this.GITHUB_CONFIG;
 
-    // 1. Ưu tiên cao nhất: raw.githubusercontent.com (0 giây delay, CORS mở toàn cầu, không lỗi preflight)
+    // 1. Ưu tiên cao nhất: GitHub Contents API với Token (0 giây delay, CORS chuẩn, real-time từ Git HEAD)
+    if (token) {
+      try {
+        const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=main&t=${Date.now()}`, {
+          headers: {
+            'Authorization': `token ${token}`
+          },
+          cache: 'no-store'
+        });
+        if (res.ok) {
+          const fileData = await res.json();
+          const remoteProducts = this.decodeGitHubContent(fileData);
+          if (Array.isArray(remoteProducts) && remoteProducts.length > 0) {
+            this.save('products', remoteProducts);
+            if (window.storeApp && typeof window.storeApp.renderProducts === 'function') {
+              window.storeApp.renderProducts();
+            }
+            if (window.adminPanel && document.getElementById('adminView') && !document.getElementById('adminView').classList.contains('hidden')) {
+              window.adminPanel.render();
+            }
+            return remoteProducts;
+          }
+        }
+      } catch (e) {
+        console.warn('[Fetch Products] API Contents fallback:', e.message);
+      }
+    }
+
+    // 2. Dự phòng: raw.githubusercontent.com
     try {
       const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}?t=${Date.now()}`;
       const res = await fetch(rawUrl, { cache: 'no-store' });
@@ -769,39 +810,6 @@ class DataStore {
       }
     } catch (err) {
       console.warn('[Fetch Products] Raw GitHub fallback:', err.message);
-    }
-
-    // 2. Dự phòng: GitHub Contents API với Accept tiêu chuẩn vnd.github.v3+json
-    if (token) {
-      try {
-        const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=main&t=${Date.now()}`, {
-          headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json'
-          },
-          cache: 'no-store'
-        });
-        if (res.ok) {
-          const fileData = await res.json();
-          if (fileData && fileData.content) {
-            const cleanB64 = fileData.content.replace(/\s/g, '');
-            const decodedStr = new TextDecoder('utf-8').decode(Uint8Array.from(atob(cleanB64), c => c.charCodeAt(0)));
-            const remoteProducts = JSON.parse(decodedStr);
-            if (Array.isArray(remoteProducts) && remoteProducts.length > 0) {
-              this.save('products', remoteProducts);
-              if (window.storeApp && typeof window.storeApp.renderProducts === 'function') {
-                window.storeApp.renderProducts();
-              }
-              if (window.adminPanel && document.getElementById('adminView') && !document.getElementById('adminView').classList.contains('hidden')) {
-                window.adminPanel.render();
-              }
-              return remoteProducts;
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('[Fetch Products] API fallback:', e.message);
-      }
     }
 
     // 3. Dự phòng cuối: file tĩnh local data/products.json
@@ -834,10 +842,9 @@ class DataStore {
       // 1. Lấy SHA của file hiện tại trên GitHub
       let sha = null;
       try {
-        const getRes = await fetch(apiUrl, {
+        const getRes = await fetch(apiUrl + `?ref=main&t=${Date.now()}`, {
           headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json'
+            'Authorization': `token ${token}`
           }
         });
         if (getRes.ok) {
@@ -867,7 +874,6 @@ class DataStore {
         method: 'PUT',
         headers: {
           'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(putBody)
@@ -1211,15 +1217,28 @@ class DataStore {
     try {
       const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues?state=all&per_page=100&t=${Date.now()}`, {
         headers: {
-          'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json'
+          'Authorization': `token ${token}`
         }
       });
 
       if (res.ok) {
         const issues = await res.json();
-        const localAccounts = this.getAccounts() || [];
-        let updated = false;
+        const currentAccounts = this.getAccounts() || [];
+        const adminAccount = currentAccounts.find(a => a.id === 'acc-admin-01' || a.username === 'sonbigcar') || {
+          id: 'acc-admin-01',
+          email: 'admin@doanson.com',
+          username: 'sonbigcar',
+          password: 'Son190799',
+          full_name: 'Đoàn Thanh Sơn (Admin)',
+          phone: '0908123456',
+          company: 'DoanSon BIM Studio',
+          role: 'admin',
+          status: 'active',
+          created_at: '2026-01-01T00:00:00Z',
+          orders_count: 0
+        };
+
+        const remoteAccountsMap = new Map();
 
         for (const issue of issues) {
           if (issue.title && issue.title.startsWith('[ACCOUNT]') && issue.body) {
@@ -1238,25 +1257,25 @@ class DataStore {
                 if (this.batchSync && this.batchSync.isAccountDeleted(accData.id, issue.number)) {
                   continue;
                 }
-                const existingIdx = localAccounts.findIndex(a => a.id === accData.id || (a.email && a.email.toLowerCase() === (accData.email || '').toLowerCase()));
-                if (existingIdx >= 0) {
-                  localAccounts[existingIdx] = { ...localAccounts[existingIdx], ...accData };
+                if (accData.id === 'acc-admin-01' || (accData.username && accData.username.toLowerCase() === 'sonbigcar')) {
+                  Object.assign(adminAccount, accData);
                 } else {
-                  localAccounts.push(accData);
+                  const key = accData.id || accData.email;
+                  remoteAccountsMap.set(key, accData);
                 }
-                updated = true;
               } catch (e) {}
             }
           }
         }
 
-        if (updated) {
-          this.save('accounts', localAccounts);
-          if (window.adminPanel && window.adminPanel.currentTab === 'accounts') {
-            window.adminPanel.render();
-          }
+        // BƯỚC QUAN TRỌNG: Máy B CHỈ GIỮ Admin và các tài khoản đang ACTIVE trên Server
+        // Bất kỳ tài khoản nào đã bị xóa ở Máy A sẽ tự động biến mất trên Máy B
+        const consolidatedAccounts = [adminAccount, ...Array.from(remoteAccountsMap.values())];
+        this.save('accounts', consolidatedAccounts);
+        if (window.adminPanel && window.adminPanel.currentTab === 'accounts') {
+          window.adminPanel.render();
         }
-        return localAccounts;
+        return consolidatedAccounts;
       }
     } catch (err) {
       console.warn('[Sync Accounts] Lỗi tải tài khoản từ GitHub:', err.message);
@@ -1291,7 +1310,6 @@ class DataStore {
           method: 'PATCH',
           headers: {
             'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
@@ -1306,7 +1324,6 @@ class DataStore {
           method: 'POST',
           headers: {
             'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ title, body })
@@ -1337,7 +1354,6 @@ class DataStore {
         method: 'PATCH',
         headers: {
           'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -1408,7 +1424,6 @@ class DataStore {
         method: 'POST',
         headers: {
           'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ title, body })
@@ -1486,7 +1501,6 @@ class DataStore {
             method: 'PATCH',
             headers: {
               'Authorization': `token ${token}`,
-              'Accept': 'application/vnd.github.v3+json',
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -1502,7 +1516,6 @@ class DataStore {
             method: 'POST',
             headers: {
               'Authorization': `token ${token}`,
-              'Accept': 'application/vnd.github.v3+json',
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -1546,7 +1559,6 @@ class DataStore {
         method: 'PATCH',
         headers: {
           'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -1563,6 +1575,7 @@ class DataStore {
 
   /**
    * TẢI TOÀN BỘ ĐƠN HÀNG TỪ MÁY CHỦ GITHUB VỀ (CHO CẢ MÁY ADMIN VÀ KHÁCH)
+   * Đảm bảo đồng bộ chuẩn xác giữa Máy A và Máy B, loại bỏ đơn đã xóa
    */
   async fetchRemoteOrders() {
     if (this.batchSync && this.batchSync.hasPendingSync()) {
@@ -1574,16 +1587,19 @@ class DataStore {
     try {
       const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues?state=all&per_page=100&t=${Date.now()}`, {
         headers: {
-          'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json'
+          'Authorization': `token ${token}`
         }
       });
 
       if (res.ok) {
         const issues = await res.json();
-        const remoteOrders = [];
+        const remoteOrdersMap = new Map();
 
         for (const issue of issues) {
+          // Bỏ qua các issue đã bị xóa hoặc không phải đơn hàng
+          if (issue.title && (issue.title.includes('[ORDER DELETED]') || issue.title.includes('[DELETED]'))) {
+            continue;
+          }
           if (issue.title && issue.title.startsWith('[ORDER #') && issue.body) {
             const match = issue.body.match(/<!-- ORDER_DATA_JSON_START -->(.*?)<!-- ORDER_DATA_JSON_END -->/s);
             if (match) {
@@ -1593,43 +1609,36 @@ class DataStore {
                 if (issue.state === 'closed' && orderData.status !== 'cancelled') {
                   orderData.status = 'paid';
                 }
-                remoteOrders.push(orderData);
+                const oKey = orderData.order_code || ('issue-' + issue.number);
+                remoteOrdersMap.set(oKey, orderData);
               } catch (e) {}
             }
           }
         }
 
-        if (remoteOrders.length > 0) {
-          let localOrders = this.get('orders') || [];
-          remoteOrders.forEach(remOrder => {
-            const idx = localOrders.findIndex(loc => loc.order_code === remOrder.order_code);
-            if (idx >= 0) {
-              localOrders[idx] = { ...localOrders[idx], ...remOrder };
-            } else {
-              localOrders.unshift(remOrder);
-            }
-          });
-          // Sắp xếp đơn mới nhất lên đầu
-          localOrders.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-          this.save('orders', localOrders);
+        // ĐỒNG BỘ TOÀN DIỆN MÁY B VỚI MÁY A:
+        // Lấy danh sách active orders từ server (loại bỏ sạch các đơn đã xóa ở máy A)
+        const activeOrders = Array.from(remoteOrdersMap.values());
+        activeOrders.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
-          // Tự động đồng bộ quyền sở hữu Thư viện và Bản quyền từ đơn hàng cho mọi máy tính
-          this.reconcilePurchasesAndLicensesFromOrders();
+        this.save('orders', activeOrders);
 
-          if (window.storeApp) {
-            if (document.getElementById('libraryView') && !document.getElementById('libraryView').classList.contains('hidden')) {
-              window.storeApp.renderUserLibrary();
-            }
-            if (document.getElementById('licenseView') && !document.getElementById('licenseView').classList.contains('hidden')) {
-              window.storeApp.renderUserLicenses();
-            }
+        // Tự động đồng bộ quyền sở hữu Thư viện và Bản quyền từ đơn hàng cho mọi máy tính
+        this.reconcilePurchasesAndLicensesFromOrders();
+
+        if (window.storeApp) {
+          if (document.getElementById('libraryView') && !document.getElementById('libraryView').classList.contains('hidden')) {
+            window.storeApp.renderUserLibrary();
           }
-          if (window.adminPanel && window.adminPanel.currentTab === 'orders') {
-            window.adminPanel.render();
+          if (document.getElementById('licenseView') && !document.getElementById('licenseView').classList.contains('hidden')) {
+            window.storeApp.renderUserLicenses();
           }
-
-          return localOrders;
         }
+        if (window.adminPanel && window.adminPanel.currentTab === 'orders') {
+          window.adminPanel.render();
+        }
+
+        return activeOrders;
       }
     } catch (err) {
       console.warn('[Fetch Remote Orders] Lỗi tải đơn hàng:', err.message);
@@ -1647,8 +1656,7 @@ class DataStore {
     try {
       const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues?state=all&per_page=100&t=${Date.now()}`, {
         headers: {
-          'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json'
+          'Authorization': `token ${token}`
         }
       });
 
@@ -2376,13 +2384,13 @@ class DataStore {
       try {
         const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=main&t=${Date.now()}`, {
           headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3.raw'
+            'Authorization': `token ${token}`
           },
           cache: 'no-store'
         });
         if (res.ok) {
-          const remotePillars = await res.json();
+          const fileData = await res.json();
+          const remotePillars = this.decodeGitHubContent(fileData);
           if (remotePillars && remotePillars.tools) {
             this.save('pillars_config', remotePillars);
             if (window.storeApp && typeof window.storeApp.renderPillars === 'function') {
@@ -2427,10 +2435,9 @@ class DataStore {
       const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
       let sha = null;
       try {
-        const getRes = await fetch(apiUrl, {
+        const getRes = await fetch(apiUrl + `?ref=main&t=${Date.now()}`, {
           headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json'
+            'Authorization': `token ${token}`
           }
         });
         if (getRes.ok) {
@@ -2458,7 +2465,6 @@ class DataStore {
         method: 'PUT',
         headers: {
           'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(putBody)
@@ -2594,8 +2600,7 @@ class DataStore {
     try {
       const getRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=main&t=${Date.now()}`, {
         headers: {
-          'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json'
+          'Authorization': `token ${token}`
         },
         cache: 'no-store'
       });
@@ -2620,7 +2625,6 @@ class DataStore {
       method: 'PUT',
       headers: {
         'Authorization': `token ${token}`,
-        'Accept': 'application/vnd.github.v3+json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(putBody)
@@ -2638,8 +2642,7 @@ class DataStore {
         try {
           const reGetRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=main&_bust=${Date.now()}`, {
             headers: {
-              'Authorization': `token ${token}`,
-              'Accept': 'application/vnd.github.v3+json'
+              'Authorization': `token ${token}`
             },
             cache: 'no-store'
           });
@@ -2652,7 +2655,6 @@ class DataStore {
                 method: 'PUT',
                 headers: {
                   'Authorization': `token ${token}`,
-                  'Accept': 'application/vnd.github.v3+json',
                   'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(putBody)
@@ -2678,7 +2680,6 @@ class DataStore {
             method: 'PUT',
             headers: {
               'Authorization': `token ${token}`,
-              'Accept': 'application/vnd.github.v3+json',
               'Content-Type': 'application/json'
             },
             body: JSON.stringify(putBody)
@@ -2805,7 +2806,6 @@ class DataStore {
           method: 'PUT',
           headers: {
             'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
@@ -3012,18 +3012,13 @@ class DataStore {
       try {
         const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${pathInRepo}?ref=main&t=${Date.now()}`, {
           headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json'
+            'Authorization': `token ${token}`
           },
           cache: 'no-store'
         });
         if (res.ok) {
           const fileData = await res.json();
-          if (fileData && fileData.content) {
-            const cleanB64 = fileData.content.replace(/\s/g, '');
-            const decodedStr = new TextDecoder('utf-8').decode(Uint8Array.from(atob(cleanB64), c => c.charCodeAt(0)));
-            vault = JSON.parse(decodedStr);
-          }
+          vault = this.decodeGitHubContent(fileData);
         }
       } catch (e) {
         console.warn('Lỗi fetch GitHub Contents licenses_vault:', e.message);
@@ -3054,8 +3049,26 @@ class DataStore {
     localStorage.setItem('revit_licenses_vault', JSON.stringify(vault));
 
     // 3. Tiến hành chuẩn hóa và đồng bộ các license & thiết bị vào DataStore
-    const storedLicenses = this.get('licenses') || [];
+    let storedLicenses = this.get('licenses') || [];
     const accounts = this.getAccounts() || [];
+
+    // TẬP HỢP CÁC KEY HỢP LỆ ĐANG CÓ TRÊN SERVER (VAULT)
+    const validVaultKeys = new Set(
+      Object.keys(vault)
+        .filter(k => {
+          const v = vault[k];
+          return v && typeof v === 'object' && v.status !== 'deleted';
+        })
+        .map(k => k.trim().toUpperCase())
+    );
+
+    // BƯỚC QUAN TRỌNG: Lọc bỏ các license cũ trong local storage nếu trên Server đã bị xóa (đáp ứng đúng thao tác ở Máy A sang Máy B)
+    storedLicenses = storedLicenses.filter(lic => {
+      if (!lic || !lic.license_key) return false;
+      const upper = lic.license_key.trim().toUpperCase();
+      if (this.batchSync && this.batchSync.isLicenseDeleted(upper)) return false;
+      return validVaultKeys.has(upper);
+    });
 
     for (const [key, vData] of Object.entries(vault)) {
       if (!vData || typeof vData !== 'object') continue;
@@ -3199,16 +3212,15 @@ class DataStore {
       try {
         const getRes = await fetch(apiUrl + `?ref=main&t=${Date.now()}`, {
           headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json'
+            'Authorization': `token ${token}`
           }
         });
         if (getRes.ok) {
           const fileData = await getRes.json();
           sha = fileData.sha;
-          if (fileData.content) {
-            const raw = decodeURIComponent(escape(atob(fileData.content.replace(/\s/g, ''))));
-            vault = JSON.parse(raw);
+          const decoded = this.decodeGitHubContent(fileData);
+          if (decoded && typeof decoded === 'object') {
+            vault = decoded;
           }
         }
       } catch (e) {
@@ -3221,41 +3233,29 @@ class DataStore {
         delete vault[delKey];
       }
 
-      // 2. Merge licenses hiện tại từ local DataStore (loại bỏ những key đã xóa)
+      // 2. Chỉ cập nhật các license đang có sẵn trong vault trên server với thông tin mới từ local
+      // (Tránh reinject các license cũ đã bị xóa ở máy tính khác)
       const allLicenses = this.getLicenses();
-      allLicenses.forEach(lic => {
-        if (!lic || !lic.license_key) return;
-        const key = lic.license_key.trim().toUpperCase();
-        if (delSet.has(key)) return;
-        const existing = vault[key] || {};
+      for (const key of Object.keys(vault)) {
+        if (delSet.has(key)) continue;
+        const matchedLocal = allLicenses.find(l => l.license_key && l.license_key.trim().toUpperCase() === key);
+        if (matchedLocal) {
+          const existing = vault[key] || {};
+          const licSlots = Number(matchedLocal.max_machines || matchedLocal.max_accounts || existing.max_machines || existing.max_accounts || 3);
+          vault[key] = {
+            ...existing,
+            allowed_modules: matchedLocal.allowed_modules || existing.allowed_modules || ['MEP-ALL'],
+            plan_name: matchedLocal.plan_name || existing.plan_name || 'Gói Bản Quyền DoanSon Hub',
+            expiry_date: matchedLocal.expiry_date || existing.expiry_date,
+            max_accounts: licSlots,
+            max_machines: licSlots,
+            status: matchedLocal.status || existing.status || 'active',
+            updated_at: new Date().toISOString()
+          };
+        }
+      }
 
-        const regAccounts = (lic.registered_accounts !== undefined)
-          ? lic.registered_accounts
-          : (lic.activations || []).map(a => ({
-              username: a.username || lic.user_name || 'user',
-              fullName: a.machine_name || 'PC-Workstation',
-              machineId: a.machine_id,
-              registeredAt: a.registered_at || new Date().toISOString(),
-              lastActive: a.last_checked_at || new Date().toISOString(),
-              status: a.status || 'Active',
-              app: a.app || 'Revit Tools'
-            }));
-
-        const licSlots = Number(lic.max_machines || lic.max_accounts || existing.max_machines || existing.max_accounts || 3);
-        vault[key] = {
-          ...existing,
-          allowed_modules: lic.allowed_modules || existing.allowed_modules || ['MEP-ALL'],
-          plan_name: lic.plan_name || existing.plan_name || 'Gói Bản Quyền DoanSon Hub',
-          expiry_date: lic.expiry_date || existing.expiry_date,
-          max_accounts: licSlots,
-          max_machines: licSlots,
-          status: lic.status || existing.status || 'active',
-          registered_accounts: regAccounts,
-          updated_at: new Date().toISOString()
-        };
-      });
-
-      // 3. Áp dụng danh sách cập nhật trực tiếp
+      // 3. Áp dụng danh sách cập nhật trực tiếp (cho phép thêm license mới hoặc cập nhật thiết bị)
       (updatedLicensesList || []).forEach(updatedLicense => {
         if (!updatedLicense || !updatedLicense.license_key) return;
         const key = updatedLicense.license_key.trim().toUpperCase();
@@ -3309,7 +3309,6 @@ class DataStore {
         method: 'PUT',
         headers: {
           'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(putBody)
@@ -3321,7 +3320,7 @@ class DataStore {
         const rootApiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${rootPath}`;
         let rootSha = null;
         const rootGet = await fetch(rootApiUrl + `?ref=main&t=${Date.now()}`, {
-          headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+          headers: { 'Authorization': `token ${token}` }
         });
         if (rootGet.ok) {
           const rd = await rootGet.json();
@@ -3330,7 +3329,6 @@ class DataStore {
             method: 'PUT',
             headers: {
               'Authorization': `token ${token}`,
-              'Accept': 'application/vnd.github.v3+json',
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
