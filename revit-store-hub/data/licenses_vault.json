@@ -38,60 +38,17 @@
         "lastActive": "2026-10-29T09:51:27.413Z",
         "status": "Active",
         "machine_name": "KYODO-Huy"
-      }
-    ],
-    "updated_at": "2026-11-01T13:47:01.866Z"
-  },
-  "REVIT-TEST-PKG-MVMIKNZS": {
-    "allowed_modules": [
-      "MEP-DUCT",
-      "MEP-PIPE",
-      "MEP-SHEET",
-      "MEP-FIRE",
-      "MEP-ELEC",
-      "MEP-AI"
-    ],
-    "plan_name": "Gói Combo (DUCT + PIPE + SHEET + FIRE + ELEC + AI - 50 Máy)",
-    "expiry_date": "2027-10-24T14:48:35.704Z",
-    "max_accounts": 50,
-    "max_machines": 50,
-    "status": "active",
-    "registered_accounts": [
-      {
-        "machineId": "DS-92CB-7F2D",
-        "machine_id": "DS-92CB-7F2D",
-        "hwid": "DS-92CB-7F2D",
-        "machine_name": "ADMINISTRATOR",
-        "name": "ADMINISTRATOR",
-        "username": "ACER",
-        "user": "ACER",
-        "fullName": "ACER",
-        "revit_version": "2025",
-        "os_info": "Windows",
-        "app": "Revit Add-in",
-        "registeredAt": "2026-10-29T15:49:11.431Z",
-        "lastActive": "2026-10-29T15:49:11.431Z",
-        "last_checked_at": "2026-10-29T15:49:11.431Z",
-        "status": "Active"
       },
       {
-        "machineId": "DS-58F0-DE7A",
-        "machine_id": "DS-58F0-DE7A",
-        "hwid": "DS-58F0-DE7A",
-        "machine_name": "TK-09",
-        "name": "TK-09",
-        "username": "admin",
-        "user": "admin",
-        "fullName": "admin",
-        "revit_version": "2025",
-        "os_info": "Windows",
-        "app": "Revit Add-in",
-        "registeredAt": "2026-11-02T15:18:06.578Z",
-        "lastActive": "2026-11-02T15:18:06.578Z",
-        "last_checked_at": "2026-11-02T15:18:06.578Z",
+        "username": "phongpham",
+        "fullName": "Phạm Thanh Phong",
+        "machineId": "HWID-1793672279350",
+        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+        "registeredAt": "2026-11-03T02:17:59.350Z",
+        "lastActive": "2026-11-03T02:17:59.351Z",
         "status": "Active"
       }
     ],
-    "updated_at": "2026-11-02T15:18:06.578Z"
+    "updated_at": "2026-11-03T02:17:59.351Z"
   }
 }
