@@ -49,19 +49,23 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-11-03T02:37:43.869Z"
+    "updated_at": "2026-11-03T02:38:57.326Z"
   },
   "DS-DUCT-PIPE-CPUV-KBTA": {
     "allowed_modules": [
       "MEP-DUCT",
-      "MEP-PIPE"
+      "MEP-PIPE",
+      "MEP-SHEET",
+      "MEP-FIRE",
+      "MEP-ELEC",
+      "MEP-AI"
     ],
-    "plan_name": "Combo Cơ Điện Lạnh (Duct + Pipe)",
+    "plan_name": "Gói Combo (DUCT + PIPE + SHEET + FIRE + ELEC + AI - 2 Máy)",
     "expiry_date": "2026-12-03T02:37:29.555Z",
     "max_accounts": 2,
     "max_machines": 2,
     "status": "active",
     "registered_accounts": [],
-    "updated_at": "2026-11-03T02:37:43.869Z"
+    "updated_at": "2026-11-03T02:38:57.326Z"
   }
 }
