@@ -1,5 +1,41 @@
 [
   {
+    "id": "prod-1a19f443bb6",
+    "name": "Combo Cơ Điện Lạnh (Duct + Pipe + Elec)",
+    "slug": "combo-c---i-n-l-nh--duct---pipe---elec-",
+    "product_type": "tool",
+    "package_id": "pkg_duct_pipe",
+    "package_name": "Combo Cơ Điện Lạnh (Duct + Pipe)",
+    "allowed_modules": [
+      "MEP-DUCT",
+      "MEP-PIPE"
+    ],
+    "category": "Revit Add-in Tự Động Hóa",
+    "price": 50000,
+    "sale_price": 50000,
+    "billing_cycle": "monthly",
+    "thumbnail_url": "assets/uploads/img_mw02ttqo_DsTools.png",
+    "video_url": "",
+    "description": "",
+    "short_description": "",
+    "revit_versions": [
+      "2022",
+      "2023",
+      "2024",
+      "2025"
+    ],
+    "is_active": true,
+    "metadata": {
+      "security_mode": "cloudflare_r2",
+      "file_url": "",
+      "file_name": "Combo_Cơ_Điện_Lạnh_(Duct_+_Pipe_+_Elec)_Setup.exe",
+      "file_size": "15.0 MB",
+      "version": "v1.0.0",
+      "target_revit": "Revit 2022-2023-2024-2025",
+      "install_guide": ""
+    }
+  },
+  {
     "id": "prod-1a16eb2a79f",
     "name": "Phần mềm quản lý công việc",
     "slug": "ph-n-m-m-qu-n-l--c-ng-vi-c",
