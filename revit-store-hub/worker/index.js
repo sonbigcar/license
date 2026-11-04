@@ -487,6 +487,24 @@ export default {
             const stored = await env.LICENSES_KV.get('lic:' + license_key);
             if (stored) licObj = JSON.parse(stored);
             if (!Array.isArray(licObj.registered_accounts)) licObj.registered_accounts = [];
+
+            // KIỂM TRA CHẶN MÁY TÍNH A (BLOCK MACHINE CHECK)
+            const isBlocked = (Array.isArray(licObj.blocked_machines) && licObj.blocked_machines.includes(machine_id)) ||
+              (Array.isArray(licObj.registered_accounts) && licObj.registered_accounts.some(a => 
+                ((a.machineId || a.machine_id) === machine_id) && (a.status === 'blocked' || a.status === 'Blocked' || a.is_locked === true)
+              ));
+
+            if (isBlocked) {
+              return new Response(JSON.stringify({
+                valid: false,
+                Success: false,
+                code: 'MACHINE_BLOCKED',
+                message: `⛔ MÁY TÍNH NÀY (HWID: ${machine_id}) ĐÃ BỊ QUẢN TRỊ VIÊN CHẶN TRUY CẬP VÀO KEY NÀY!\n\nThiết bị không được phép sử dụng công cụ. Vui lòng liên hệ Admin DoanSon để được hỗ trợ.`
+              }), {
+                status: 200,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+              });
+            }
             max_machines = licObj.max_machines || licObj.max_accounts || 3;
             
             const existingIdx = licObj.registered_accounts.findIndex(a => (a.machineId || a.machine_id) === machine_id);
