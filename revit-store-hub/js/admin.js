@@ -767,6 +767,9 @@ class AdminPanel {
                       <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.openLicenseDevicesModal('${l.id}')" title="Xem danh sách HWID máy trạm">
                         🖥️ Máy Trạm
                       </button>
+                      <button class="btn btn-secondary btn-sm" style="color: #DC2626; font-weight: 700; border-color: rgba(220, 38, 38, 0.4); background: #FEF2F2;" onclick="window.adminPanel.openLicenseDevicesModal('${l.id}')" title="Chan may tinh truy cap key nay">
+                        &#128683; Ch&#7863;n M&aacute;y
+                      </button>
                       <button class="btn btn-secondary btn-sm" onclick="window.adminPanel.renewLicensePrompt('${l.id}')" title="Gia hạn thời gian sử dụng">
                         ⚡ Gia Hạn
                       </button>
@@ -1030,6 +1033,21 @@ class AdminPanel {
       this.openLicenseDevicesModal(licenseId);
       this.render();
       alert(`Đã thêm mã HWID "${hwid.trim()}" vào danh sách CHẶN thành công!`);
+    }
+  }
+
+    async adminBlockManualInput(licenseId) {
+    const input = document.getElementById(manualBlockHwidInput_);
+    const hwid = input ? input.value.trim() : '';
+    if (!hwid) {
+      alert('Vui lÃ²ng nháº­p mÃ£ HWID cá»§a mÃ¡y tÃ­nh cáº§n cháº·n!');
+      return;
+    }
+    if (confirm(Báº¡n cÃ³ cháº¯c muá»‘n CHáº¶N mÃ¡y tÃ­nh cÃ³ HWID:\n""\n\nMÃ¡y tÃ­nh nÃ y sáº½ bá»‹ tá»« chá»‘i truy cáº­p vÃ  bá»‹ há»§y kÃ­ch hoáº¡t ngay láº­p tá»©c!)) {
+      await window.licenseManager.blockMachine(licenseId, hwid, 'Admin cháº·n thá»§ cÃ´ng theo HWID');
+      this.openLicenseDevicesModal(licenseId);
+      this.render();
+      alert(ÄÃ£ thÃªm mÃ£ HWID "" vÃ o danh sÃ¡ch CHáº¶N thÃ nh cÃ´ng!);
     }
   }
 
@@ -2250,6 +2268,9 @@ class AdminPanel {
               </button>
               <button type="button" class="btn btn-secondary btn-sm" onclick="window.adminPanel.openLicenseDevicesModal('${lic.id}')" title="Xem danh sách HWID máy trạm">
                 🖥️ Xem Máy
+              </button>
+                      <button class="btn btn-secondary btn-sm" style="color: #DC2626; font-weight: 700; border-color: rgba(220, 38, 38, 0.4); background: #FEF2F2;" onclick="window.adminPanel.openLicenseDevicesModal('${lic.id}')" title="Chan may tinh truy cap key nay">
+                        &#128683; Ch&#7863;n M&aacute;y
               </button>
               <button type="button" class="btn btn-secondary btn-sm" style="color: var(--danger); font-weight: 700; border-color: rgba(239, 68, 68, 0.4); background: #FEF2F2;" onclick="window.adminPanel.deleteLicensePrompt('${lic.id}')" title="Xóa vĩnh viễn giấy phép này">
                 🗑️ Xóa
