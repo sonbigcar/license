@@ -4,9 +4,9 @@
       "MEP-ALL",
       "PHẦN MỀM QUẢN LÝ CÔNG VIỆC"
     ],
-    "plan_name": "Gói Full VIP & Quản Lý Công Việc (5 Máy/User)",
+    "plan_name": "Gói Full VIP & Quản Lý Công Việc (50 Máy)",
     "expiry_date": "2027-10-24T14:48:45.834Z",
-    "updated_at": "2026-10-29T03:16:53.494Z",
+    "updated_at": "2026-11-04T04:56:52.248Z",
     "registered_accounts": [
       {
         "username": "doanson99",
@@ -27,8 +27,8 @@
         "registeredAt": "2026-10-25T15:55:44.297Z"
       }
     ],
-    "max_accounts": 3,
-    "max_machines": 3,
+    "max_accounts": 50,
+    "max_machines": 50,
     "status": "active"
   },
   "DS-TASK-MYG3-KBNK": {
@@ -99,6 +99,6 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-11-04T04:16:07.339Z"
+    "updated_at": "2026-11-04T04:56:52.248Z"
   }
 }
