@@ -6,7 +6,7 @@
     ],
     "plan_name": "Gói Full VIP & Quản Lý Công Việc (50 Máy)",
     "expiry_date": "2027-10-24T14:48:45.834Z",
-    "updated_at": "2026-11-04T04:56:52.248Z",
+    "updated_at": "2026-11-04T08:57:07.642Z",
     "registered_accounts": [
       {
         "username": "doanson99",
@@ -99,6 +99,18 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-11-04T04:56:52.248Z"
+    "updated_at": "2026-11-04T08:57:07.642Z"
+  },
+  "DS-DUCT-PIPE-CPUV-KBTA": {
+    "allowed_modules": [
+      "MEP-ALL"
+    ],
+    "plan_name": "Gói Team (50 Máy)",
+    "expiry_date": "2027-12-03T02:37:29.555Z",
+    "max_accounts": 50,
+    "max_machines": 50,
+    "status": "active",
+    "registered_accounts": [],
+    "updated_at": "2026-11-04T08:57:07.642Z"
   }
 }
