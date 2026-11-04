@@ -1,4 +1,36 @@
 {
+  "REVIT-TEST-PKG-MVMIKVSV": {
+    "allowed_modules": [
+      "MEP-ALL",
+      "PHẦN MỀM QUẢN LÝ CÔNG VIỆC"
+    ],
+    "plan_name": "Gói Full VIP & Quản Lý Công Việc (5 Máy/User)",
+    "expiry_date": "2027-10-24T14:48:45.834Z",
+    "updated_at": "2026-10-29T03:16:53.494Z",
+    "registered_accounts": [
+      {
+        "username": "doanson99",
+        "fullName": "Đoàn sơn",
+        "machineId": "HWID-1792920519377",
+        "registeredAt": "2026-10-25T09:28:39.377Z"
+      },
+      {
+        "username": "bb",
+        "fullName": "aaaa",
+        "machineId": "HWID-1792920818879",
+        "registeredAt": "2026-10-25T09:33:38.879Z"
+      },
+      {
+        "username": "doanson",
+        "fullName": "son",
+        "machineId": "HWID-1792943744297",
+        "registeredAt": "2026-10-25T15:55:44.297Z"
+      }
+    ],
+    "max_accounts": 3,
+    "max_machines": 3,
+    "status": "active"
+  },
   "DS-TASK-MYG3-KBNK": {
     "allowed_modules": [
       "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
@@ -47,8 +79,17 @@
         "registeredAt": "2026-11-03T02:18:18.337Z",
         "lastActive": "2026-11-03T02:18:18.337Z",
         "status": "Active"
+      },
+      {
+        "username": "sondoan99",
+        "fullName": "DS-TASK-MYG3-KBNK",
+        "machineId": "HWID-1793765722211",
+        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+        "registeredAt": "2026-11-04T04:15:22.211Z",
+        "lastActive": "2026-11-04T04:15:22.211Z",
+        "status": "Active"
       }
     ],
-    "updated_at": "2026-11-03T02:40:50.555Z"
+    "updated_at": "2026-11-04T04:15:22.211Z"
   }
 }
