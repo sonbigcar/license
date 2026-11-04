@@ -178,8 +178,9 @@ class LicenseManager {
 
     lic.expiry_date = currentExpiry.toISOString();
     lic.status = 'active'; // Tự động active lại nếu trước đó bị hết hạn
-    window.dataStore.updateLicense(lic);
 
+
+    window.dataStore.updateLicense(lic);
     await this.syncLicenseToRemote(lic);
     return lic;
   }
@@ -206,9 +207,10 @@ class LicenseManager {
       lic.plan_name = `Gói Team (${slotsNum} Máy)`;
     }
 
-    window.dataStore.updateLicense(lic);
+
 
     // Đồng bộ tức thì sang tất cả hệ thống (Server, Worker, GitHub)
+    window.dataStore.updateLicense(lic);
     await this.syncLicenseToRemote(lic);
     return lic;
   }
@@ -234,6 +236,7 @@ class LicenseManager {
       lic.plan_name = `Gói Combo (${names.join(' + ')} - ${slots} Máy)`;
     }
 
+
     window.dataStore.updateLicense(lic);
     await this.syncLicenseToRemote(lic);
     return lic;
@@ -248,8 +251,9 @@ class LicenseManager {
     if (!lic) return false;
 
     lic.status = lic.status === 'active' ? 'suspended' : 'active';
-    window.dataStore.updateLicense(lic);
 
+
+    window.dataStore.updateLicense(lic);
     await this.syncLicenseToRemote(lic);
     return lic;
   }
@@ -292,8 +296,9 @@ class LicenseManager {
 
     lic.activations = [];
     lic.registered_accounts = [];
-    window.dataStore.updateLicense(lic);
 
+
+    window.dataStore.updateLicense(lic);
     await this.syncLicenseToRemote(lic);
     return true;
   }
@@ -308,9 +313,121 @@ class LicenseManager {
 
     lic.activations = (lic.activations || []).filter(a => (a.machine_id || a.machineId) !== machineId);
     lic.registered_accounts = (lic.registered_accounts || []).filter(a => (a.machineId || a.machine_id) !== machineId);
-    window.dataStore.updateLicense(lic);
+    if (Array.isArray(lic.blocked_machines)) {
+      lic.blocked_machines = lic.blocked_machines.filter(id => id !== machineId);
+    }
 
+
+    window.dataStore.updateLicense(lic);
     await this.syncLicenseToRemote(lic);
+    return true;
+  }
+
+  /**
+   * CHẶN VĨNH VIỄN MÁY TÍNH A KHỎI LICENSE KEY (BLOCK MACHINE / BLACKLIST)
+   * Đặt trạng thái máy thành 'blocked' và đưa HWID vào danh sách đen blocked_machines
+   */
+  async blockMachine(licenseId, machineId, reason = 'Quản trị viên chặn truy cập') {
+    const licenses = window.dataStore.getLicenses();
+    const lic = licenses.find(l => l.id === licenseId || l.license_key === licenseId);
+    if (!lic || !machineId) return false;
+
+    const normId = String(machineId).trim();
+    if (!Array.isArray(lic.blocked_machines)) {
+      lic.blocked_machines = [];
+    }
+    if (!lic.blocked_machines.includes(normId)) {
+      lic.blocked_machines.push(normId);
+    }
+
+    const nowIso = new Date().toISOString();
+
+    // Cập nhật trạng thái trong activations
+    if (Array.isArray(lic.activations)) {
+      lic.activations.forEach(act => {
+        if ((act.machine_id || act.machineId) === normId) {
+          act.status = 'blocked';
+          act.is_locked = true;
+          act.blocked_at = nowIso;
+          act.block_reason = reason;
+        }
+      });
+    }
+
+    // Cập nhật trạng thái trong registered_accounts
+    if (!Array.isArray(lic.registered_accounts)) {
+      lic.registered_accounts = [];
+    }
+    let found = false;
+    lic.registered_accounts.forEach(reg => {
+      if ((reg.machineId || reg.machine_id || reg.hwid) === normId) {
+        reg.status = 'blocked';
+        reg.is_locked = true;
+        reg.blocked_at = nowIso;
+        reg.block_reason = reason;
+        found = true;
+      }
+    });
+
+    if (!found) {
+      lic.registered_accounts.push({
+        machine_id: normId,
+        machineId: normId,
+        hwid: normId,
+        fullName: 'Thiết bị bị chặn',
+        status: 'blocked',
+        is_locked: true,
+        blocked_at: nowIso,
+        block_reason: reason
+      });
+    }
+
+
+    window.dataStore.updateLicense(lic);
+    await this.syncLicenseToRemote(lic);
+    console.log(`[BlockMachine] Đã chặn thành công máy ${normId} khỏi key ${lic.license_key}`);
+    return true;
+  }
+
+  /**
+   * MỞ CHẶN CHO MÁY TÍNH (UNBLOCK MACHINE)
+   */
+  async unblockMachine(licenseId, machineId) {
+    const licenses = window.dataStore.getLicenses();
+    const lic = licenses.find(l => l.id === licenseId || l.license_key === licenseId);
+    if (!lic || !machineId) return false;
+
+    const normId = String(machineId).trim();
+    if (Array.isArray(lic.blocked_machines)) {
+      lic.blocked_machines = lic.blocked_machines.filter(id => id !== normId);
+    }
+
+    if (Array.isArray(lic.activations)) {
+      lic.activations.forEach(act => {
+        if ((act.machine_id || act.machineId) === normId) {
+          act.status = 'Active';
+          act.is_locked = false;
+          delete act.blocked_at;
+          delete act.block_reason;
+        }
+      });
+    }
+
+    if (Array.isArray(lic.registered_accounts)) {
+      lic.registered_accounts.forEach(reg => {
+        if ((reg.machineId || reg.machine_id || reg.hwid) === normId) {
+          reg.status = 'Active';
+          reg.is_locked = false;
+          delete reg.blocked_at;
+          delete reg.block_reason;
+        }
+      });
+    }
+
+
+    window.dataStore.updateLicense(lic);
+    await this.syncLicenseToRemote(lic);
+    console.log('[UnblockMachine] Da mo chan cho may ' + normId);
     return true;
   }
 
@@ -337,8 +454,9 @@ class LicenseManager {
     }
 
     if (updated) {
+  
       window.dataStore.updateLicense(lic);
-      await this.syncLicenseToRemote(lic);
+    await this.syncLicenseToRemote(lic);
       return true;
     }
     return false;
