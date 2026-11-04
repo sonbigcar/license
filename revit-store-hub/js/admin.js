@@ -936,6 +936,9 @@ class AdminPanel {
       <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <h5 style="font-weight: 800; color: var(--text-pure); font-size: 0.95rem;">Danh Sách Máy Trạm (Workstations)</h5>
         <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary btn-sm" style="color: #DC2626; font-weight: 700; border-color: rgba(220,38,38,0.3);" onclick="window.adminPanel.promptBlockManualHwid('${lic.id}')" title="Nhập trực tiếp mã HWID của máy tính cần chặn">
+            🚫 Chặn HWID
+          </button>
           <button class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="window.adminPanel.resetLicenseDevicesPrompt('${lic.id}')">
             🔄 Reset Toàn Bộ Máy
           </button>
@@ -962,6 +965,9 @@ class AdminPanel {
                 <div>
                   <div style="font-weight: 800; color: var(--text-pure); font-size: 1rem; display: flex; align-items: center; gap: 8px;">
                     <span>${mName}</span>
+                    ${(act.status === 'blocked' || (Array.isArray(lic.blocked_machines) && lic.blocked_machines.includes(mId))) ? 
+                      `<span class="badge" style="background:#FEE2E2; color:#DC2626; font-size:0.7rem; font-weight:800; border:1px solid rgba(220,38,38,0.2);">🚫 ĐÃ BỊ CHẶN</span>` : 
+                      `<span class="badge" style="background:#DCFCE7; color:#166534; font-size:0.7rem; font-weight:700;">✅ Hoạt Động</span>`}
                     <button style="border:none; background:none; cursor:pointer; font-size:0.85rem;" title="Đổi tên máy" onclick="window.adminPanel.adminRenameDevice('${lic.id}', '${mId}', '${mName}')">✏️</button>
                   </div>
                   <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--primary); margin-top: 2px;">
@@ -977,8 +983,17 @@ class AdminPanel {
               </div>
 
               <div>
-                <button class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="window.adminPanel.adminDeactivateDevice('${lic.id}', '${mId}')">
-                  🗑️ Gỡ Máy Này
+                ${(act.status === 'blocked' || (Array.isArray(lic.blocked_machines) && lic.blocked_machines.includes(mId))) ? `
+                  <button class="btn btn-sm" style="color: #16A34A; border-color: #86EFAC; background: #F0FDF4; font-weight: 700;" onclick="window.adminPanel.adminUnblockDevice('${lic.id}', '${mId}')" title="Mở chặn để máy tính này có thể truy cập lại key">
+                    🔓 Mở Chặn
+                  </button>
+                ` : `
+                  <button class="btn btn-sm" style="color: #DC2626; border-color: #FCA5A5; background: #FFF1F2; font-weight: 700;" onclick="window.adminPanel.adminBlockDevice('${lic.id}', '${mId}')" title="Chặn vĩnh viễn máy tính này truy cập vào key">
+                    🚫 Chặn Máy
+                  </button>
+                `}
+                <button class="btn btn-secondary btn-sm" style="color: var(--text-muted);" onclick="window.adminPanel.adminDeactivateDevice('${lic.id}', '${mId}')" title="Gỡ máy khỏi danh sách">
+                  🗑️ Gỡ
                 </button>
               </div>
             </div>
@@ -988,6 +1003,47 @@ class AdminPanel {
     `;
 
     modal.classList.add('active');
+  }
+
+  async adminBlockDevice(licenseId, machineId) {
+    if (confirm(`Bạn có chắc muốn CHẶN máy tính (Mã: ${machineId}) truy cập vào Key này?\n\nSau khi chặn, máy tính này sẽ bị ngắt kết nối ngay lập tức và KHÔNG THỂ kích hoạt hay sử dụng bất kỳ công cụ nào từ Key này!`)) {
+      await window.licenseManager.blockMachine(licenseId, machineId);
+      this.openLicenseDevicesModal(licenseId);
+      this.render();
+      alert(`Đã CHẶN máy tính (${machineId}) thành công!`);
+    }
+  }
+
+  async adminUnblockDevice(licenseId, machineId) {
+    if (confirm(`Mở chặn cho máy tính (${machineId}) truy cập lại Key này?`)) {
+      await window.licenseManager.unblockMachine(licenseId, machineId);
+      this.openLicenseDevicesModal(licenseId);
+      this.render();
+      alert(`Đã MỞ CHẶN cho máy tính (${machineId}) thành công!`);
+    }
+  }
+
+  async promptBlockManualHwid(licenseId) {
+    const hwid = prompt('Nhập mã phần cứng máy tính (HWID / Machine ID) muốn CHẶN khỏi Key này:');
+    if (hwid && hwid.trim()) {
+      await window.licenseManager.blockMachine(licenseId, hwid.trim(), 'Admin chặn thủ công');
+      this.openLicenseDevicesModal(licenseId);
+      this.render();
+      alert(`Đã thêm mã HWID "${hwid.trim()}" vào danh sách CHẶN thành công!`);
+    }
+  }
+
+  async adminBlockManualHwid(licenseId) {
+    const input = document.getElementById('manualBlockHwidInput');
+    const hwid = input ? input.value.trim() : '';
+    if (!hwid) {
+      alert('Vui lòng nhập mã HWID của máy tính muốn chặn!');
+      return;
+    }
+    await window.licenseManager.blockMachine(licenseId, hwid, 'Admin chặn thủ công');
+    this.openLicenseDevicesModal(licenseId);
+    this.render();
+    alert(`Đã thêm mã HWID: ${hwid} vào danh sách CHẶN thành công!`);
   }
 
   closeLicenseDevicesModal() {
