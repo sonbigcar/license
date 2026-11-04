@@ -88,8 +88,17 @@
         "registeredAt": "2026-11-04T04:15:22.211Z",
         "lastActive": "2026-11-04T04:15:34.898Z",
         "status": "Active"
+      },
+      {
+        "username": "sondoan",
+        "fullName": "Đoàn Sơn",
+        "machineId": "HWID-1793765767339",
+        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+        "registeredAt": "2026-11-04T04:16:07.339Z",
+        "lastActive": "2026-11-04T04:16:07.339Z",
+        "status": "Active"
       }
     ],
-    "updated_at": "2026-11-04T04:15:22.211Z"
+    "updated_at": "2026-11-04T04:16:07.339Z"
   }
 }
