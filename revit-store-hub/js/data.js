@@ -1270,7 +1270,53 @@ class DataStore {
 
         // BƯỚC QUAN TRỌNG: Máy B CHỈ GIỮ Admin và các tài khoản đang ACTIVE trên Server
         // Bất kỳ tài khoản nào đã bị xóa ở Máy A sẽ tự động biến mất trên Máy B
-        const consolidatedAccounts = [adminAccount, ...Array.from(remoteAccountsMap.values())];
+        // SMART MERGE: Hợp nhất an toàn, không bao giờ xóa mù quáng tài khoản local
+        const mergedAccountsMap = new Map();
+        mergedAccountsMap.set(adminAccount.id, adminAccount);
+
+        // 1. Nạp toàn bộ tài khoản từ remote server
+        remoteAccountsMap.forEach((acc) => {
+          const key = acc.id || acc.email;
+          mergedAccountsMap.set(key, acc);
+        });
+
+        // 2. Bảo toàn tất cả tài khoản local chưa bị xóa (mới đăng ký hoặc remote chưa kịp sync)
+        const currentUser = (window.authManager && typeof window.authManager.getCurrentUser === 'function') ? window.authManager.getCurrentUser() : null;
+
+        currentAccounts.forEach(locAcc => {
+          if (!locAcc) return;
+          const locKey = locAcc.id || locAcc.email;
+          if (locAcc.id === 'acc-admin-01' || (locAcc.username && locAcc.username.toLowerCase() === 'sonbigcar')) return;
+
+          // Nếu tài khoản đã bị chủ động xóa qua tombstone thì bỏ qua
+          if (this.batchSync && this.batchSync.isAccountDeleted(locAcc.id, locAcc.github_issue_number)) {
+            return;
+          }
+
+          if (mergedAccountsMap.has(locKey)) {
+            // Đã có từ remote, gộp thông tin an toàn
+            const remoteAcc = mergedAccountsMap.get(locKey);
+            mergedAccountsMap.set(locKey, { ...locAcc, ...remoteAcc });
+          } else {
+            // Chưa có trên remote: Đây là tài khoản local hợp lệ mới tạo hoặc remote đang delay!
+            // TUYỆT ĐỐI GIỮ LẠI, ngăn chặn mất tài khoản!
+            mergedAccountsMap.set(locKey, locAcc);
+            // Đưa vào hàng đợi sync nếu chưa có trên GitHub
+            if (!locAcc.github_issue_number && this.batchSync) {
+              this.batchSync.queueAccountUpdate(locAcc);
+            }
+          }
+        });
+
+        // 3. Đảm bảo currentUser luôn tồn tại trong danh sách accounts
+        if (currentUser && currentUser.id && currentUser.id !== 'acc-admin-01') {
+          const userKey = currentUser.id || currentUser.email;
+          if (!mergedAccountsMap.has(userKey)) {
+            mergedAccountsMap.set(userKey, currentUser);
+          }
+        }
+
+        const consolidatedAccounts = Array.from(mergedAccountsMap.values());
         this.save('accounts', consolidatedAccounts);
         if (window.adminPanel && window.adminPanel.currentTab === 'accounts') {
           window.adminPanel.render();
@@ -1618,7 +1664,31 @@ class DataStore {
 
         // ĐỒNG BỘ TOÀN DIỆN MÁY B VỚI MÁY A:
         // Lấy danh sách active orders từ server (loại bỏ sạch các đơn đã xóa ở máy A)
-        const activeOrders = Array.from(remoteOrdersMap.values());
+        // SMART MERGE CHO ĐƠN HÀNG: Giữ lại các đơn hàng local pending/mới chưa kịp tạo issue
+        const currentOrders = this.getOrders() || [];
+        const mergedOrdersMap = new Map();
+
+        // 1. Nạp đơn hàng từ remote
+        remoteOrdersMap.forEach((ord, key) => {
+          mergedOrdersMap.set(String(key), ord);
+        });
+
+        // 2. Giữ lại đơn hàng local chưa có trên remote (ví dụ mới tạo đợi thanh toán)
+        currentOrders.forEach(locOrd => {
+          if (!locOrd) return;
+          const locKey = String(locOrd.order_code || locOrd.id || '');
+          if (!locKey) return;
+          if (mergedOrdersMap.has(locKey)) {
+            const remOrd = mergedOrdersMap.get(locKey);
+            mergedOrdersMap.set(locKey, { ...locOrd, ...remOrd });
+          } else {
+            if (locOrd.status !== 'cancelled' && !locOrd.deleted) {
+              mergedOrdersMap.set(locKey, locOrd);
+            }
+          }
+        });
+
+        const activeOrders = Array.from(mergedOrdersMap.values());
         activeOrders.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
         this.save('orders', activeOrders);
