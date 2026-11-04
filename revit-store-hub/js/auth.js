@@ -14,7 +14,18 @@ class AuthManager {
   loadUser() {
     try {
       const user = localStorage.getItem(this.STORAGE_KEY);
-      if (user) return JSON.parse(user);
+      if (user) {
+        const parsed = JSON.parse(user);
+        if (parsed && window.dataStore && typeof window.dataStore.getAccounts === 'function') {
+          const accounts = window.dataStore.getAccounts() || [];
+          const exists = accounts.some(a => a.id === parsed.id || (a.email && parsed.email && a.email.toLowerCase() === parsed.email.toLowerCase()));
+          if (!exists) {
+            accounts.push(parsed);
+            window.dataStore.save('accounts', accounts);
+          }
+        }
+        return parsed;
+      }
     } catch (e) {
       console.error('Error reading auth user', e);
     }
@@ -76,6 +87,15 @@ class AuthManager {
           (a.username && a.username.toLowerCase() === input)
         );
       } catch (err) {}
+    }
+
+    // Dự phòng an toàn: nếu tài khoản trùng với phiên lưu trữ trên máy
+    if (!account && this.currentUser) {
+      const cur = this.currentUser;
+      if ((cur.email && cur.email.toLowerCase() === input) || (cur.username && cur.username.toLowerCase() === input)) {
+        account = cur;
+        window.dataStore.saveAccount(account);
+      }
     }
 
     const isOwnerOrAdmin = 
