@@ -394,6 +394,23 @@ const server = http.createServer(async (req, res) => {
         }
 
         const maxMachines = licVault[key].max_machines || licVault[key].max_accounts || 3;
+
+        // 0. KIỂM TRA CHẶN MÁY TÍNH A (BLOCK MACHINE / BLACKLIST CHECK)
+        const isBlocked = (Array.isArray(licVault[key].blocked_machines) && licVault[key].blocked_machines.includes(machineId)) ||
+          (Array.isArray(licVault[key].registered_accounts) && licVault[key].registered_accounts.some(a => 
+            ((a.machineId || a.machine_id) === machineId) && (a.status === 'blocked' || a.status === 'Blocked' || a.is_locked === true)
+          ));
+
+        if (isBlocked) {
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({
+            valid: false,
+            Success: false,
+            code: 'MACHINE_BLOCKED',
+            message: `⛔ MÁY TÍNH NÀY (HWID: ${machineId}) ĐÃ BỊ QUẢN TRỊ VIÊN CHẶN TRUY CẬP VÀO KEY NÀY!\n\nThiết bị không được phép sử dụng công cụ. Vui lòng liên hệ Admin DoanSon để được mở khóa.`
+          }));
+          return;
+        }
         const nowIso = new Date().toISOString();
 
         // Kiểm tra xem máy tính này đã đăng ký trước đó chưa
