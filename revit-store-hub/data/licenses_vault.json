@@ -77,14 +77,14 @@
       },
       {
         "username": "nguyet",
-        "fullName": "nguyet",
-        "machineId": "HWID-1793866362872",
+        "fullName": "Nguyet",
+        "machineId": "HWID-1793866365060",
         "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
-        "registeredAt": "2026-11-05T08:12:42.872Z",
-        "lastActive": "2026-11-05T08:12:42.872Z",
+        "registeredAt": "2026-11-05T08:12:45.060Z",
+        "lastActive": "2026-11-05T08:12:45.060Z",
         "status": "Active"
       }
     ],
-    "updated_at": "2026-11-05T08:12:42.872Z"
+    "updated_at": "2026-11-05T08:12:45.060Z"
   }
 }
