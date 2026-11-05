@@ -22,9 +22,10 @@ class AdminPanel {
   }
 
   render() {
-    const user = window.authManager.getCurrentUser();
-    const container = document.getElementById('adminView');
-    if (!container) return;
+    try {
+      const user = window.authManager.getCurrentUser();
+      const container = document.getElementById('adminView');
+      if (!container) return;
 
     if (!user || user.role !== 'admin') {
       container.innerHTML = `
@@ -148,6 +149,22 @@ class AdminPanel {
         </div>
       </div>
     `;
+    } catch (err) {
+      console.error("Lá»—i khi hiá»ƒn thá»‹ Quáº£n Trá»‹ Há»‡ Thá»‘ng:", err);
+      const container = document.getElementById('adminView');
+      if (container) {
+        container.innerHTML = `
+          <div class="portal-container" style="text-align: center; padding: 60px 20px; color: #DC2626;">
+            <div style="font-size: 3rem; margin-bottom: 12px;">âš ï¸</div>
+            <h3 style="font-size: 1.3rem; margin-bottom: 8px;">Äang khÃ´i phá»¥c giao diá»‡n Quáº£n Trá»‹ Há»‡ Thá»‘ng...</h3>
+            <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto 20px;">Chi tiáº¿t: ${err.message}</p>
+            <button class="btn btn-primary" onclick="location.href=location.pathname + '?v=' + Date.now()" style="font-weight: 700; padding: 10px 24px;">
+              ðŸ”„ Táº£i Láº¡i Trang Ngay
+            </button>
+          </div>
+        `;
+      }
+    }
   }
 
   async switchTab(tab) {
