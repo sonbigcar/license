@@ -1036,21 +1036,6 @@ class AdminPanel {
     }
   }
 
-    async adminBlockManualInput(licenseId) {
-    const input = document.getElementById(manualBlockHwidInput_);
-    const hwid = input ? input.value.trim() : '';
-    if (!hwid) {
-      alert('Vui lÃ²ng nháº­p mÃ£ HWID cá»§a mÃ¡y tÃ­nh cáº§n cháº·n!');
-      return;
-    }
-    if (confirm(Báº¡n cÃ³ cháº¯c muá»‘n CHáº¶N mÃ¡y tÃ­nh cÃ³ HWID:\n""\n\nMÃ¡y tÃ­nh nÃ y sáº½ bá»‹ tá»« chá»‘i truy cáº­p vÃ  bá»‹ há»§y kÃ­ch hoáº¡t ngay láº­p tá»©c!)) {
-      await window.licenseManager.blockMachine(licenseId, hwid, 'Admin cháº·n thá»§ cÃ´ng theo HWID');
-      this.openLicenseDevicesModal(licenseId);
-      this.render();
-      alert(ÄÃ£ thÃªm mÃ£ HWID "" vÃ o danh sÃ¡ch CHáº¶N thÃ nh cÃ´ng!);
-    }
-  }
-
   async adminBlockManualHwid(licenseId) {
     const input = document.getElementById('manualBlockHwidInput');
     const hwid = input ? input.value.trim() : '';
