@@ -793,10 +793,28 @@ class StoreApp {
         }
       }
     } else if (viewId === 'adminView') {
-      window.adminPanel.render();
+      if (window.adminPanel && typeof window.adminPanel.render === 'function') {
+        window.adminPanel.render();
+      } else {
+        const adminEl = document.getElementById('adminView');
+        if (adminEl) {
+          adminEl.innerHTML = `
+            <div class="portal-container" style="text-align: center; padding: 80px 20px;">
+              <div style="font-size: 3rem; margin-bottom: 12px;">ðŸ”„</div>
+              <h3 style="color: var(--text-pure); font-size: 1.3rem; margin-bottom: 8px;">Äang Táº£i Giao Diá»‡n Quáº£n Trá»‹ Há»‡ Thá»‘ng...</h3>
+              <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto 20px;">TrÃ¬nh duyá»‡t cá»§a báº¡n Ä‘ang lÆ°u bá»™ nhá»› Ä‘á»‡m (cache) cÅ©. Vui lÃ²ng báº¥m nÃºt bÃªn dÆ°á»›i Ä‘á»ƒ táº£i láº¡i ngay láº­p tá»©c:</p>
+              <button class="btn btn-primary" onclick="location.href=location.pathname + '?v=' + Date.now()" style="font-weight: 700; padding: 10px 24px;">
+                âš¡ Táº£i Láº¡i Ngay (XÃ³a Cache)
+              </button>
+            </div>
+          `;
+        }
+      }
       if (window.dataStore && typeof window.dataStore.fetchRemoteOrders === 'function') {
         window.dataStore.fetchRemoteOrders().then(() => {
-          if (window.adminPanel) window.adminPanel.render();
+          if (window.adminPanel && typeof window.adminPanel.render === 'function') {
+            window.adminPanel.render();
+          }
         }).catch(() => {});
       }
     }
