@@ -74,8 +74,17 @@
         "registeredAt": "2026-11-05T07:42:30.295Z",
         "lastActive": "2026-11-05T07:42:30.295Z",
         "status": "Active"
+      },
+      {
+        "username": "nguyet",
+        "fullName": "nguyet",
+        "machineId": "HWID-1793866362872",
+        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+        "registeredAt": "2026-11-05T08:12:42.872Z",
+        "lastActive": "2026-11-05T08:12:42.872Z",
+        "status": "Active"
       }
     ],
-    "updated_at": "2026-11-05T07:42:30.295Z"
+    "updated_at": "2026-11-05T08:12:42.872Z"
   }
 }
