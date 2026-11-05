@@ -115,8 +115,17 @@
         "registeredAt": "2026-11-05T08:12:45.060Z",
         "lastActive": "2026-11-05T08:12:45.060Z",
         "status": "Active"
+      },
+      {
+        "username": "doanson123",
+        "fullName": "doanson123",
+        "machineId": "HWID-1793868463694",
+        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+        "registeredAt": "2026-11-05T08:47:43.694Z",
+        "lastActive": "2026-11-05T08:47:43.694Z",
+        "status": "Active"
       }
     ],
-    "updated_at": "2026-11-05T08:12:45.060Z"
+    "updated_at": "2026-11-05T08:47:43.694Z"
   }
 }
