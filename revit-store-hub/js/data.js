@@ -1817,61 +1817,99 @@ class DataStore {
 
         // 2. Đồng bộ vào licenses (Bản Quyền Của Tôi cho Revit Tools Add-in)
         if (item.product_type === 'tool') {
+          // Lấy key đã lưu từ đơn hàng hoặc tạo key chuẩn cố định
+          let licenseKey = null;
+          if (order.licenses && Array.isArray(order.licenses)) {
+            const matchedKey = order.licenses.find(k => k.name === item.name || k.product_id === item.product_id || k.key);
+            if (matchedKey) licenseKey = matchedKey.key;
+          }
+          if (!licenseKey) {
+            const safeCode = (order.order_code || '888888').toString().padStart(6, '0');
+            const hashPart = Math.abs(item.product_id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) * 31).toString(36).toUpperCase().padStart(4, 'X');
+            licenseKey = `DSMEP-${safeCode}-${hashPart}-PRO`;
+          }
+
           const licId = `lic-${order.id}-${item.product_id}`;
+          const normKey = licenseKey.trim().toUpperCase();
           const hasLic = licenses.some(l => 
             (l.id === licId) ||
+            (l.license_key && l.license_key.trim().toUpperCase() === normKey) ||
             ((l.user_id === userId || (userEmail && l.user_email && l.user_email.toLowerCase().trim() === userEmail)) && l.product_id === item.product_id && (l.order_id === order.id || !l.order_id))
           );
 
           if (!hasLic) {
-            // Lấy key đã lưu từ đơn hàng hoặc tạo key chuẩn cố định
-            let licenseKey = null;
-            if (order.licenses && Array.isArray(order.licenses)) {
-              const matchedKey = order.licenses.find(k => k.name === item.name || k.product_id === item.product_id);
-              if (matchedKey) licenseKey = matchedKey.key;
-            }
-            if (!licenseKey) {
-              const safeCode = (order.order_code || '888888').toString().padStart(6, '0');
-              const hashPart = Math.abs(item.product_id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) * 31).toString(36).toUpperCase().padStart(4, 'X');
-              licenseKey = `DSMEP-${safeCode}-${hashPart}-PRO`;
-            }
-
             // Kiểm tra bảo vệ: Nếu license hoặc key này đã bị xóa thì tuyệt đối không tự ý hồi sinh lại
-            if (this.batchSync && (this.batchSync.isLicenseDeleted(licId) || this.batchSync.isLicenseDeleted(licenseKey))) {
+            if (this.batchSync && (this.batchSync.isLicenseDeleted(licId) || this.batchSync.isLicenseDeleted(licenseKey) || this.batchSync.isLicenseDeleted(normKey))) {
               return;
             }
 
             const prod = this.getProductById(item.product_id);
             const fileUrl = (prod && prod.metadata && prod.metadata.file_url) || (item.metadata && item.metadata.file_url) || '';
 
-            const expiryDate = new Date(paidDate);
+            // Kiểm tra xem key này đã từng có cấu hình trong vault hoặc license cũ chưa để bảo toàn ngày gia hạn và slot máy
+            let vaultData = {};
+            try {
+              vaultData = JSON.parse(localStorage.getItem('revit_licenses_vault') || '{}');
+            } catch (e) {}
+            const vData = vaultData[normKey] || null;
+
+            const defaultExpiry = new Date(paidDate);
             if (item.billing_cycle === 'monthly') {
-              expiryDate.setMonth(expiryDate.getMonth() + 1);
+              defaultExpiry.setMonth(defaultExpiry.getMonth() + 1);
             } else if (item.billing_cycle === 'lifetime' || item.billing_cycle === 'one_time') {
-              expiryDate.setFullYear(expiryDate.getFullYear() + 50);
+              defaultExpiry.setFullYear(defaultExpiry.getFullYear() + 50);
             } else {
-              expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+              defaultExpiry.setFullYear(defaultExpiry.getFullYear() + 1);
             }
 
-            licenses.unshift({
+            const finalExpiry = (vData && vData.expiry_date) ? vData.expiry_date : defaultExpiry.toISOString();
+            const finalSlots = (vData && (vData.max_machines || vData.max_accounts)) ? Number(vData.max_machines || vData.max_accounts) : (item.max_machines || 2);
+            const finalPlanName = (vData && vData.plan_name) || item.package_name || item.name;
+            const finalModules = (vData && vData.allowed_modules) || item.allowed_modules || ['MEP-ALL'];
+
+            const newLicObj = {
               id: licId,
               license_key: licenseKey,
               user_id: userId,
               user_name: userName,
               user_email: userEmail,
+              company: order.company || 'Cá nhân',
               product_id: item.product_id,
               order_id: order.id,
               order_code: order.order_code,
               product_name: item.name,
+              plan_name: finalPlanName,
+              allowed_modules: finalModules,
               download_url: fileUrl,
               subscription_type: item.billing_cycle || 'yearly',
-              max_machines: 2,
-              status: 'active',
+              max_machines: finalSlots,
+              max_accounts: finalSlots,
+              status: (vData && vData.status) || 'active',
               start_date: paidDate,
-              expiry_date: expiryDate.toISOString(),
-              activations: []
-            });
+              expiry_date: finalExpiry,
+              activations: (vData && vData.activations) || []
+            };
+
+            licenses.unshift(newLicObj);
             licensesChanged = true;
+
+            // Đảm bảo đưa vào vault và queue đồng bộ lên GitHub
+            if (!vaultData[normKey]) {
+              vaultData[normKey] = {
+                allowed_modules: finalModules,
+                plan_name: finalPlanName,
+                expiry_date: finalExpiry,
+                max_accounts: finalSlots,
+                max_machines: finalSlots,
+                status: 'active',
+                registered_accounts: [],
+                updated_at: new Date().toISOString()
+              };
+              localStorage.setItem('revit_licenses_vault', JSON.stringify(vaultData));
+            }
+            if (typeof this.queueLicenseUpdate === 'function') {
+              this.queueLicenseUpdate(newLicObj);
+            }
           }
         }
       });
@@ -3132,12 +3170,49 @@ class DataStore {
         .map(k => k.trim().toUpperCase())
     );
 
-    // BƯỚC QUAN TRỌNG: Lọc bỏ các license cũ trong local storage nếu trên Server đã bị xóa (đáp ứng đúng thao tác ở Máy A sang Máy B)
+    // Danh sách key từ các đơn hàng đã thanh toán thành công (Paid orders single source of truth)
+    const paidOrders = (this.get('orders') || []).filter(o => o.status === 'paid');
+    const orderLicenseKeys = new Set();
+    paidOrders.forEach(o => {
+      if (Array.isArray(o.licenses)) {
+        o.licenses.forEach(l => {
+          if (l && l.key) orderLicenseKeys.add(l.key.trim().toUpperCase());
+        });
+      }
+    });
+
+    // BƯỚC QUAN TRỌNG: Lọc bỏ license nếu đã bị Admin chủ động xóa
+    // Bảo vệ không bao giờ xóa nhầm các license hợp lệ từ đơn hàng hoặc đang chờ đồng bộ
     storedLicenses = storedLicenses.filter(lic => {
       if (!lic || !lic.license_key) return false;
       const upper = lic.license_key.trim().toUpperCase();
       if (this.batchSync && this.batchSync.isLicenseDeleted(upper)) return false;
-      return validVaultKeys.has(upper);
+      const isPending = this.batchSync && this.batchSync.pendingLicenseUpdates && this.batchSync.pendingLicenseUpdates.has(upper);
+      return validVaultKeys.has(upper) || orderLicenseKeys.has(upper) || isPending;
+    });
+
+    // AUTO-HEALING: Nếu có license hợp lệ từ đơn hàng hoặc local chưa có trong vault, tự động bổ sung vào vault
+    let vaultNeedsPush = false;
+    storedLicenses.forEach(lic => {
+      if (!lic || !lic.license_key) return;
+      const upper = lic.license_key.trim().toUpperCase();
+      if (this.batchSync && this.batchSync.isLicenseDeleted(upper)) return;
+      if (!vault[upper]) {
+        const slots = Number(lic.max_machines || lic.max_accounts || 2);
+        vault[upper] = {
+          allowed_modules: lic.allowed_modules || ['MEP-ALL'],
+          plan_name: lic.plan_name || lic.product_name || 'Gói Bản Quyền DoanSon Hub',
+          expiry_date: lic.expiry_date || new Date(Date.now() + 365 * 86400000).toISOString(),
+          max_accounts: slots,
+          max_machines: slots,
+          status: lic.status || 'active',
+          registered_accounts: lic.registered_accounts || [],
+          activations: lic.activations || [],
+          updated_at: new Date().toISOString()
+        };
+        validVaultKeys.add(upper);
+        vaultNeedsPush = true;
+      }
     });
 
     for (const [key, vData] of Object.entries(vault)) {
@@ -3201,18 +3276,23 @@ class DataStore {
       );
 
       if (existingIdx >= 0) {
+        // Nếu có cập nhật đang chờ flush từ Admin trong phiên này thì giữ nguyên thông tin vừa sửa
+        const hasPendingAdminUpdate = this.batchSync && this.batchSync.pendingLicenseUpdates && this.batchSync.pendingLicenseUpdates.has(upperKey);
+
         storedLicenses[existingIdx].activations = normalizedActivations;
         storedLicenses[existingIdx].registered_accounts = regAccounts;
-        if (vData.allowed_modules) storedLicenses[existingIdx].allowed_modules = vData.allowed_modules;
-        if (vData.plan_name) storedLicenses[existingIdx].plan_name = vData.plan_name;
-        if (vData.expiry_date) storedLicenses[existingIdx].expiry_date = vData.expiry_date;
-        const vSlots = Number(vData.max_machines || vData.max_accounts);
-        if (!isNaN(vSlots) && vSlots > 0) {
-          storedLicenses[existingIdx].max_machines = vSlots;
-          storedLicenses[existingIdx].max_accounts = vSlots;
-        }
-        if (vData.status) {
-          storedLicenses[existingIdx].status = vData.status;
+        if (!hasPendingAdminUpdate) {
+          if (vData.allowed_modules) storedLicenses[existingIdx].allowed_modules = vData.allowed_modules;
+          if (vData.plan_name) storedLicenses[existingIdx].plan_name = vData.plan_name;
+          if (vData.expiry_date) storedLicenses[existingIdx].expiry_date = vData.expiry_date;
+          const vSlots = Number(vData.max_machines || vData.max_accounts);
+          if (!isNaN(vSlots) && vSlots > 0) {
+            storedLicenses[existingIdx].max_machines = vSlots;
+            storedLicenses[existingIdx].max_accounts = vSlots;
+          }
+          if (vData.status) {
+            storedLicenses[existingIdx].status = vData.status;
+          }
         }
       } else {
         // Tạo mới license từ Vault
@@ -3253,6 +3333,13 @@ class DataStore {
     }
 
     this.save('licenses', storedLicenses);
+
+    if (vaultNeedsPush) {
+      localStorage.setItem('revit_licenses_vault', JSON.stringify(vault));
+      this.syncLicensesVaultBatchToGitHub(storedLicenses, []).catch(e => {
+        console.warn('Auto sync missing vault keys error:', e);
+      });
+    }
 
     // Tự động render lại view nếu đang xem bản quyền
     if (window.storeApp && document.getElementById('licenseView') && !document.getElementById('licenseView').classList.contains('hidden')) {
@@ -3303,8 +3390,7 @@ class DataStore {
         delete vault[delKey];
       }
 
-      // 2. Chỉ cập nhật các license đang có sẵn trong vault trên server với thông tin mới từ local
-      // (Tránh reinject các license cũ đã bị xóa ở máy tính khác)
+      // 2. Cập nhật các license đang có sẵn trong vault trên server với thông tin mới từ local
       const allLicenses = this.getLicenses();
       for (const key of Object.keys(vault)) {
         if (delSet.has(key)) continue;
@@ -3320,6 +3406,28 @@ class DataStore {
             max_accounts: licSlots,
             max_machines: licSlots,
             status: matchedLocal.status || existing.status || 'active',
+            updated_at: new Date().toISOString()
+          };
+        }
+      }
+
+      // 2.1 Đảm bảo tất cả các license hợp lệ đang tồn tại trong hệ thống (bao gồm từ đơn hàng đã thanh toán) đều được đưa vào vault
+      for (const lic of allLicenses) {
+        if (!lic || !lic.license_key) continue;
+        const key = lic.license_key.trim().toUpperCase();
+        if (delSet.has(key)) continue;
+        if (this.batchSync && this.batchSync.isLicenseDeleted(key)) continue;
+        if (!vault[key]) {
+          const licSlots = Number(lic.max_machines || lic.max_accounts || 2);
+          vault[key] = {
+            allowed_modules: lic.allowed_modules || ['MEP-ALL'],
+            plan_name: lic.plan_name || lic.product_name || 'Gói Bản Quyền DoanSon Hub',
+            expiry_date: lic.expiry_date || new Date(Date.now() + 365 * 86400000).toISOString(),
+            max_accounts: licSlots,
+            max_machines: licSlots,
+            status: lic.status || 'active',
+            registered_accounts: lic.registered_accounts || [],
+            activations: lic.activations || [],
             updated_at: new Date().toISOString()
           };
         }
