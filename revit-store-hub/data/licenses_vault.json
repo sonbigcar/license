@@ -1,131 +1,146 @@
 {
-  "REVIT-TEST-PKG-MVMIKVSV": {
-    "allowed_modules": [
-      "MEP-ALL",
-      "PHẦN MỀM QUẢN LÝ CÔNG VIỆC"
-    ],
-    "plan_name": "Gói Full VIP & Quản Lý Công Việc (5 Máy/User)",
-    "expiry_date": "2027-10-24T14:48:45.834Z",
-    "updated_at": "2026-10-29T03:16:53.494Z",
-    "registered_accounts": [
-      {
-        "username": "doanson99",
-        "fullName": "Đoàn sơn",
-        "machineId": "HWID-1792920519377",
-        "registeredAt": "2026-10-25T09:28:39.377Z"
-      },
-      {
-        "username": "bb",
-        "fullName": "aaaa",
-        "machineId": "HWID-1792920818879",
-        "registeredAt": "2026-10-25T09:33:38.879Z"
-      },
-      {
-        "username": "doanson",
-        "fullName": "son",
-        "machineId": "HWID-1792943744297",
-        "registeredAt": "2026-10-25T15:55:44.297Z"
-      }
-    ],
-    "max_accounts": 3,
-    "max_machines": 3,
-    "status": "active"
-  },
-  "DS-TASK-MYG3-KBNK": {
-    "allowed_modules": [
-      "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
-      "TASK-APP",
-      "MEP-TASK"
-    ],
-    "plan_name": "Gói Combo (PHẦN MỀM QUẢN LÝ CÔNG VIỆC + TASK-APP + TASK - 50 Máy)",
-    "expiry_date": "2027-10-25T00:00:00Z",
-    "max_accounts": 50,
-    "max_machines": 50,
-    "status": "active",
-    "registered_accounts": [
-      {
-        "username": "sonson",
-        "fullName": "SON",
-        "machineId": "HWID-1792948490833",
-        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
-        "registeredAt": "2026-10-25T17:14:50.833Z",
-        "lastActive": "2026-10-25T17:14:50.833Z",
-        "status": "Active"
-      },
-      {
-        "username": "doanson",
-        "fullName": "sơn",
-        "machineId": "HWID-1793019618751",
-        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
-        "registeredAt": "2026-10-26T13:00:18.751Z",
-        "lastActive": "2026-11-07T03:09:31.262Z",
-        "status": "Active"
-      },
-      {
-        "username": "huy2k",
-        "fullName": "KYODO-Huy",
-        "machineId": "HWID-1793267487413",
-        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
-        "registeredAt": "2026-10-29T09:51:27.413Z",
-        "lastActive": "2026-11-03T07:47:53.888Z",
-        "status": "Active",
-        "machine_name": "KYODO-Huy"
-      },
-      {
-        "username": "phongpham",
-        "fullName": "Phạm Thanh Phong",
-        "machineId": "HWID-1793672298337",
-        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
-        "registeredAt": "2026-11-03T02:18:18.337Z",
-        "lastActive": "2026-11-03T02:18:18.337Z",
-        "status": "Active"
-      },
-      {
-        "username": "sondoan99",
-        "fullName": "DS-TASK-MYG3-KBNK",
-        "machineId": "HWID-1793765722211",
-        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
-        "registeredAt": "2026-11-04T04:15:22.211Z",
-        "lastActive": "2026-11-04T04:15:34.898Z",
-        "status": "Active"
-      },
-      {
-        "username": "sondoan",
-        "fullName": "Đoàn Sơn",
-        "machineId": "HWID-1793765767339",
-        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
-        "registeredAt": "2026-11-04T04:16:07.339Z",
-        "lastActive": "2026-11-04T04:16:07.339Z",
-        "status": "Active"
-      },
-      {
-        "username": "truc99",
-        "fullName": "Truc99",
-        "machineId": "HWID-1793864550294",
-        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
-        "registeredAt": "2026-11-05T07:42:30.295Z",
-        "lastActive": "2026-11-05T07:42:30.295Z",
-        "status": "Active"
-      },
-      {
-        "username": "nguyet",
-        "fullName": "Nguyet",
-        "machineId": "HWID-1793866365060",
-        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
-        "registeredAt": "2026-11-05T08:12:45.060Z",
-        "lastActive": "2026-11-05T08:12:45.060Z",
-        "status": "Active"
-      },
-      {
-        "username": "doanson123",
-        "fullName": "Doanson123",
-        "machineId": "HWID-1793868495842",
-        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
-        "registeredAt": "2026-11-05T08:48:15.842Z",
-        "lastActive": "2026-11-07T02:33:44.775Z",
-        "status": "Active"
-      }
-    ],
-    "updated_at": "2026-11-06T02:33:22.374Z"
-  }
+    "REVIT-TEST-PKG-MVMIKVSV":  {
+                                    "allowed_modules":  [
+                                                            "MEP-ALL",
+                                                            "PHẦN MỀM QUẢN LÝ CÔNG VIỆC"
+                                                        ],
+                                    "plan_name":  "Gói Full VIP \u0026 Quản Lý Công Việc (50 Máy)",
+                                    "expiry_date":  "2027-10-24T14:48:45.834Z",
+                                    "updated_at":  "2026-11-12T02:49:03.428Z",
+                                    "registered_accounts":  [
+                                                                {
+                                                                    "username":  "doanson99",
+                                                                    "fullName":  "Đoàn sơn",
+                                                                    "machineId":  "HWID-1792920519377",
+                                                                    "registeredAt":  "2026-10-25T09:28:39.377Z"
+                                                                },
+                                                                {
+                                                                    "username":  "bb",
+                                                                    "fullName":  "aaaa",
+                                                                    "machineId":  "HWID-1792920818879",
+                                                                    "registeredAt":  "2026-10-25T09:33:38.879Z"
+                                                                },
+                                                                {
+                                                                    "username":  "doanson",
+                                                                    "fullName":  "son",
+                                                                    "machineId":  "HWID-1792943744297",
+                                                                    "registeredAt":  "2026-10-25T15:55:44.297Z"
+                                                                }
+                                                            ],
+                                    "max_accounts":  50,
+                                    "max_machines":  50,
+                                    "status":  "active"
+                                },
+    "DS-TASK-MYG3-KBNK":  {
+                              "allowed_modules":  [
+                                                      "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+                                                      "TASK-APP",
+                                                      "MEP-TASK"
+                                                  ],
+                              "plan_name":  "Gói Combo (PHẦN MỀM QUẢN LÝ CÔNG VIỆC + TASK-APP + TASK - 50 Máy)",
+                              "expiry_date":  "2027-10-25T00:00:00Z",
+                              "max_accounts":  50,
+                              "max_machines":  50,
+                              "status":  "active",
+                              "registered_accounts":  [
+                                                          {
+                                                              "username":  "sonson",
+                                                              "fullName":  "SON",
+                                                              "machineId":  "HWID-1792948490833",
+                                                              "app":  "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+                                                              "registeredAt":  "2026-10-25T17:14:50.833Z",
+                                                              "lastActive":  "2026-10-25T17:14:50.833Z",
+                                                              "status":  "Active"
+                                                          },
+                                                          {
+                                                              "username":  "doanson",
+                                                              "fullName":  "sơn",
+                                                              "machineId":  "HWID-1793019618751",
+                                                              "app":  "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+                                                              "registeredAt":  "2026-10-26T13:00:18.751Z",
+                                                              "lastActive":  "2026-11-07T03:09:31.262Z",
+                                                              "status":  "Active"
+                                                          },
+                                                          {
+                                                              "username":  "huy2k",
+                                                              "fullName":  "KYODO-Huy",
+                                                              "machineId":  "HWID-1793267487413",
+                                                              "app":  "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+                                                              "registeredAt":  "2026-10-29T09:51:27.413Z",
+                                                              "lastActive":  "2026-11-03T07:47:53.888Z",
+                                                              "status":  "Active",
+                                                              "machine_name":  "KYODO-Huy"
+                                                          },
+                                                          {
+                                                              "username":  "phongpham",
+                                                              "fullName":  "Phạm Thanh Phong",
+                                                              "machineId":  "HWID-1793672298337",
+                                                              "app":  "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+                                                              "registeredAt":  "2026-11-03T02:18:18.337Z",
+                                                              "lastActive":  "2026-11-03T02:18:18.337Z",
+                                                              "status":  "Active"
+                                                          },
+                                                          {
+                                                              "username":  "sondoan99",
+                                                              "fullName":  "DS-TASK-MYG3-KBNK",
+                                                              "machineId":  "HWID-1793765722211",
+                                                              "app":  "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+                                                              "registeredAt":  "2026-11-04T04:15:22.211Z",
+                                                              "lastActive":  "2026-11-04T04:15:34.898Z",
+                                                              "status":  "Active"
+                                                          },
+                                                          {
+                                                              "username":  "sondoan",
+                                                              "fullName":  "Đoàn Sơn",
+                                                              "machineId":  "HWID-1793765767339",
+                                                              "app":  "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+                                                              "registeredAt":  "2026-11-04T04:16:07.339Z",
+                                                              "lastActive":  "2026-11-04T04:16:07.339Z",
+                                                              "status":  "Active"
+                                                          },
+                                                          {
+                                                              "username":  "truc99",
+                                                              "fullName":  "Truc99",
+                                                              "machineId":  "HWID-1793864550294",
+                                                              "app":  "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+                                                              "registeredAt":  "2026-11-05T07:42:30.295Z",
+                                                              "lastActive":  "2026-11-05T07:42:30.295Z",
+                                                              "status":  "Active"
+                                                          },
+                                                          {
+                                                              "username":  "nguyet",
+                                                              "fullName":  "Nguyet",
+                                                              "machineId":  "HWID-1793866365060",
+                                                              "app":  "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+                                                              "registeredAt":  "2026-11-05T08:12:45.060Z",
+                                                              "lastActive":  "2026-11-05T08:12:45.060Z",
+                                                              "status":  "Active"
+                                                          },
+                                                          {
+                                                              "username":  "doanson123",
+                                                              "fullName":  "Doanson123",
+                                                              "machineId":  "HWID-1793868495842",
+                                                              "app":  "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+                                                              "registeredAt":  "2026-11-05T08:48:15.842Z",
+                                                              "lastActive":  "2026-11-07T02:33:44.775Z",
+                                                              "status":  "Active"
+                                                          }
+                                                      ],
+                              "updated_at":  "2026-11-06T02:33:22.374Z"
+                          },
+    "DS-DUCT-PIPE-CPUV-KBTA":  {
+                                   "allowed_modules":  [
+                                                           "MEP-DUCT",
+                                                           "MEP-PIPE"
+                                                       ],
+                                   "plan_name":  "Combo Cơ Điện Lạnh (Duct + Pipe + Elec)",
+                                   "expiry_date":  "2027-11-12T00:00:00.000Z",
+                                   "max_accounts":  2,
+                                   "max_machines":  2,
+                                   "status":  "active",
+                                   "registered_accounts":  [
+
+                                                           ],
+                                   "updated_at":  "2026-11-12T02:49:03.432Z"
+                               }
 }
