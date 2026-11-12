@@ -100,7 +100,7 @@ class LicenseManager {
   /**
    * Đồng bộ toàn diện thông tin License sang Server Node local, Cloudflare Worker và GitHub Repository
    */
-  async syncLicenseToRemote(lic) {
+  async syncLicenseToRemote(lic, immediate = true) {
     if (!lic || !lic.license_key) return;
 
     const maxSlots = Number(lic.max_machines || lic.max_accounts || 3);
@@ -145,9 +145,16 @@ class LicenseManager {
       });
     } catch (e) {}
 
-    // 3. Đưa vào hàng đợi gom 15s để đồng bộ atomic chống xung đột SHA và Rate Limit
+    // 3. Đưa vào hàng đợi gom và đồng bộ atomic tức thì lên GitHub & Cloud
     if (window.dataStore && typeof window.dataStore.queueLicenseUpdate === 'function') {
       window.dataStore.queueLicenseUpdate(lic);
+      if (immediate && window.dataStore.batchSync && typeof window.dataStore.batchSync.flushBatchNow === 'function') {
+        try {
+          await window.dataStore.batchSync.flushBatchNow();
+        } catch (flushErr) {
+          console.warn('[Sync GitHub] Lỗi flushBatchNow:', flushErr);
+        }
+      }
     } else {
       try {
         if (window.dataStore && typeof window.dataStore.syncLicensesVaultToGitHub === 'function') {
