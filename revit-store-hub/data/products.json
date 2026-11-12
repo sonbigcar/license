@@ -210,34 +210,5 @@
       "file_name": "Signal_Butterfly_Valve_DN50-300.rfa",
       "file_size": "3.2 MB"
     }
-  },
-  {
-    "id": "fam-003",
-    "name": "Cửa Đi Nhôm Kính Xingfa Hệ 55 Mở Quay 1-2 Cánh Parametric",
-    "slug": "cua-di-nhom-kinh-xingfa-he-55",
-    "product_type": "family",
-    "category": "Kiến Trúc - Cửa & Vách",
-    "description": "Family cửa nhôm Xingfa hệ 55 đầy đủ thông số biến thiên (Parametric: Chiều rộng, chiều cao, độ dày kính, màu nhôm). Tích hợp góc mở 2D/3D linh hoạt.",
-    "short_description": "Family thông số biến thiên linh hoạt, đầy đủ thông số kích thước cửa.",
-    "revit_versions": [
-      "2020",
-      "2021",
-      "2022",
-      "2023",
-      "2024",
-      "2025"
-    ],
-    "thumbnail_url": "https://images.unsplash.com/photo-1534237710431-e2fc698436d0?auto=format&fit=crop&w=800&q=80",
-    "video_url": "https://www.youtube.com/embed/dQw4w9WgXcQ",
-    "price": 180000,
-    "sale_price": 120000,
-    "billing_cycle": "one_time",
-    "is_active": true,
-    "metadata": {
-      "lod": "LOD 300",
-      "category": "Doors",
-      "file_name": "Xingfa_Door_System55_Parametric.rfa",
-      "file_size": "3.6 MB"
-    }
   }
 ]
