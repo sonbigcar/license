@@ -239,33 +239,5 @@
       "file_name": "Xingfa_Door_System55_Parametric.rfa",
       "file_size": "3.6 MB"
     }
-  },
-  {
-    "id": "tmpl-002",
-    "name": "Template Kiến Trúc Nhà Phố & Biệt Thự Hiện Đại TCVN",
-    "slug": "template-kien-truc-nha-pho-biet-thu",
-    "product_type": "template",
-    "category": "Project Template - Kiến Trúc",
-    "description": "Template thiết kế nhà phố, biệt thự: Cài đặt sẵn thư viện tường nhiều lớp, chủng loại trần, sàn, ghi chú ký hiệu dim/tag chuẩn bản vẽ thi công Việt Nam, tự động xuất diện tích phòng và bảng vật liệu.",
-    "short_description": "Bộ template chuyên nghiệp cho kiến trúc sư, xuất hồ sơ thi công nhanh chóng.",
-    "revit_versions": [
-      "2021",
-      "2022",
-      "2023",
-      "2024",
-      "2025"
-    ],
-    "thumbnail_url": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80",
-    "video_url": "https://www.youtube.com/embed/kJQP7kiw5Fk",
-    "price": 650000,
-    "sale_price": 450000,
-    "billing_cycle": "one_time",
-    "is_active": true,
-    "metadata": {
-      "format": ".RTE (Revit Template)",
-      "file_name": "RevitHub_Architectural_Villa_Template.rte",
-      "file_size": "38.0 MB",
-      "standards": "TCVN Hồ sơ thiết kế kỹ thuật"
-    }
   }
 ]
