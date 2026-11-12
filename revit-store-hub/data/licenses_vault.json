@@ -159,8 +159,25 @@
         "lastActive": "2026-11-12T02:57:14.479Z",
         "last_checked_at": "2026-11-12T02:57:14.479Z",
         "status": "Active"
+      },
+      {
+        "machineId": "DS-FCB5-7377",
+        "machine_id": "DS-FCB5-7377",
+        "hwid": "DS-FCB5-7377",
+        "machine_name": "TK-03",
+        "name": "TK-03",
+        "username": "admin",
+        "user": "admin",
+        "fullName": "admin",
+        "revit_version": "2025",
+        "os_info": "Windows",
+        "app": "Revit Add-in",
+        "registeredAt": "2026-11-12T03:10:12.806Z",
+        "lastActive": "2026-11-12T03:10:12.806Z",
+        "last_checked_at": "2026-11-12T03:10:12.806Z",
+        "status": "Active"
       }
     ],
-    "updated_at": "2026-11-12T03:04:14.321Z"
+    "updated_at": "2026-11-12T03:10:12.806Z"
   }
 }
