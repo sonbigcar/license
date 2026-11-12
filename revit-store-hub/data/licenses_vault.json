@@ -176,8 +176,25 @@
         "lastActive": "2026-11-12T03:10:12.806Z",
         "last_checked_at": "2026-11-12T03:10:12.806Z",
         "status": "Active"
+      },
+      {
+        "machineId": "DS-3871-FF8C",
+        "machine_id": "DS-3871-FF8C",
+        "hwid": "DS-3871-FF8C",
+        "machine_name": "TK-10",
+        "name": "TK-10",
+        "username": "TK-10",
+        "user": "TK-10",
+        "fullName": "TK-10",
+        "revit_version": "2025",
+        "os_info": "Windows",
+        "app": "Revit Add-in",
+        "registeredAt": "2026-11-12T09:44:23.516Z",
+        "lastActive": "2026-11-12T09:44:23.516Z",
+        "last_checked_at": "2026-11-12T09:44:23.516Z",
+        "status": "Active"
       }
     ],
-    "updated_at": "2026-11-12T09:26:09.441Z"
+    "updated_at": "2026-11-12T09:44:23.516Z"
   }
 }
