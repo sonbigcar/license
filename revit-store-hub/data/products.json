@@ -183,32 +183,5 @@
       "file_size": "4.8 MB",
       "omniclass": "23.35.10.11"
     }
-  },
-  {
-    "id": "fam-002",
-    "name": "Van Bướm Tín Hiệu Điện Kèm Công Tắc Giám Sát",
-    "slug": "van-buom-tin-hieu-dien-kem-cong-tac",
-    "product_type": "family",
-    "category": "MEP - Cấp Thoát Nước & PCCC",
-    "description": "Van bướm kèm công tắc báo trạng thái Đóng/Mở về tủ trung tâm PCCC. Dải kích thước từ DN50 đến DN300, đầy đủ thông số thủy lực, áp lực làm việc PN16/PN25.",
-    "short_description": "Đầy đủ dải kích thước DN50-DN300, tích hợp thông số thủy lực.",
-    "revit_versions": [
-      "2022",
-      "2023",
-      "2024",
-      "2025"
-    ],
-    "thumbnail_url": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
-    "video_url": "https://www.youtube.com/embed/kJQP7kiw5Fk",
-    "price": 200000,
-    "sale_price": 150000,
-    "billing_cycle": "one_time",
-    "is_active": true,
-    "metadata": {
-      "lod": "LOD 300",
-      "category": "Pipe Accessories",
-      "file_name": "Signal_Butterfly_Valve_DN50-300.rfa",
-      "file_size": "3.2 MB"
-    }
   }
 ]
