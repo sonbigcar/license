@@ -156,8 +156,8 @@
         "os_info": "Windows",
         "app": "Revit Add-in",
         "registeredAt": "2026-11-12T02:57:14.479Z",
-        "lastActive": "2026-11-12T02:57:14.479Z",
-        "last_checked_at": "2026-11-12T02:57:14.479Z",
+        "lastActive": "2026-11-12T09:26:09.441Z",
+        "last_checked_at": "2026-11-12T09:26:09.441Z",
         "status": "Active"
       },
       {
@@ -178,6 +178,6 @@
         "status": "Active"
       }
     ],
-    "updated_at": "2026-11-12T03:10:12.806Z"
+    "updated_at": "2026-11-12T09:26:09.441Z"
   }
 }
