@@ -241,33 +241,6 @@
     }
   },
   {
-    "id": "tmpl-001",
-    "name": "Template Revit MEP Nhà Cao Tầng & TTTM Chuẩn TCVN / ISO 19650",
-    "slug": "template-revit-mep-nha-cao-tang-tcvn",
-    "product_type": "template",
-    "category": "Project Template - MEP",
-    "description": "Bộ Template dự án MEP hoàn chỉnh nhất: Cấu hình sẵn toàn bộ Pipe System, Duct System, View Template phân hệ (HVAC, PCCC, Cấp thoát nước, Điện), Bộ lọc màu Filter tiêu chuẩn, Khung tên Titleblock chuẩn quốc tế.",
-    "short_description": "Template đầy đủ View Template, hệ thống đường ống và bảng thống kê MEP.",
-    "revit_versions": [
-      "2022",
-      "2023",
-      "2024",
-      "2025"
-    ],
-    "thumbnail_url": "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=800&q=80",
-    "video_url": "https://www.youtube.com/embed/5qap5aO4i9A",
-    "price": 850000,
-    "sale_price": 590000,
-    "billing_cycle": "one_time",
-    "is_active": true,
-    "metadata": {
-      "format": ".RTE (Revit Template)",
-      "file_name": "RevitHub_MEP_HighRise_Template_v2024.rte",
-      "file_size": "45.0 MB",
-      "standards": "TCVN, NFPA, ISO 19650"
-    }
-  },
-  {
     "id": "tmpl-002",
     "name": "Template Kiến Trúc Nhà Phố & Biệt Thự Hiện Đại TCVN",
     "slug": "template-kien-truc-nha-pho-biet-thu",
