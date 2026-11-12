@@ -126,33 +126,5 @@
       "file_size": "15.0 MB",
       "lod": "LOD 350"
     }
-  },
-  {
-    "id": "tool-003",
-    "name": "Rebar Detailer & Auto Scheduling Pro",
-    "slug": "rebar-detailer-auto-scheduling",
-    "product_type": "tool",
-    "category": "Revit Add-in Kết Cấu",
-    "description": "Tự động rải thép dầm, cột, móng, sàn theo TCVN 5574:2018. Tự động gắn tag thép hình học, sinh bảng thống kê thép chuẩn xác 100% không cần Dynamo.",
-    "short_description": "Tự động rải thép dầm/cột và sinh bảng thống kê thép chuẩn TCVN.",
-    "revit_versions": [
-      "2022",
-      "2023",
-      "2024",
-      "2025"
-    ],
-    "thumbnail_url": "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80",
-    "video_url": "https://www.youtube.com/embed/kJQP7kiw5Fk",
-    "price": 1500000,
-    "sale_price": 1100000,
-    "billing_cycle": "yearly",
-    "is_active": true,
-    "metadata": {
-      "version": "v3.1.0",
-      "target_revit": "Revit 2022-2025",
-      "file_name": "Rebar_Detailer_Setup.exe",
-      "file_size": "22.0 MB",
-      "author": "RevitHub Studio"
-    }
   }
 ]
