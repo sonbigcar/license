@@ -103,7 +103,7 @@
     ],
     "plan_name": "Gói Full VIP & Quản Lý Công Việc (50 Máy)",
     "expiry_date": "2027-10-24T14:48:45.834Z",
-    "updated_at": "2026-11-13T02:44:55.986Z",
+    "updated_at": "2026-11-13T02:45:03.726Z",
     "registered_accounts": [
       {
         "username": "doanson99",
@@ -130,6 +130,15 @@
         "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
         "registeredAt": "2026-11-13T02:44:55.985Z",
         "lastActive": "2026-11-13T02:44:55.986Z",
+        "status": "Active"
+      },
+      {
+        "username": "sondoan",
+        "fullName": "sondoan",
+        "machineId": "HWID-1794537903726",
+        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+        "registeredAt": "2026-11-13T02:45:03.726Z",
+        "lastActive": "2026-11-13T02:45:03.726Z",
         "status": "Active"
       }
     ],
