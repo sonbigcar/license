@@ -1,36 +1,4 @@
 {
-  "REVIT-TEST-PKG-MVMIKVSV": {
-    "allowed_modules": [
-      "MEP-ALL",
-      "PHẦN MỀM QUẢN LÝ CÔNG VIỆC"
-    ],
-    "plan_name": "Gói Full VIP & Quản Lý Công Việc (50 Máy)",
-    "expiry_date": "2027-10-24T14:48:45.834Z",
-    "updated_at": "2026-11-12T03:04:14.321Z",
-    "registered_accounts": [
-      {
-        "username": "doanson99",
-        "fullName": "Đoàn sơn",
-        "machineId": "HWID-1792920519377",
-        "registeredAt": "2026-10-25T09:28:39.377Z"
-      },
-      {
-        "username": "bb",
-        "fullName": "aaaa",
-        "machineId": "HWID-1792920818879",
-        "registeredAt": "2026-10-25T09:33:38.879Z"
-      },
-      {
-        "username": "doanson",
-        "fullName": "son",
-        "machineId": "HWID-1792943744297",
-        "registeredAt": "2026-10-25T15:55:44.297Z"
-      }
-    ],
-    "max_accounts": 50,
-    "max_machines": 50,
-    "status": "active"
-  },
   "DS-TASK-MYG3-KBNK": {
     "allowed_modules": [
       "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
@@ -128,73 +96,45 @@
     ],
     "updated_at": "2026-11-12T03:04:14.321Z"
   },
-  "DS-DUCT-PIPE-CPUV-KBTA": {
+  "REVIT-TEST-PKG-MVMIKVSV": {
     "allowed_modules": [
-      "MEP-DUCT",
-      "MEP-PIPE",
-      "MEP-SHEET",
-      "MEP-FIRE",
-      "MEP-ELEC",
-      "MEP-AI"
+      "MEP-ALL",
+      "PHẦN MỀM QUẢN LÝ CÔNG VIỆC"
     ],
-    "plan_name": "Gói Combo (DUCT + PIPE + SHEET + FIRE + ELEC + AI - 2 Máy)",
-    "expiry_date": "2027-11-12T00:00:00Z",
-    "max_accounts": 50,
-    "max_machines": 50,
-    "status": "active",
+    "plan_name": "Gói Full VIP & Quản Lý Công Việc (50 Máy)",
+    "expiry_date": "2027-10-24T14:48:45.834Z",
+    "updated_at": "2026-11-13T02:44:55.986Z",
     "registered_accounts": [
       {
-        "machineId": "DS-58F0-DE7A",
-        "machine_id": "DS-58F0-DE7A",
-        "hwid": "DS-58F0-DE7A",
-        "machine_name": "TK-09",
-        "name": "TK-09",
-        "username": "admin",
-        "user": "admin",
-        "fullName": "admin",
-        "revit_version": "2025",
-        "os_info": "Windows",
-        "app": "Revit Add-in",
-        "registeredAt": "2026-11-12T02:57:14.479Z",
-        "lastActive": "2026-11-12T09:26:09.441Z",
-        "last_checked_at": "2026-11-12T09:26:09.441Z",
-        "status": "Active"
+        "username": "doanson99",
+        "fullName": "Đoàn sơn",
+        "machineId": "HWID-1792920519377",
+        "registeredAt": "2026-10-25T09:28:39.377Z"
       },
       {
-        "machineId": "DS-FCB5-7377",
-        "machine_id": "DS-FCB5-7377",
-        "hwid": "DS-FCB5-7377",
-        "machine_name": "TK-03",
-        "name": "TK-03",
-        "username": "admin",
-        "user": "admin",
-        "fullName": "admin",
-        "revit_version": "2025",
-        "os_info": "Windows",
-        "app": "Revit Add-in",
-        "registeredAt": "2026-11-12T03:10:12.806Z",
-        "lastActive": "2026-11-12T03:10:12.806Z",
-        "last_checked_at": "2026-11-12T03:10:12.806Z",
-        "status": "Active"
+        "username": "bb",
+        "fullName": "aaaa",
+        "machineId": "HWID-1792920818879",
+        "registeredAt": "2026-10-25T09:33:38.879Z"
       },
       {
-        "machineId": "DS-3871-FF8C",
-        "machine_id": "DS-3871-FF8C",
-        "hwid": "DS-3871-FF8C",
-        "machine_name": "TK-10",
-        "name": "TK-10",
-        "username": "TK-10",
-        "user": "TK-10",
-        "fullName": "TK-10",
-        "revit_version": "2025",
-        "os_info": "Windows",
-        "app": "Revit Add-in",
-        "registeredAt": "2026-11-12T09:44:23.516Z",
-        "lastActive": "2026-11-12T09:44:23.516Z",
-        "last_checked_at": "2026-11-12T09:44:23.516Z",
+        "username": "doanson",
+        "fullName": "son",
+        "machineId": "HWID-1792943744297",
+        "registeredAt": "2026-10-25T15:55:44.297Z"
+      },
+      {
+        "username": "sondoan99",
+        "fullName": "sondoan99",
+        "machineId": "HWID-1794537895985",
+        "app": "PHẦN MỀM QUẢN LÝ CÔNG VIỆC",
+        "registeredAt": "2026-11-13T02:44:55.985Z",
+        "lastActive": "2026-11-13T02:44:55.986Z",
         "status": "Active"
       }
     ],
-    "updated_at": "2026-11-12T09:44:23.516Z"
+    "max_accounts": 50,
+    "max_machines": 50,
+    "status": "active"
   }
 }
